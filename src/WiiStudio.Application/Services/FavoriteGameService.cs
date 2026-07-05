@@ -8,21 +8,24 @@ namespace WiiStudio.Application.Services;
 public sealed class FavoriteGameService : IFavoriteGameService
 {
     private readonly IGameLibraryService _gameLibraryService;
+    private readonly IFavoriteGameStore _favoriteGameStore;
     private readonly ConcurrentDictionary<string, byte> _favoriteGameIds = new(StringComparer.OrdinalIgnoreCase);
+    private bool _isLoaded;
 
-    public FavoriteGameService(IGameLibraryService gameLibraryService)
+    public FavoriteGameService(IGameLibraryService gameLibraryService, IFavoriteGameStore favoriteGameStore)
     {
         _gameLibraryService = gameLibraryService;
+        _favoriteGameStore = favoriteGameStore;
     }
 
-    public Task AddAsync(string gameId, CancellationToken cancellationToken)
+    public async Task AddAsync(string gameId, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
         ValidateGameId(gameId);
+        await EnsureLoadedAsync(cancellationToken);
 
         _favoriteGameIds.TryAdd(gameId.Trim().ToUpperInvariant(), 0);
-
-        return Task.CompletedTask;
+        await SaveAsync(cancellationToken);
     }
 
     public async Task AddRangeAsync(IReadOnlyList<string> gameIds, CancellationToken cancellationToken)
@@ -35,26 +38,29 @@ public sealed class FavoriteGameService : IFavoriteGameService
         }
     }
 
-    public Task RemoveAsync(string gameId, CancellationToken cancellationToken)
+    public async Task RemoveAsync(string gameId, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
         ValidateGameId(gameId);
+        await EnsureLoadedAsync(cancellationToken);
 
         _favoriteGameIds.TryRemove(gameId.Trim().ToUpperInvariant(), out _);
-
-        return Task.CompletedTask;
+        await SaveAsync(cancellationToken);
     }
 
-    public Task<bool> IsFavoriteAsync(string gameId, CancellationToken cancellationToken)
+    public async Task<bool> IsFavoriteAsync(string gameId, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
         ValidateGameId(gameId);
+        await EnsureLoadedAsync(cancellationToken);
 
-        return Task.FromResult(_favoriteGameIds.ContainsKey(gameId.Trim().ToUpperInvariant()));
+        return _favoriteGameIds.ContainsKey(gameId.Trim().ToUpperInvariant());
     }
 
     public async Task<IReadOnlyList<GameDto>> GetFavoritesAsync(CancellationToken cancellationToken)
     {
+        await EnsureLoadedAsync(cancellationToken);
+
         var games = await _gameLibraryService.GetGamesAsync(null, cancellationToken);
         var favorites = games
             .Where(game => _favoriteGameIds.ContainsKey(game.Id))
@@ -63,6 +69,34 @@ public sealed class FavoriteGameService : IFavoriteGameService
             .ToArray();
 
         return favorites;
+    }
+
+    private async Task EnsureLoadedAsync(CancellationToken cancellationToken)
+    {
+        if (_isLoaded)
+        {
+            return;
+        }
+
+        var favoriteGameIds = await _favoriteGameStore.LoadAsync(cancellationToken);
+        foreach (var gameId in favoriteGameIds)
+        {
+            if (GameIdValidation.IsValid(gameId))
+            {
+                _favoriteGameIds.TryAdd(gameId.Trim().ToUpperInvariant(), 0);
+            }
+        }
+
+        _isLoaded = true;
+    }
+
+    private Task SaveAsync(CancellationToken cancellationToken)
+    {
+        var gameIds = _favoriteGameIds.Keys
+            .Order(StringComparer.OrdinalIgnoreCase)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        return _favoriteGameStore.SaveAsync(gameIds, cancellationToken);
     }
 
     private static void ValidateGameId(string gameId)

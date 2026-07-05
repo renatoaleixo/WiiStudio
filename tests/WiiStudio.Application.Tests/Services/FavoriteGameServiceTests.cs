@@ -11,7 +11,7 @@ public sealed class FavoriteGameServiceTests
     [Fact]
     public async Task AddAsync_ShouldMarkGameAsFavorite()
     {
-        var service = new FavoriteGameService(new FakeGameLibraryService([]));
+        var service = new FavoriteGameService(new FakeGameLibraryService([]), new FakeFavoriteGameStore());
 
         await service.AddAsync("RMCP01", CancellationToken.None);
 
@@ -22,7 +22,7 @@ public sealed class FavoriteGameServiceTests
     [Fact]
     public async Task AddRangeAsync_ShouldIgnoreDuplicates()
     {
-        var service = new FavoriteGameService(new FakeGameLibraryService([]));
+        var service = new FavoriteGameService(new FakeGameLibraryService([]), new FakeFavoriteGameStore());
 
         await service.AddRangeAsync(["RMCP01", "RMCP01"], CancellationToken.None);
 
@@ -33,7 +33,7 @@ public sealed class FavoriteGameServiceTests
     [Fact]
     public async Task RemoveAsync_ShouldUnmarkFavorite()
     {
-        var service = new FavoriteGameService(new FakeGameLibraryService([]));
+        var service = new FavoriteGameService(new FakeGameLibraryService([]), new FakeFavoriteGameStore());
 
         await service.AddAsync("RMCP01", CancellationToken.None);
         await service.RemoveAsync("RMCP01", CancellationToken.None);
@@ -47,7 +47,7 @@ public sealed class FavoriteGameServiceTests
     {
         var mario = CreateGame("RMCP01", "Mario Kart Wii");
         var zelda = CreateGame("RZDP01", "The Legend of Zelda");
-        var service = new FavoriteGameService(new FakeGameLibraryService([mario, zelda]));
+        var service = new FavoriteGameService(new FakeGameLibraryService([mario, zelda]), new FakeFavoriteGameStore());
 
         await service.AddAsync("RZDP01", CancellationToken.None);
         var favorites = await service.GetFavoritesAsync(CancellationToken.None);
@@ -60,11 +60,22 @@ public sealed class FavoriteGameServiceTests
     [Fact]
     public async Task AddAsync_ShouldRejectInvalidGameId()
     {
-        var service = new FavoriteGameService(new FakeGameLibraryService([]));
+        var service = new FavoriteGameService(new FakeGameLibraryService([]), new FakeFavoriteGameStore());
 
         var act = () => service.AddAsync("invalid", CancellationToken.None);
 
         await act.Should().ThrowAsync<ArgumentException>();
+    }
+
+    [Fact]
+    public async Task AddAsync_ShouldPersistFavorites()
+    {
+        var store = new FakeFavoriteGameStore();
+        var service = new FavoriteGameService(new FakeGameLibraryService([]), store);
+
+        await service.AddAsync("RMCP01", CancellationToken.None);
+
+        store.SavedGameIds.Should().ContainSingle().Which.Should().Be("RMCP01");
     }
 
     private static GameDto CreateGame(string id, string title)
@@ -91,6 +102,33 @@ public sealed class FavoriteGameServiceTests
         public Task RefreshAsync(Guid usbDriveId, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
+
+            return Task.CompletedTask;
+        }
+    }
+
+    private sealed class FakeFavoriteGameStore : IFavoriteGameStore
+    {
+        private readonly IReadOnlySet<string> _loadedGameIds;
+
+        public FakeFavoriteGameStore(IReadOnlySet<string>? loadedGameIds = null)
+        {
+            _loadedGameIds = loadedGameIds ?? new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        }
+
+        public IReadOnlySet<string> SavedGameIds { get; private set; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        public Task<IReadOnlySet<string>> LoadAsync(CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            return Task.FromResult(_loadedGameIds);
+        }
+
+        public Task SaveAsync(IReadOnlySet<string> gameIds, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            SavedGameIds = gameIds;
 
             return Task.CompletedTask;
         }
