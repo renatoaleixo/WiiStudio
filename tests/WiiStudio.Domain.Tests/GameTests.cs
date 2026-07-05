@@ -1,6 +1,7 @@
 using FluentAssertions;
 using WiiStudio.Domain.Entities;
 using WiiStudio.Domain.Enums;
+using WiiStudio.Domain.ValueObjects;
 
 namespace WiiStudio.Domain.Tests;
 
@@ -13,7 +14,8 @@ public sealed class GameTests
 
         game.Id.Should().Be("RMCP01");
         game.Title.Should().Be("Mario Kart Wii");
-        game.Format.Should().Be(GameFormat.Wbfs);
+        game.GameId.Should().Be(new GameId("RMCP01"));
+        game.Format.Should().Be(FileFormat.Wbfs);
         game.SizeInBytes.Should().Be(1024);
     }
 
