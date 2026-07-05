@@ -10,6 +10,49 @@ namespace WiiStudio.Infrastructure.Tests.Wiimms;
 public sealed class WitServiceTests
 {
     [Fact]
+    public async Task GetVersionAsync_ShouldRunWitVersionWithResolvedExecutablePath()
+    {
+        var processRunner = new FakeProcessRunner(new ProcessResult(
+            0,
+            "wit: Wiimms ISO Tool v3.05a r8638\n",
+            string.Empty,
+            TimeSpan.FromMilliseconds(10)));
+        var service = new WitService(processRunner, new FakeWiimmsToolLocator("/opt/wiimms/wit"), NullLogger<WitService>.Instance);
+
+        var version = await service.GetVersionAsync(CancellationToken.None);
+
+        version.Should().Be(new Version(3, 5));
+        processRunner.LastRequest.Should().NotBeNull();
+        processRunner.LastRequest!.ExecutablePath.Should().Be("/opt/wiimms/wit");
+        processRunner.LastRequest.Arguments.Should().Equal("--version");
+    }
+
+    [Fact]
+    public async Task GetVersionAsync_ShouldThrowWhenWitVersionFails()
+    {
+        var processRunner = new FakeProcessRunner(new ProcessResult(127, string.Empty, "not found", TimeSpan.FromMilliseconds(10)));
+        var service = new WitService(processRunner, new FakeWiimmsToolLocator("/opt/wiimms/wit"), NullLogger<WitService>.Instance);
+
+        var act = () => service.GetVersionAsync(CancellationToken.None);
+
+        var exception = await act.Should().ThrowAsync<WiimmsCommandException>();
+        exception.Which.ExitCode.Should().Be(127);
+        exception.Which.StandardError.Should().Be("not found");
+    }
+
+    [Fact]
+    public async Task GetVersionAsync_ShouldThrowWhenVersionOutputCannotBeParsed()
+    {
+        var processRunner = new FakeProcessRunner(new ProcessResult(0, "wiimms iso tools", string.Empty, TimeSpan.FromMilliseconds(10)));
+        var service = new WitService(processRunner, new FakeWiimmsToolLocator("/opt/wiimms/wit"), NullLogger<WitService>.Instance);
+
+        var act = () => service.GetVersionAsync(CancellationToken.None);
+
+        var exception = await act.Should().ThrowAsync<WiimmsVersionParseException>();
+        exception.Which.StandardOutput.Should().Be("wiimms iso tools");
+    }
+
+    [Fact]
     public async Task ListGamesAsync_ShouldRunWitListWithStructuredArguments()
     {
         var processRunner = new FakeProcessRunner(new ProcessResult(

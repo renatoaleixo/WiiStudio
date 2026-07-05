@@ -7,6 +7,7 @@ namespace WiiStudio.Infrastructure.Wiimms;
 
 public sealed class WitService : IWitService
 {
+    private static readonly TimeSpan VersionTimeout = TimeSpan.FromSeconds(10);
     private static readonly TimeSpan DefaultTimeout = TimeSpan.FromMinutes(2);
 
     private readonly IProcessRunner _processRunner;
@@ -18,6 +19,27 @@ public sealed class WitService : IWitService
         _processRunner = processRunner;
         _toolLocator = toolLocator;
         _logger = logger;
+    }
+
+    public async Task<Version> GetVersionAsync(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var witPath = await _toolLocator.FindWitAsync(cancellationToken);
+        var request = new ProcessRequest(witPath, ["--version"], VersionTimeout);
+        var result = await _processRunner.RunAsync(request, cancellationToken);
+        if (!result.IsSuccess)
+        {
+            throw new WiimmsCommandException(
+                $"wit --version failed with exit code {result.ExitCode}.",
+                result.ExitCode,
+                result.StandardError);
+        }
+
+        var version = WiimmsVersionParser.Parse(result.StandardOutput);
+        _logger.LogInformation("Detected wit version {WitVersion}", version);
+
+        return version;
     }
 
     public async Task<IReadOnlyList<Game>> ListGamesAsync(UsbDrive drive, CancellationToken cancellationToken)

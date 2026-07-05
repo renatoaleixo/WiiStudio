@@ -91,6 +91,13 @@ public sealed class GameLibraryScannerTests
             _games = games;
         }
 
+        public Task<Version> GetVersionAsync(CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            return Task.FromResult(new Version(3, 5));
+        }
+
         public Task<IReadOnlyList<Game>> ListGamesAsync(UsbDrive drive, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
