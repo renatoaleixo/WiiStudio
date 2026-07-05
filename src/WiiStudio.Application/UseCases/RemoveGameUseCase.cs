@@ -10,15 +10,18 @@ public sealed class RemoveGameUseCase
     private readonly IValidator<RemoveGameCommand> _validator;
     private readonly IUsbDriveService _usbDriveService;
     private readonly IWwtService _wwtService;
+    private readonly IGameLibraryService _gameLibraryService;
 
     public RemoveGameUseCase(
         IValidator<RemoveGameCommand> validator,
         IUsbDriveService usbDriveService,
-        IWwtService wwtService)
+        IWwtService wwtService,
+        IGameLibraryService gameLibraryService)
     {
         _validator = validator;
         _usbDriveService = usbDriveService;
         _wwtService = wwtService;
+        _gameLibraryService = gameLibraryService;
     }
 
     public async Task ExecuteAsync(RemoveGameCommand command, CancellationToken cancellationToken)
@@ -27,6 +30,7 @@ public sealed class RemoveGameUseCase
 
         var drive = await FindDriveAsync(command.SourceDriveId, cancellationToken);
         await _wwtService.RemoveGameAsync(drive, command.GameId, cancellationToken);
+        await _gameLibraryService.RefreshAsync(drive.Id, cancellationToken);
     }
 
     private async Task<Domain.Entities.UsbDrive> FindDriveAsync(Guid driveId, CancellationToken cancellationToken)

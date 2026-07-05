@@ -19,6 +19,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IValidator<ImportGameCommand>, ImportGameCommandValidator>();
         services.AddSingleton<IValidator<RemoveGameCommand>, RemoveGameCommandValidator>();
         services.AddTransient<IGameLibraryScanner, GameLibraryScanner>();
+        services.AddSingleton<IGameLibraryService, GameLibraryService>();
         services.AddTransient<DetectUsbDrivesUseCase>();
         services.AddTransient<ScanUsbDrivesUseCase>();
         services.AddTransient<ScanGameLibraryUseCase>();

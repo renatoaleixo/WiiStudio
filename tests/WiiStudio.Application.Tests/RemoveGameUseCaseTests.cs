@@ -1,6 +1,7 @@
 using FluentAssertions;
 using FluentValidation;
 using WiiStudio.Application.Commands;
+using WiiStudio.Application.DTOs;
 using WiiStudio.Application.Exceptions;
 using WiiStudio.Application.Interfaces;
 using WiiStudio.Application.UseCases;
@@ -20,11 +21,28 @@ public sealed class RemoveGameUseCaseTests
         var useCase = new RemoveGameUseCase(
             new RemoveGameCommandValidator(),
             new FakeUsbDriveService([drive]),
-            wwtService);
+            wwtService,
+            new FakeGameLibraryService());
 
         await useCase.ExecuteAsync(new RemoveGameCommand("RMCP01", drive.Id, Confirmed: true), CancellationToken.None);
 
         wwtService.RemovedGames.Should().ContainSingle().Which.Should().Be((drive, "RMCP01"));
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_ShouldRefreshLibraryAfterRemoval()
+    {
+        var drive = CreateDrive();
+        var gameLibraryService = new FakeGameLibraryService();
+        var useCase = new RemoveGameUseCase(
+            new RemoveGameCommandValidator(),
+            new FakeUsbDriveService([drive]),
+            new FakeWwtService(),
+            gameLibraryService);
+
+        await useCase.ExecuteAsync(new RemoveGameCommand("RMCP01", drive.Id, Confirmed: true), CancellationToken.None);
+
+        gameLibraryService.RefreshedDriveIds.Should().ContainSingle().Which.Should().Be(drive.Id);
     }
 
     [Fact]
@@ -34,7 +52,8 @@ public sealed class RemoveGameUseCaseTests
         var useCase = new RemoveGameUseCase(
             new RemoveGameCommandValidator(),
             new FakeUsbDriveService([drive]),
-            new FakeWwtService());
+            new FakeWwtService(),
+            new FakeGameLibraryService());
 
         var act = () => useCase.ExecuteAsync(new RemoveGameCommand("RMCP01", drive.Id, Confirmed: false), CancellationToken.None);
 
@@ -48,7 +67,8 @@ public sealed class RemoveGameUseCaseTests
         var useCase = new RemoveGameUseCase(
             new RemoveGameCommandValidator(),
             new FakeUsbDriveService([]),
-            new FakeWwtService());
+            new FakeWwtService(),
+            new FakeGameLibraryService());
 
         var act = () => useCase.ExecuteAsync(new RemoveGameCommand("RMCP01", missingDriveId, Confirmed: true), CancellationToken.None);
 
@@ -93,6 +113,26 @@ public sealed class RemoveGameUseCaseTests
         {
             cancellationToken.ThrowIfCancellationRequested();
             RemovedGames.Add((drive, gameId));
+
+            return Task.CompletedTask;
+        }
+    }
+
+    private sealed class FakeGameLibraryService : IGameLibraryService
+    {
+        public List<Guid> RefreshedDriveIds { get; } = [];
+
+        public Task<IReadOnlyList<GameDto>> GetGamesAsync(Guid? usbDriveId, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            return Task.FromResult<IReadOnlyList<GameDto>>([]);
+        }
+
+        public Task RefreshAsync(Guid usbDriveId, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            RefreshedDriveIds.Add(usbDriveId);
 
             return Task.CompletedTask;
         }

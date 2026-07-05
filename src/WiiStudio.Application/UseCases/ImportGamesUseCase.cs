@@ -10,15 +10,18 @@ public sealed class ImportGamesUseCase
     private readonly IValidator<ImportGameCommand> _validator;
     private readonly IUsbDriveService _usbDriveService;
     private readonly IWwtService _wwtService;
+    private readonly IGameLibraryService _gameLibraryService;
 
     public ImportGamesUseCase(
         IValidator<ImportGameCommand> validator,
         IUsbDriveService usbDriveService,
-        IWwtService wwtService)
+        IWwtService wwtService,
+        IGameLibraryService gameLibraryService)
     {
         _validator = validator;
         _usbDriveService = usbDriveService;
         _wwtService = wwtService;
+        _gameLibraryService = gameLibraryService;
     }
 
     public async Task ExecuteAsync(ImportGameCommand command, CancellationToken cancellationToken)
@@ -31,6 +34,8 @@ public sealed class ImportGamesUseCase
             cancellationToken.ThrowIfCancellationRequested();
             await _wwtService.AddGameAsync(drive, sourcePath, cancellationToken);
         }
+
+        await _gameLibraryService.RefreshAsync(drive.Id, cancellationToken);
     }
 
     private async Task<Domain.Entities.UsbDrive> FindDriveAsync(Guid driveId, CancellationToken cancellationToken)
