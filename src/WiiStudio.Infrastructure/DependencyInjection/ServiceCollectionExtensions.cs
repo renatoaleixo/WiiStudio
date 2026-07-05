@@ -23,7 +23,9 @@ public static class ServiceCollectionExtensions
 
     public static IServiceCollection AddWiiStudioInfrastructure(this IServiceCollection services)
     {
+        services.AddSingleton(new WiimmsToolOptions());
         services.AddSingleton<IProcessRunner, ProcessRunner>();
+        services.AddSingleton<IWiimmsToolLocator, WiimmsToolLocator>();
         services.AddSingleton<IUsbProvider, LinuxUsbProvider>();
         services.AddSingleton<IUsbDetectionService, UsbDetectionService>();
         services.AddSingleton<IUsbDriveService, UsbDriveService>();

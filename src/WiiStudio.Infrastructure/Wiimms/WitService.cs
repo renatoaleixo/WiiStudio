@@ -10,11 +10,13 @@ public sealed class WitService : IWitService
     private static readonly TimeSpan DefaultTimeout = TimeSpan.FromMinutes(2);
 
     private readonly IProcessRunner _processRunner;
+    private readonly IWiimmsToolLocator _toolLocator;
     private readonly ILogger<WitService> _logger;
 
-    public WitService(IProcessRunner processRunner, ILogger<WitService> logger)
+    public WitService(IProcessRunner processRunner, IWiimmsToolLocator toolLocator, ILogger<WitService> logger)
     {
         _processRunner = processRunner;
+        _toolLocator = toolLocator;
         _logger = logger;
     }
 
@@ -23,8 +25,9 @@ public sealed class WitService : IWitService
         ArgumentNullException.ThrowIfNull(drive);
         cancellationToken.ThrowIfCancellationRequested();
 
+        var witPath = await _toolLocator.FindWitAsync(cancellationToken);
         var request = new ProcessRequest(
-            "wit",
+            witPath,
             [
                 "list",
                 drive.MountPoint,

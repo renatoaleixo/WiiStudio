@@ -17,12 +17,12 @@ public sealed class WitServiceTests
             "RMCP01\tMario Kart Wii\tPAL\tWBFS\t1024\t/media/wii/wbfs/RMCP01.wbfs\n",
             string.Empty,
             TimeSpan.FromMilliseconds(10)));
-        var service = new WitService(processRunner, NullLogger<WitService>.Instance);
+        var service = new WitService(processRunner, new FakeWiimmsToolLocator("/opt/wiimms/wit"), NullLogger<WitService>.Instance);
 
         await service.ListGamesAsync(CreateDrive(), CancellationToken.None);
 
         processRunner.LastRequest.Should().NotBeNull();
-        processRunner.LastRequest!.ExecutablePath.Should().Be("wit");
+        processRunner.LastRequest!.ExecutablePath.Should().Be("/opt/wiimms/wit");
         processRunner.LastRequest.Arguments.Should().Equal(
             "list",
             "/media/wii",
@@ -38,9 +38,9 @@ public sealed class WitServiceTests
             ID	TITLE	REGION	FORMAT	SIZE	FILE
             RMCP01	Mario Kart Wii	PAL	WBFS	1024	/media/wii/wbfs/RMCP01.wbfs
             RSBP01	Super Smash Bros. Brawl	NTSC-U	ISO	2048	/media/wii/wbfs/RSBP01.iso
-            """;
+        """;
         var processRunner = new FakeProcessRunner(new ProcessResult(0, output, string.Empty, TimeSpan.FromMilliseconds(10)));
-        var service = new WitService(processRunner, NullLogger<WitService>.Instance);
+        var service = new WitService(processRunner, new FakeWiimmsToolLocator("/opt/wiimms/wit"), NullLogger<WitService>.Instance);
 
         var games = await service.ListGamesAsync(CreateDrive(), CancellationToken.None);
 
@@ -62,9 +62,9 @@ public sealed class WitServiceTests
             BADID	Bad Game	PAL	WBFS	1024	/media/wii/bad.wbfs
             RMCP01	Mario Kart Wii	PAL	WBFS	not-a-number	/media/wii/wbfs/RMCP01.wbfs
             RSBP01	Super Smash Bros. Brawl	NTSC-U	ISO	2048	/media/wii/wbfs/RSBP01.iso
-            """;
+        """;
         var processRunner = new FakeProcessRunner(new ProcessResult(0, output, string.Empty, TimeSpan.FromMilliseconds(10)));
-        var service = new WitService(processRunner, NullLogger<WitService>.Instance);
+        var service = new WitService(processRunner, new FakeWiimmsToolLocator("/opt/wiimms/wit"), NullLogger<WitService>.Instance);
 
         var games = await service.ListGamesAsync(CreateDrive(), CancellationToken.None);
 
@@ -75,7 +75,7 @@ public sealed class WitServiceTests
     public async Task ListGamesAsync_ShouldThrowWhenWitFails()
     {
         var processRunner = new FakeProcessRunner(new ProcessResult(2, string.Empty, "device not found", TimeSpan.FromMilliseconds(10)));
-        var service = new WitService(processRunner, NullLogger<WitService>.Instance);
+        var service = new WitService(processRunner, new FakeWiimmsToolLocator("/opt/wiimms/wit"), NullLogger<WitService>.Instance);
 
         var act = () => service.ListGamesAsync(CreateDrive(), CancellationToken.None);
 
@@ -106,6 +106,30 @@ public sealed class WitServiceTests
             LastRequest = request;
 
             return Task.FromResult(_result);
+        }
+    }
+
+    private sealed class FakeWiimmsToolLocator : IWiimmsToolLocator
+    {
+        private readonly string _witPath;
+
+        public FakeWiimmsToolLocator(string witPath)
+        {
+            _witPath = witPath;
+        }
+
+        public Task<string> FindWitAsync(CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            return Task.FromResult(_witPath);
+        }
+
+        public Task<string> FindWwtAsync(CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            return Task.FromResult("/opt/wiimms/wwt");
         }
     }
 }
