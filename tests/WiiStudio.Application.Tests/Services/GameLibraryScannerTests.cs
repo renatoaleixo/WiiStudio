@@ -104,6 +104,13 @@ public sealed class GameLibraryScannerTests
 
             return Task.FromResult(_games);
         }
+
+        public Task VerifyAsync(string sourcePath, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            return Task.CompletedTask;
+        }
     }
 
     private sealed class FakeGameLibraryScanner : IGameLibraryScanner

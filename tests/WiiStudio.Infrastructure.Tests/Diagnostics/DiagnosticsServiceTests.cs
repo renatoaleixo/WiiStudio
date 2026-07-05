@@ -112,6 +112,13 @@ public sealed class DiagnosticsServiceTests
 
             return Task.FromResult<IReadOnlyList<Game>>([]);
         }
+
+        public Task VerifyAsync(string sourcePath, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            return Task.CompletedTask;
+        }
     }
 
     private sealed class FakeWiimmsToolLocator : IWiimmsToolLocator

@@ -127,6 +127,35 @@ public sealed class WitServiceTests
         exception.Which.StandardError.Should().Be("device not found");
     }
 
+    [Fact]
+    public async Task VerifyAsync_ShouldRunWitVerifyWithStructuredArguments()
+    {
+        var processRunner = new FakeProcessRunner(new ProcessResult(0, string.Empty, string.Empty, TimeSpan.FromMilliseconds(10)));
+        var service = new WitService(processRunner, new FakeWiimmsToolLocator("/opt/wiimms/wit"), NullLogger<WitService>.Instance);
+
+        await service.VerifyAsync("/games/mario.wbfs", CancellationToken.None);
+
+        processRunner.LastRequest.Should().NotBeNull();
+        processRunner.LastRequest!.ExecutablePath.Should().Be("/opt/wiimms/wit");
+        processRunner.LastRequest.Arguments.Should().Equal(
+            "verify",
+            "/games/mario.wbfs",
+            "--test");
+    }
+
+    [Fact]
+    public async Task VerifyAsync_ShouldThrowWhenWitFails()
+    {
+        var processRunner = new FakeProcessRunner(new ProcessResult(4, string.Empty, "bad dump", TimeSpan.FromMilliseconds(10)));
+        var service = new WitService(processRunner, new FakeWiimmsToolLocator("/opt/wiimms/wit"), NullLogger<WitService>.Instance);
+
+        var act = () => service.VerifyAsync("/games/mario.wbfs", CancellationToken.None);
+
+        var exception = await act.Should().ThrowAsync<WiimmsCommandException>();
+        exception.Which.ExitCode.Should().Be(4);
+        exception.Which.StandardError.Should().Be("bad dump");
+    }
+
     private static UsbDrive CreateDrive()
     {
         return new UsbDrive("Wii HD", "/media/wii", UsbDriveFileSystem.Wbfs, 1000, 500);

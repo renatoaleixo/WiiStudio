@@ -73,4 +73,31 @@ public sealed class WitService : IWitService
 
         return games;
     }
+
+    public async Task VerifyAsync(string sourcePath, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var witPath = await _toolLocator.FindWitAsync(cancellationToken);
+        var request = new ProcessRequest(
+            witPath,
+            [
+                "verify",
+                sourcePath,
+                "--test"
+            ],
+            DefaultTimeout);
+
+        var result = await _processRunner.RunAsync(request, cancellationToken);
+        if (!result.IsSuccess)
+        {
+            throw new WiimmsCommandException(
+                $"wit verify failed with exit code {result.ExitCode}.",
+                result.ExitCode,
+                result.StandardError);
+        }
+
+        _logger.LogInformation("Verified game source {SourcePath} with wit", sourcePath);
+    }
 }
