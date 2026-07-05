@@ -22,6 +22,7 @@ public static class ServiceCollectionExtensions
         services.AddTransient<IGameLibraryScanner, GameLibraryScanner>();
         services.AddSingleton<IGameLibraryService, GameLibraryService>();
         services.AddSingleton<IFavoriteGameService, FavoriteGameService>();
+        services.AddSingleton<IGameDetailsService, GameDetailsService>();
         services.AddSingleton<IGameSearchService, GameSearchService>();
         services.AddSingleton<ISearchPresetService, SearchPresetService>();
         services.AddTransient<DetectUsbDrivesUseCase>();
