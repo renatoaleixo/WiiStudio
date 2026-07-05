@@ -1,6 +1,6 @@
 namespace WiiStudio.Application.Validators;
 
-internal static class GameIdValidation
+public static class GameIdValidation
 {
     public static string Normalize(string value)
     {
