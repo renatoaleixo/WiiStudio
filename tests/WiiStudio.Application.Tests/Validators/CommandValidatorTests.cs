@@ -30,6 +30,17 @@ public sealed class CommandValidatorTests
     }
 
     [Fact]
+    public void ImportGameCommandValidator_ShouldRejectUnsupportedExtensions()
+    {
+        var validator = new ImportGameCommandValidator();
+        var command = new ImportGameCommand(["/games/mario.txt"], Guid.NewGuid());
+
+        var result = validator.Validate(command);
+
+        result.IsValid.Should().BeFalse();
+    }
+
+    [Fact]
     public void RemoveGameCommandValidator_ShouldRequireConfirmation()
     {
         var validator = new RemoveGameCommandValidator();
