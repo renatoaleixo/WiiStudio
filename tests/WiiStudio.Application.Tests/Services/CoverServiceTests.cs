@@ -82,5 +82,26 @@ public sealed class CoverServiceTests
         {
             throw new NotSupportedException();
         }
+
+        public Task<bool> RemoveAsync(string gameId, CoverAssetKind kind, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            return Task.FromResult(Assets.Remove((gameId, kind)));
+        }
+
+        public Task RebuildIndexAsync(CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            return Task.CompletedTask;
+        }
+
+        public Task<AssetStatistics> GetStatisticsAsync(CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            return Task.FromResult(new AssetStatistics(Assets.Count, 0, new Dictionary<CoverAssetKind, int>(), null));
+        }
     }
 }

@@ -30,6 +30,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IExportGameService, ExportGameService>();
         services.AddSingleton<IVerifyGameService, VerifyGameService>();
         services.AddSingleton<IRepairGameService, RepairGameService>();
+        services.AddSingleton<IAssetManager, AssetManager>();
         services.AddSingleton<ICoverService, CoverService>();
         services.AddSingleton<ICoverDownloadService, CoverDownloadService>();
         services.AddSingleton<IMetadataSynchronizationService, MetadataSynchronizationService>();

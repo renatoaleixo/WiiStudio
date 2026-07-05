@@ -59,6 +59,65 @@ public sealed class FileSystemCoverCacheTests
         stream.Should().BeNull();
     }
 
+    [Fact]
+    public async Task RemoveAsync_ShouldDeletePersistedAsset()
+    {
+        using var fixture = TemporaryCoverCacheFixture.Create();
+        var cache = fixture.CreateCache();
+        await using var stream = new MemoryStream(Encoding.UTF8.GetBytes("cover"));
+        await cache.SaveAsync("RMCP01", CoverAssetKind.FrontCover, stream, CancellationToken.None);
+
+        var removed = await cache.RemoveAsync("RMCP01", CoverAssetKind.FrontCover, CancellationToken.None);
+        var cachedPath = await cache.GetAsync("RMCP01", CoverAssetKind.FrontCover, CancellationToken.None);
+
+        removed.Should().BeTrue();
+        cachedPath.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task RemoveAsync_ShouldReturnFalseWhenAssetIsMissing()
+    {
+        using var fixture = TemporaryCoverCacheFixture.Create();
+        var cache = fixture.CreateCache();
+
+        var removed = await cache.RemoveAsync("RMCP01", CoverAssetKind.FrontCover, CancellationToken.None);
+
+        removed.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task RebuildIndexAsync_ShouldCreateAssetDirectories()
+    {
+        using var fixture = TemporaryCoverCacheFixture.Create();
+        var cache = fixture.CreateCache();
+
+        await cache.RebuildIndexAsync(CancellationToken.None);
+
+        Directory.Exists(Path.Combine(fixture.RootDirectory, "covers")).Should().BeTrue();
+        Directory.Exists(Path.Combine(fixture.RootDirectory, "discs")).Should().BeTrue();
+        Directory.Exists(Path.Combine(fixture.RootDirectory, "banners")).Should().BeTrue();
+        Directory.Exists(Path.Combine(fixture.RootDirectory, "thumbnails")).Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task GetStatisticsAsync_ShouldReturnAssetTotalsByKind()
+    {
+        using var fixture = TemporaryCoverCacheFixture.Create();
+        var cache = fixture.CreateCache();
+        await using var frontCover = new MemoryStream(Encoding.UTF8.GetBytes("front"));
+        await using var discArt = new MemoryStream(Encoding.UTF8.GetBytes("disc"));
+        await cache.SaveAsync("RMCP01", CoverAssetKind.FrontCover, frontCover, CancellationToken.None);
+        await cache.SaveAsync("RMCP01", CoverAssetKind.DiscArt, discArt, CancellationToken.None);
+
+        var statistics = await cache.GetStatisticsAsync(CancellationToken.None);
+
+        statistics.TotalAssets.Should().Be(2);
+        statistics.SizeInBytes.Should().BeGreaterThan(0);
+        statistics.CountByKind[CoverAssetKind.FrontCover].Should().Be(1);
+        statistics.CountByKind[CoverAssetKind.DiscArt].Should().Be(1);
+        statistics.LastModifiedAt.Should().NotBeNull();
+    }
+
     private sealed class TemporaryCoverCacheFixture : IDisposable
     {
         private TemporaryCoverCacheFixture(string rootDirectory)

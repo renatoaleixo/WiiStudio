@@ -121,6 +121,27 @@ public sealed class CoverDownloadServiceTests
 
             return Task.FromResult(path);
         }
+
+        public Task<bool> RemoveAsync(string gameId, CoverAssetKind kind, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            return Task.FromResult(CachedPaths.Remove((gameId, kind)));
+        }
+
+        public Task RebuildIndexAsync(CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            return Task.CompletedTask;
+        }
+
+        public Task<AssetStatistics> GetStatisticsAsync(CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            return Task.FromResult(new AssetStatistics(CachedPaths.Count, 0, new Dictionary<CoverAssetKind, int>(), null));
+        }
     }
 
     private sealed class FakeCoverProvider : ICoverProvider
