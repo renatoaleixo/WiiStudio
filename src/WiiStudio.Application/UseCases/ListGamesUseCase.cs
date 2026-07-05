@@ -1,4 +1,4 @@
-using WiiStudio.Application.Abstractions;
+using WiiStudio.Application.Interfaces;
 using WiiStudio.Domain.Entities;
 
 namespace WiiStudio.Application.UseCases;

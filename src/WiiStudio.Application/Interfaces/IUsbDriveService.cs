@@ -1,6 +1,6 @@
 using WiiStudio.Domain.Entities;
 
-namespace WiiStudio.Application.Abstractions;
+namespace WiiStudio.Application.Interfaces;
 
 public interface IUsbDriveService
 {

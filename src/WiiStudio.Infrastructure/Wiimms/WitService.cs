@@ -1,7 +1,7 @@
-using WiiStudio.Application.Abstractions;
+using WiiStudio.Application.Interfaces;
 using WiiStudio.Domain.Entities;
 
-namespace WiiStudio.Infrastructure.Services;
+namespace WiiStudio.Infrastructure.Wiimms;
 
 public sealed class WitService : IWitService
 {

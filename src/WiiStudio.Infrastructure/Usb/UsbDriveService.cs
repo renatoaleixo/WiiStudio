@@ -1,9 +1,9 @@
 using System.IO;
-using WiiStudio.Application.Abstractions;
+using WiiStudio.Application.Interfaces;
 using WiiStudio.Domain.Entities;
 using WiiStudio.Domain.Enums;
 
-namespace WiiStudio.Infrastructure.Services;
+namespace WiiStudio.Infrastructure.Usb;
 
 public sealed class UsbDriveService : IUsbDriveService
 {

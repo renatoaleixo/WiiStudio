@@ -1,5 +1,5 @@
 using FluentAssertions;
-using WiiStudio.Application.Abstractions;
+using WiiStudio.Application.Interfaces;
 using WiiStudio.Application.UseCases;
 using WiiStudio.Domain.Entities;
 using WiiStudio.Domain.Enums;
