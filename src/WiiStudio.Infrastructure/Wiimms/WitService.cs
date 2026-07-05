@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using WiiStudio.Application.Interfaces;
 using WiiStudio.Domain.Entities;
+using WiiStudio.Domain.Enums;
 using WiiStudio.Infrastructure.Processes;
 
 namespace WiiStudio.Infrastructure.Wiimms;
@@ -99,5 +100,40 @@ public sealed class WitService : IWitService
         }
 
         _logger.LogInformation("Verified game source {SourcePath} with wit", sourcePath);
+    }
+
+    public async Task CopyAsync(string sourcePath, string destinationPath, FileFormat targetFormat, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
+        ArgumentException.ThrowIfNullOrWhiteSpace(destinationPath);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var formatArgument = targetFormat switch
+        {
+            FileFormat.Iso => "--iso",
+            FileFormat.Wbfs => "--wbfs",
+            _ => throw new ArgumentOutOfRangeException(nameof(targetFormat), targetFormat, "Unsupported export format.")
+        };
+        var witPath = await _toolLocator.FindWitAsync(cancellationToken);
+        var request = new ProcessRequest(
+            witPath,
+            [
+                "copy",
+                formatArgument,
+                sourcePath,
+                destinationPath
+            ],
+            DefaultTimeout);
+
+        var result = await _processRunner.RunAsync(request, cancellationToken);
+        if (!result.IsSuccess)
+        {
+            throw new WiimmsCommandException(
+                $"wit copy failed with exit code {result.ExitCode}.",
+                result.ExitCode,
+                result.StandardError);
+        }
+
+        _logger.LogInformation("Copied game source {SourcePath} to {DestinationPath} with wit", sourcePath, destinationPath);
     }
 }

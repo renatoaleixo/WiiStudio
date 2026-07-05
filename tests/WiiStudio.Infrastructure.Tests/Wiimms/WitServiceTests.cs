@@ -156,6 +156,36 @@ public sealed class WitServiceTests
         exception.Which.StandardError.Should().Be("bad dump");
     }
 
+    [Fact]
+    public async Task CopyAsync_ShouldRunWitCopyWithStructuredArguments()
+    {
+        var processRunner = new FakeProcessRunner(new ProcessResult(0, string.Empty, string.Empty, TimeSpan.FromMilliseconds(10)));
+        var service = new WitService(processRunner, new FakeWiimmsToolLocator("/opt/wiimms/wit"), NullLogger<WitService>.Instance);
+
+        await service.CopyAsync("/games/mario.wbfs", "/exports/Mario Kart Wii [RMCP01].iso", FileFormat.Iso, CancellationToken.None);
+
+        processRunner.LastRequest.Should().NotBeNull();
+        processRunner.LastRequest!.ExecutablePath.Should().Be("/opt/wiimms/wit");
+        processRunner.LastRequest.Arguments.Should().Equal(
+            "copy",
+            "--iso",
+            "/games/mario.wbfs",
+            "/exports/Mario Kart Wii [RMCP01].iso");
+    }
+
+    [Fact]
+    public async Task CopyAsync_ShouldThrowWhenWitFails()
+    {
+        var processRunner = new FakeProcessRunner(new ProcessResult(6, string.Empty, "write failed", TimeSpan.FromMilliseconds(10)));
+        var service = new WitService(processRunner, new FakeWiimmsToolLocator("/opt/wiimms/wit"), NullLogger<WitService>.Instance);
+
+        var act = () => service.CopyAsync("/games/mario.wbfs", "/exports/mario.iso", FileFormat.Iso, CancellationToken.None);
+
+        var exception = await act.Should().ThrowAsync<WiimmsCommandException>();
+        exception.Which.ExitCode.Should().Be(6);
+        exception.Which.StandardError.Should().Be("write failed");
+    }
+
     private static UsbDrive CreateDrive()
     {
         return new UsbDrive("Wii HD", "/media/wii", UsbDriveFileSystem.Wbfs, 1000, 500);

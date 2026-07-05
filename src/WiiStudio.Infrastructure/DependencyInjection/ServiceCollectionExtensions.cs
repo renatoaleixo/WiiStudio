@@ -6,6 +6,7 @@ using WiiStudio.Application.Services;
 using WiiStudio.Application.UseCases;
 using WiiStudio.Application.Validators;
 using WiiStudio.Infrastructure.Diagnostics;
+using WiiStudio.Infrastructure.Export;
 using WiiStudio.Infrastructure.Favorites;
 using WiiStudio.Infrastructure.Processes;
 using WiiStudio.Infrastructure.Usb;
@@ -24,6 +25,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IFavoriteGameService, FavoriteGameService>();
         services.AddSingleton<IGameDetailsService, GameDetailsService>();
         services.AddSingleton<IGameSearchService, GameSearchService>();
+        services.AddSingleton<IExportGameService, ExportGameService>();
         services.AddSingleton<IVerifyGameService, VerifyGameService>();
         services.AddSingleton<ISearchPresetService, SearchPresetService>();
         services.AddTransient<DetectUsbDrivesUseCase>();
@@ -41,6 +43,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton(new WiimmsToolOptions());
         services.AddSingleton(new FavoriteGameStoreOptions());
         services.AddSingleton<IProcessRunner, ProcessRunner>();
+        services.AddSingleton<IExportFileSystem, PhysicalExportFileSystem>();
         services.AddSingleton<IFavoriteGameStore, JsonFavoriteGameStore>();
         services.AddSingleton<IWiimmsToolLocator, WiimmsToolLocator>();
         services.AddSingleton<IUsbProvider, LinuxUsbProvider>();

@@ -136,5 +136,12 @@ public sealed class VerifyGameServiceTests
 
             return Task.CompletedTask;
         }
+
+        public Task CopyAsync(string sourcePath, string destinationPath, FileFormat targetFormat, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            return Task.CompletedTask;
+        }
     }
 }

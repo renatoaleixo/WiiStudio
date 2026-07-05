@@ -119,6 +119,13 @@ public sealed class DiagnosticsServiceTests
 
             return Task.CompletedTask;
         }
+
+        public Task CopyAsync(string sourcePath, string destinationPath, WiiStudio.Domain.Enums.FileFormat targetFormat, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            return Task.CompletedTask;
+        }
     }
 
     private sealed class FakeWiimmsToolLocator : IWiimmsToolLocator
