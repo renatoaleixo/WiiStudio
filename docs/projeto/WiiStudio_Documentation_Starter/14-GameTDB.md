@@ -1,2 +1,0 @@
-# GameTDB
-Capas.

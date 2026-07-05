@@ -1,2 +1,0 @@
-# SQLite
-Configurações e histórico.

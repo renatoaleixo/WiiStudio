@@ -1,2 +1,0 @@
-# NKit
-Suporte legado.

@@ -1,2 +1,0 @@
-# Backlog
-MVP e versões.

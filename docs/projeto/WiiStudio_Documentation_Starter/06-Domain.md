@@ -1,2 +1,0 @@
-# Domínio
-Game, UsbDrive, Cover.

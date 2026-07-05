@@ -1,2 +1,0 @@
-# Wiimms
-Integração via Process.
