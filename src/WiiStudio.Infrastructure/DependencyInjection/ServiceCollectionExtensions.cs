@@ -27,6 +27,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IGameSearchService, GameSearchService>();
         services.AddSingleton<IExportGameService, ExportGameService>();
         services.AddSingleton<IVerifyGameService, VerifyGameService>();
+        services.AddSingleton<IRepairGameService, RepairGameService>();
         services.AddSingleton<ISearchPresetService, SearchPresetService>();
         services.AddTransient<DetectUsbDrivesUseCase>();
         services.AddTransient<ScanUsbDrivesUseCase>();
