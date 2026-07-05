@@ -20,6 +20,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IValidator<RemoveGameCommand>, RemoveGameCommandValidator>();
         services.AddTransient<IGameLibraryScanner, GameLibraryScanner>();
         services.AddSingleton<IGameLibraryService, GameLibraryService>();
+        services.AddSingleton<IGameSearchService, GameSearchService>();
         services.AddTransient<DetectUsbDrivesUseCase>();
         services.AddTransient<ScanUsbDrivesUseCase>();
         services.AddTransient<ScanGameLibraryUseCase>();
