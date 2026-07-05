@@ -2,6 +2,16 @@ namespace WiiStudio.Application.Validators;
 
 internal static class GameIdValidation
 {
+    public static string Normalize(string value)
+    {
+        if (!IsValid(value))
+        {
+            throw new ArgumentException("GameId must contain exactly 6 letters or digits.", nameof(value));
+        }
+
+        return value.Trim().ToUpperInvariant();
+    }
+
     public static bool IsValid(string? value)
     {
         if (string.IsNullOrWhiteSpace(value))

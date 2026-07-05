@@ -105,6 +105,13 @@ public sealed class CoverDownloadServiceTests
             return Task.FromResult<string?>(path);
         }
 
+        public Task<Stream?> OpenReadAsync(string gameId, CoverAssetKind kind, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            return Task.FromResult<Stream?>(null);
+        }
+
         public Task<string> SaveAsync(string gameId, CoverAssetKind kind, Stream content, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();

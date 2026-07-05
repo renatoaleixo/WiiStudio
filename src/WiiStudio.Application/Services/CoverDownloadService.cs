@@ -41,11 +41,11 @@ public sealed class CoverDownloadService : ICoverDownloadService
         var items = new List<CoverDownloadItem>();
         foreach (var gameId in request.GameIds)
         {
-            ValidateGameId(gameId);
+            var normalizedGameId = GameIdValidation.Normalize(gameId);
             foreach (var kind in GetAssetKinds(request.AssetKinds))
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                items.Add(await DownloadItemAsync(gameId.Trim().ToUpperInvariant(), kind, request.ForceRefresh, cancellationToken));
+                items.Add(await DownloadItemAsync(normalizedGameId, kind, request.ForceRefresh, cancellationToken));
             }
         }
 
@@ -57,11 +57,10 @@ public sealed class CoverDownloadService : ICoverDownloadService
         var items = new List<CoverDownloadItem>();
         foreach (var gameId in request.GameIds)
         {
-            ValidateGameId(gameId);
+            var normalizedGameId = GameIdValidation.Normalize(gameId);
             foreach (var kind in GetAssetKinds(request.AssetKinds))
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                var normalizedGameId = gameId.Trim().ToUpperInvariant();
                 var cachedPath = await _coverCache.GetAsync(normalizedGameId, kind, cancellationToken);
                 items.Add(cachedPath is null
                     ? new CoverDownloadItem(normalizedGameId, kind, CoverAssetSource.Provider, null, "Asset will be downloaded from provider.")
@@ -101,13 +100,5 @@ public sealed class CoverDownloadService : ICoverDownloadService
     private static IReadOnlyList<CoverAssetKind> GetAssetKinds(IReadOnlyList<CoverAssetKind>? assetKinds)
     {
         return assetKinds is { Count: > 0 } ? assetKinds : DefaultAssetKinds;
-    }
-
-    private static void ValidateGameId(string gameId)
-    {
-        if (!GameIdValidation.IsValid(gameId))
-        {
-            throw new ArgumentException("GameId must contain exactly 6 letters or digits.", nameof(gameId));
-        }
     }
 }

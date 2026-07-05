@@ -21,6 +21,21 @@ public sealed class FileSystemCoverCache : ICoverCache
         return Task.FromResult<string?>(File.Exists(path) ? path : null);
     }
 
+    public Task<Stream?> OpenReadAsync(string gameId, CoverAssetKind kind, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var path = GetAssetPath(gameId, kind);
+        if (!File.Exists(path))
+        {
+            return Task.FromResult<Stream?>(null);
+        }
+
+        Stream stream = File.OpenRead(path);
+
+        return Task.FromResult<Stream?>(stream);
+    }
+
     public async Task<string> SaveAsync(string gameId, CoverAssetKind kind, Stream content, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(content);

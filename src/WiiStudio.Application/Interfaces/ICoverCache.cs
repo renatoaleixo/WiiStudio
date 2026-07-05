@@ -6,5 +6,7 @@ public interface ICoverCache
 {
     Task<string?> GetAsync(string gameId, CoverAssetKind kind, CancellationToken cancellationToken);
 
+    Task<Stream?> OpenReadAsync(string gameId, CoverAssetKind kind, CancellationToken cancellationToken);
+
     Task<string> SaveAsync(string gameId, CoverAssetKind kind, Stream content, CancellationToken cancellationToken);
 }
