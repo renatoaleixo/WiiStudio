@@ -1,21 +1,32 @@
+using WiiStudio.Application.DTOs;
 using WiiStudio.Application.Interfaces;
-using WiiStudio.Domain.Entities;
+using WiiStudio.Application.Queries;
 
 namespace WiiStudio.Application.UseCases;
 
 public sealed class ListGamesUseCase
 {
-    private readonly IWitService _witService;
+    private readonly IGameSearchService _gameSearchService;
 
-    public ListGamesUseCase(IWitService witService)
+    public ListGamesUseCase(IGameSearchService gameSearchService)
     {
-        _witService = witService;
+        _gameSearchService = gameSearchService;
     }
 
-    public Task<IReadOnlyList<Game>> ExecuteAsync(UsbDrive drive, CancellationToken cancellationToken)
+    public async Task<SearchResult> ExecuteAsync(GetGamesQuery query, CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(drive);
+        ArgumentNullException.ThrowIfNull(query);
 
-        return _witService.ListGamesAsync(drive, cancellationToken);
+        var request = new SearchRequest(
+            query.UsbDriveId,
+            query.SearchText,
+            query.Regions,
+            query.Formats,
+            query.MinimumSizeInBytes,
+            query.MaximumSizeInBytes,
+            query.SortField,
+            query.SortDescending);
+
+        return await _gameSearchService.SearchAsync(request, cancellationToken);
     }
 }
