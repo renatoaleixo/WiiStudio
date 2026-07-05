@@ -31,6 +31,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IUsbDetectionService, UsbDetectionService>();
         services.AddSingleton<IUsbDriveService, UsbDriveService>();
         services.AddSingleton<IWitService, WitService>();
+        services.AddSingleton<IWwtService, WwtService>();
         services.AddSingleton<IDiagnosticsService, DiagnosticsService>();
 
         return services;
