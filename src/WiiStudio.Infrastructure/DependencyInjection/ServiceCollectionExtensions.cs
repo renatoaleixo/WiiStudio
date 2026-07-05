@@ -2,6 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using WiiStudio.Application.Interfaces;
 using WiiStudio.Application.Services;
 using WiiStudio.Application.UseCases;
+using WiiStudio.Infrastructure.Diagnostics;
 using WiiStudio.Infrastructure.Processes;
 using WiiStudio.Infrastructure.Usb;
 using WiiStudio.Infrastructure.Wiimms;
@@ -30,6 +31,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IUsbDetectionService, UsbDetectionService>();
         services.AddSingleton<IUsbDriveService, UsbDriveService>();
         services.AddSingleton<IWitService, WitService>();
+        services.AddSingleton<IDiagnosticsService, DiagnosticsService>();
 
         return services;
     }
