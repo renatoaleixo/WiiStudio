@@ -1,0 +1,2 @@
+# USB
+Detecção automática.

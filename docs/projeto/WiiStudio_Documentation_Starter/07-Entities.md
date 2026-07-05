@@ -1,0 +1,4 @@
+# Entidades
+Game
+Settings
+History

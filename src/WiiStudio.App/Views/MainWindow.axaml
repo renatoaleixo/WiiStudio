@@ -1,0 +1,65 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:domain="clr-namespace:WiiStudio.Domain.Entities;assembly=WiiStudio.Domain"
+        x:Class="WiiStudio.App.Views.MainWindow"
+        Title="WiiStudio"
+        Width="1100"
+        Height="720"
+        MinWidth="900"
+        MinHeight="560">
+  <Design.DataContext>
+    <x:Null />
+  </Design.DataContext>
+
+  <Grid RowDefinitions="Auto,*" Background="#111318">
+    <Border Grid.Row="0" Background="#1B1F27" Padding="24,18">
+      <Grid ColumnDefinitions="*,Auto" VerticalAlignment="Center">
+        <StackPanel Spacing="4">
+          <TextBlock Text="WiiStudio" FontSize="24" FontWeight="SemiBold" Foreground="#F4F7FB" />
+          <TextBlock Text="{Binding StatusMessage}" Foreground="#AAB2C0" />
+        </StackPanel>
+        <Button Grid.Column="1"
+                Command="{Binding DetectDrivesCommand}"
+                IsEnabled="{Binding !IsBusy}"
+                Padding="18,10"
+                HorizontalAlignment="Right">
+          <TextBlock Text="Detectar HDs" />
+        </Button>
+      </Grid>
+    </Border>
+
+    <Grid Grid.Row="1" ColumnDefinitions="220,*">
+      <Border Background="#171A21" Padding="16">
+        <StackPanel Spacing="8">
+          <TextBlock Text="Dashboard" Foreground="#F4F7FB" FontWeight="SemiBold" />
+          <TextBlock Text="Biblioteca" Foreground="#AAB2C0" />
+          <TextBlock Text="HD WBFS" Foreground="#AAB2C0" />
+          <TextBlock Text="Conversão" Foreground="#AAB2C0" />
+          <TextBlock Text="Capas" Foreground="#AAB2C0" />
+          <TextBlock Text="Configurações" Foreground="#AAB2C0" />
+          <TextBlock Text="Logs" Foreground="#AAB2C0" />
+        </StackPanel>
+      </Border>
+
+      <Grid Grid.Column="1" RowDefinitions="Auto,*" Margin="24">
+        <TextBlock Text="Dispositivos detectados" FontSize="20" FontWeight="SemiBold" Foreground="#F4F7FB" />
+        <ListBox Grid.Row="1" ItemsSource="{Binding Drives}" Margin="0,16,0,0">
+          <ListBox.ItemTemplate>
+            <DataTemplate DataType="domain:UsbDrive">
+              <Grid ColumnDefinitions="*,Auto" Margin="8">
+                <StackPanel>
+                  <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
+                  <TextBlock Text="{Binding MountPath}" Opacity="0.72" />
+                </StackPanel>
+                <TextBlock Grid.Column="1"
+                           Text="{Binding FileSystem}"
+                           VerticalAlignment="Center"
+                           Margin="24,0,0,0" />
+              </Grid>
+            </DataTemplate>
+          </ListBox.ItemTemplate>
+        </ListBox>
+      </Grid>
+    </Grid>
+  </Grid>
+</Window>

@@ -1,0 +1,2 @@
+# Padrões
+Async, nullable, SOLID.

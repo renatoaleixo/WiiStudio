@@ -1,0 +1,5 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\WiiStudio.Domain\WiiStudio.Domain.csproj" />
+  </ItemGroup>
+</Project>
