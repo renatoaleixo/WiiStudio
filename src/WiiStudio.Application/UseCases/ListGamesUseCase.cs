@@ -22,6 +22,7 @@ public sealed class ListGamesUseCase
             query.SearchText,
             query.Regions,
             query.Formats,
+            FavoritesOnly: false,
             query.MinimumSizeInBytes,
             query.MaximumSizeInBytes,
             query.SortField,

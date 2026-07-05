@@ -10,4 +10,5 @@ public sealed record GameDto(
     FileFormat Format,
     string? FilePath,
     long SizeInBytes,
-    DateTimeOffset AddedAt);
+    DateTimeOffset AddedAt,
+    bool IsFavorite = false);
