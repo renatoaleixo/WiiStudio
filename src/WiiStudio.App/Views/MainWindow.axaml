@@ -1,65 +1,172 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:domain="clr-namespace:WiiStudio.Domain.Entities;assembly=WiiStudio.Domain"
+        xmlns:dto="clr-namespace:WiiStudio.Application.DTOs;assembly=WiiStudio.Application"
         x:Class="WiiStudio.App.Views.MainWindow"
         Title="WiiStudio"
-        Width="1100"
-        Height="720"
-        MinWidth="900"
-        MinHeight="560">
+        Width="1280"
+        Height="780"
+        MinWidth="980"
+        MinHeight="640">
   <Design.DataContext>
     <x:Null />
   </Design.DataContext>
 
-  <Grid RowDefinitions="Auto,*" Background="#111318">
-    <Border Grid.Row="0" Background="#1B1F27" Padding="24,18">
-      <Grid ColumnDefinitions="*,Auto" VerticalAlignment="Center">
-        <StackPanel Spacing="4">
-          <TextBlock Text="WiiStudio" FontSize="24" FontWeight="SemiBold" Foreground="#F4F7FB" />
-          <TextBlock Text="{Binding StatusMessage}" Foreground="#AAB2C0" />
+  <Grid RowDefinitions="Auto,*,Auto" Background="#101319">
+    <Border Grid.Row="0" Background="#1A1F28" Padding="18,14">
+      <Grid ColumnDefinitions="Auto,*,320,Auto,Auto" ColumnSpacing="14" VerticalAlignment="Center">
+        <TextBlock Text="WiiStudio"
+                   FontSize="22"
+                   FontWeight="SemiBold"
+                   Foreground="#F6F8FC"
+                   VerticalAlignment="Center" />
+
+        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+          <Button Command="{Binding DetectDrivesCommand}"
+                  IsEnabled="{Binding !IsBusy}"
+                  Padding="14,8">
+            <TextBlock Text="Detectar HDs" />
+          </Button>
+          <Button Command="{Binding ToggleSidePanelCommand}" Padding="14,8">
+            <TextBlock Text="Painel" />
+          </Button>
         </StackPanel>
-        <Button Grid.Column="1"
-                Command="{Binding DetectDrivesCommand}"
-                IsEnabled="{Binding !IsBusy}"
-                Padding="18,10"
-                HorizontalAlignment="Right">
-          <TextBlock Text="Detectar HDs" />
-        </Button>
+
+        <TextBox Grid.Column="2"
+                 Watermark="Pesquisar jogos, tarefas e logs"
+                 Height="36"
+                 VerticalAlignment="Center" />
+
+        <TextBlock Grid.Column="3"
+                   Text="Default"
+                   Foreground="#C7CEDA"
+                   VerticalAlignment="Center" />
+
+        <TextBlock Grid.Column="4"
+                   Text="{Binding State}"
+                   Foreground="#8EA0B8"
+                   VerticalAlignment="Center" />
       </Grid>
     </Border>
 
-    <Grid Grid.Row="1" ColumnDefinitions="220,*">
-      <Border Background="#171A21" Padding="16">
-        <StackPanel Spacing="8">
-          <TextBlock Text="Dashboard" Foreground="#F4F7FB" FontWeight="SemiBold" />
-          <TextBlock Text="Biblioteca" Foreground="#AAB2C0" />
-          <TextBlock Text="HD WBFS" Foreground="#AAB2C0" />
-          <TextBlock Text="Conversão" Foreground="#AAB2C0" />
-          <TextBlock Text="Capas" Foreground="#AAB2C0" />
-          <TextBlock Text="Configurações" Foreground="#AAB2C0" />
-          <TextBlock Text="Logs" Foreground="#AAB2C0" />
-        </StackPanel>
+    <Grid Grid.Row="1" ColumnDefinitions="232,5,*,5,300">
+      <Border Grid.Column="0" Background="#151922" Padding="12">
+        <DockPanel LastChildFill="True">
+          <TextBlock DockPanel.Dock="Top"
+                     Text="Módulos"
+                     Foreground="#8EA0B8"
+                     FontWeight="SemiBold"
+                     Margin="8,4,8,12" />
+          <ListBox ItemsSource="{Binding Modules}"
+                   SelectedItem="{Binding SelectedModule}"
+                   Background="Transparent"
+                   BorderThickness="0">
+            <ListBox.ItemTemplate>
+              <DataTemplate DataType="dto:ShellModule">
+                <Grid RowDefinitions="Auto,Auto" Margin="6" MinHeight="48">
+                  <TextBlock Text="{Binding Title}" Foreground="#F6F8FC" FontWeight="SemiBold" />
+                  <TextBlock Grid.Row="1"
+                             Text="{Binding Description}"
+                             Foreground="#8EA0B8"
+                             FontSize="11"
+                             TextWrapping="NoWrap"
+                             TextTrimming="CharacterEllipsis" />
+                </Grid>
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
+        </DockPanel>
       </Border>
 
-      <Grid Grid.Column="1" RowDefinitions="Auto,*" Margin="24">
-        <TextBlock Text="Dispositivos detectados" FontSize="20" FontWeight="SemiBold" Foreground="#F4F7FB" />
-        <ListBox Grid.Row="1" ItemsSource="{Binding Drives}" Margin="0,16,0,0">
-          <ListBox.ItemTemplate>
-            <DataTemplate DataType="domain:UsbDrive">
-              <Grid ColumnDefinitions="*,Auto" Margin="8">
-                <StackPanel>
-                  <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
-                  <TextBlock Text="{Binding MountPath}" Opacity="0.72" />
-                </StackPanel>
-                <TextBlock Grid.Column="1"
-                           Text="{Binding FileSystem}"
-                           VerticalAlignment="Center"
-                           Margin="24,0,0,0" />
-              </Grid>
-            </DataTemplate>
-          </ListBox.ItemTemplate>
-        </ListBox>
+      <GridSplitter Grid.Column="1" Background="#242B36" ResizeDirection="Columns" />
+
+      <Grid Grid.Column="2" RowDefinitions="Auto,*" Margin="22">
+        <StackPanel Spacing="4">
+          <TextBlock Text="{Binding SelectedModuleTitle}"
+                     FontSize="24"
+                     FontWeight="SemiBold"
+                     Foreground="#F6F8FC" />
+          <TextBlock Text="{Binding SelectedModuleDescription}"
+                     Foreground="#9BA8BA"
+                     TextWrapping="Wrap" />
+        </StackPanel>
+
+        <Grid Grid.Row="1" RowDefinitions="Auto,*" Margin="0,22,0,0">
+          <Border Background="#171C25" Padding="16">
+            <Grid ColumnDefinitions="*,Auto">
+              <StackPanel>
+                <TextBlock Text="Dispositivos detectados"
+                           FontSize="18"
+                           FontWeight="SemiBold"
+                           Foreground="#F6F8FC" />
+                <TextBlock Text="{Binding StatusMessage}" Foreground="#9BA8BA" />
+              </StackPanel>
+              <TextBlock Grid.Column="1"
+                         Text="{Binding DeviceSummary}"
+                         Foreground="#C7CEDA"
+                         VerticalAlignment="Center" />
+            </Grid>
+          </Border>
+
+          <ListBox Grid.Row="1"
+                   ItemsSource="{Binding Drives}"
+                   Margin="0,14,0,0"
+                   Background="#141820"
+                   BorderThickness="0">
+            <ListBox.ItemTemplate>
+              <DataTemplate DataType="domain:UsbDrive">
+                <Grid ColumnDefinitions="*,Auto,Auto" Margin="10" MinHeight="48">
+                  <StackPanel>
+                    <TextBlock Text="{Binding Name}" Foreground="#F6F8FC" FontWeight="SemiBold" />
+                    <TextBlock Text="{Binding MountPath}" Foreground="#8EA0B8" />
+                  </StackPanel>
+                  <TextBlock Grid.Column="1"
+                             Text="{Binding FileSystem}"
+                             Foreground="#C7CEDA"
+                             VerticalAlignment="Center"
+                             Margin="24,0,0,0" />
+                  <TextBlock Grid.Column="2"
+                             Text="{Binding AvailableSizeInBytes}"
+                             Foreground="#8EA0B8"
+                             VerticalAlignment="Center"
+                             Margin="24,0,0,0" />
+                </Grid>
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
+        </Grid>
       </Grid>
+
+      <GridSplitter Grid.Column="3" Background="#242B36" ResizeDirection="Columns" IsVisible="{Binding IsSidePanelVisible}" />
+
+      <Border Grid.Column="4"
+              Background="#151922"
+              Padding="16"
+              IsVisible="{Binding IsSidePanelVisible}">
+        <StackPanel Spacing="18">
+          <StackPanel Spacing="4">
+            <TextBlock Text="Tarefas" FontWeight="SemiBold" Foreground="#F6F8FC" />
+            <TextBlock Text="{Binding TaskSummary}" Foreground="#9BA8BA" />
+          </StackPanel>
+          <StackPanel Spacing="4">
+            <TextBlock Text="Notificações" FontWeight="SemiBold" Foreground="#F6F8FC" />
+            <TextBlock Text="{Binding NotificationSummary}" Foreground="#9BA8BA" />
+          </StackPanel>
+          <StackPanel Spacing="4">
+            <TextBlock Text="Dispositivo" FontWeight="SemiBold" Foreground="#F6F8FC" />
+            <TextBlock Text="{Binding DeviceSummary}" Foreground="#9BA8BA" />
+          </StackPanel>
+        </StackPanel>
+      </Border>
     </Grid>
+
+    <Border Grid.Row="2" Background="#1A1F28" Padding="14,8">
+      <Grid ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="20">
+        <TextBlock Text="{Binding StatusMessage}" Foreground="#C7CEDA" />
+        <TextBlock Grid.Column="1" Text="{Binding TaskSummary}" Foreground="#8EA0B8" />
+        <TextBlock Grid.Column="2" Text="{Binding NotificationSummary}" Foreground="#8EA0B8" />
+        <TextBlock Grid.Column="3" Text="{Binding DeviceSummary}" Foreground="#8EA0B8" />
+      </Grid>
+    </Border>
   </Grid>
 </Window>
