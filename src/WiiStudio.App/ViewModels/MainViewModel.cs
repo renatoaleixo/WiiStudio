@@ -11,6 +11,7 @@ namespace WiiStudio.App.ViewModels;
 public sealed partial class MainViewModel : ObservableObject
 {
     private readonly DetectUsbDrivesUseCase _detectUsbDrivesUseCase;
+    private readonly IImportWizardService _importWizardService;
     private readonly ILibraryViewService _libraryViewService;
     private readonly IMainWindowService _mainWindowService;
 
@@ -47,12 +48,32 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private int _selectedGameCount;
 
+    [ObservableProperty]
+    private string? _importSourcePathsText;
+
+    [ObservableProperty]
+    private UsbDrive? _selectedImportDrive;
+
+    [ObservableProperty]
+    private ImportWizardState _importWizardState = ImportWizardState.SelectingFiles;
+
+    [ObservableProperty]
+    private ImportWizardStep _selectedImportStep = ImportWizardStep.SelectingFiles;
+
+    [ObservableProperty]
+    private string _importSummary = "Nenhum arquivo analisado";
+
+    [ObservableProperty]
+    private bool _canExecuteImport;
+
     public MainViewModel(
         DetectUsbDrivesUseCase detectUsbDrivesUseCase,
+        IImportWizardService importWizardService,
         ILibraryViewService libraryViewService,
         IMainWindowService mainWindowService)
     {
         _detectUsbDrivesUseCase = detectUsbDrivesUseCase;
+        _importWizardService = importWizardService;
         _libraryViewService = libraryViewService;
         _mainWindowService = mainWindowService;
 
@@ -67,6 +88,19 @@ public sealed partial class MainViewModel : ObservableObject
     public ObservableCollection<UsbDrive> Drives { get; } = new();
 
     public ObservableCollection<LibraryGameItem> Games { get; } = new();
+
+    public ObservableCollection<ImportPreviewItemViewModel> ImportPreviewItems { get; } = new();
+
+    public IReadOnlyList<ImportWizardStep> ImportSteps { get; } =
+    [
+        ImportWizardStep.SelectingFiles,
+        ImportWizardStep.Validating,
+        ImportWizardStep.SelectingTarget,
+        ImportWizardStep.Options,
+        ImportWizardStep.Reviewing,
+        ImportWizardStep.Importing,
+        ImportWizardStep.Completed
+    ];
 
     public IReadOnlyList<LibraryViewMode> LibraryViewModes { get; } =
     [
@@ -159,6 +193,8 @@ public sealed partial class MainViewModel : ObservableObject
                 Drives.Add(drive);
             }
 
+            SelectedImportDrive ??= Drives.FirstOrDefault();
+
             StatusMessage = drives.Count == 0
                 ? "Nenhum dispositivo encontrado."
                 : $"{drives.Count} dispositivo(s) encontrado(s).";
@@ -168,6 +204,81 @@ public sealed partial class MainViewModel : ObservableObject
         {
             IsBusy = false;
         }
+    }
+
+    [RelayCommand]
+    private async Task AnalyzeImportAsync(CancellationToken cancellationToken)
+    {
+        ImportWizardState = ImportWizardState.Validating;
+        SelectedImportStep = ImportWizardStep.Validating;
+        StatusMessage = "Validando arquivos para importação...";
+
+        var sourcePaths = ParseImportSourcePaths();
+        var preview = await _importWizardService.AnalyzeAsync(sourcePaths, cancellationToken);
+
+        ImportPreviewItems.Clear();
+        foreach (var item in preview.Items)
+        {
+            ImportPreviewItems.Add(new ImportPreviewItemViewModel(item));
+        }
+
+        ImportWizardState = preview.State;
+        SelectedImportStep = preview.CanImport ? ImportWizardStep.SelectingTarget : ImportWizardStep.Validating;
+        CanExecuteImport = preview.CanImport && SelectedImportDrive is not null;
+        ImportSummary = preview.Items.Count == 0
+            ? "Informe ao menos um arquivo."
+            : $"{preview.Items.Count} arquivo(s) analisado(s).";
+        StatusMessage = preview.CanImport ? "Arquivos prontos para importação." : "Revise os arquivos informados.";
+    }
+
+    [RelayCommand]
+    private async Task ExecuteImportAsync(CancellationToken cancellationToken)
+    {
+        if (!CanExecuteImport || SelectedImportDrive is null)
+        {
+            StatusMessage = "Selecione arquivos válidos e um destino.";
+            return;
+        }
+
+        IsBusy = true;
+        ImportWizardState = ImportWizardState.Importing;
+        SelectedImportStep = ImportWizardStep.Importing;
+        StatusMessage = "Importando jogos...";
+
+        try
+        {
+            var result = await _importWizardService.ExecuteAsync(
+                new ImportWizardRequest(ParseImportSourcePaths(), SelectedImportDrive.Id),
+                cancellationToken);
+
+            ImportWizardState = result.State;
+            SelectedImportStep = ImportWizardStep.Completed;
+            ImportSummary = result.Message;
+            StatusMessage = $"{result.ImportedCount} jogo(s) importado(s).";
+            await RefreshLibraryAsync(cancellationToken);
+        }
+        catch (Exception exception)
+        {
+            ImportWizardState = ImportWizardState.Failed;
+            SelectedImportStep = ImportWizardStep.Reviewing;
+            ImportSummary = exception.Message;
+            StatusMessage = "Falha ao importar jogos.";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    [RelayCommand]
+    private void CancelImport()
+    {
+        ImportWizardState = ImportWizardState.Cancelled;
+        SelectedImportStep = ImportWizardStep.SelectingFiles;
+        ImportPreviewItems.Clear();
+        CanExecuteImport = false;
+        ImportSummary = "Importação cancelada";
+        StatusMessage = "Importação cancelada.";
     }
 
     [RelayCommand]
@@ -191,6 +302,13 @@ public sealed partial class MainViewModel : ObservableObject
     partial void OnSelectedGameChanged(LibraryGameItem? value)
     {
         _ = SelectVisibleGamesAsync(value);
+    }
+
+    partial void OnSelectedImportDriveChanged(UsbDrive? value)
+    {
+        CanExecuteImport = value is not null
+            && ImportPreviewItems.Count > 0
+            && ImportPreviewItems.All(item => item.Status != ImportWizardFileStatus.Error.ToString());
     }
 
     partial void OnSelectedModuleChanged(ShellModule? value)
@@ -243,5 +361,19 @@ public sealed partial class MainViewModel : ObservableObject
 
         OnPropertyChanged(nameof(LibrarySummary));
         OnPropertyChanged(nameof(SelectionSummary));
+    }
+
+    private IReadOnlyList<string> ParseImportSourcePaths()
+    {
+        if (string.IsNullOrWhiteSpace(ImportSourcePathsText))
+        {
+            return [];
+        }
+
+        return ImportSourcePathsText
+            .Split(['\r', '\n', ';'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Where(path => !string.IsNullOrWhiteSpace(path))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
     }
 }

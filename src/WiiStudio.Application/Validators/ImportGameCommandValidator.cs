@@ -5,7 +5,7 @@ namespace WiiStudio.Application.Validators;
 
 public sealed class ImportGameCommandValidator : AbstractValidator<ImportGameCommand>
 {
-    private static readonly string[] SupportedExtensions = [".iso", ".wbfs"];
+    private static readonly string[] SupportedExtensions = [".iso", ".wbfs", ".rvz"];
 
     public ImportGameCommandValidator()
     {
@@ -15,7 +15,7 @@ public sealed class ImportGameCommandValidator : AbstractValidator<ImportGameCom
         RuleForEach(command => command.SourcePaths)
             .NotEmpty()
             .Must(HaveSupportedExtension)
-            .WithMessage("Source path must use a supported extension: .iso or .wbfs.");
+            .WithMessage("Source path must use a supported extension: .iso, .wbfs, .rvz or .nkit.iso.");
 
         RuleFor(command => command.DestinationDriveId)
             .NotEmpty();
@@ -28,8 +28,12 @@ public sealed class ImportGameCommandValidator : AbstractValidator<ImportGameCom
             return false;
         }
 
-        var extension = Path.GetExtension(sourcePath);
+        if (sourcePath.EndsWith(".nkit.iso", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
 
+        var extension = Path.GetExtension(sourcePath);
         return SupportedExtensions.Contains(extension, StringComparer.OrdinalIgnoreCase);
     }
 }

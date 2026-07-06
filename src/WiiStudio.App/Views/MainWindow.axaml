@@ -192,7 +192,7 @@
               Background="#151922"
               Padding="16"
               IsVisible="{Binding IsSidePanelVisible}">
-        <Grid RowDefinitions="Auto,Auto,Auto,*" RowSpacing="18">
+        <Grid RowDefinitions="Auto,Auto,Auto,Auto,*" RowSpacing="18">
           <StackPanel Spacing="4">
             <TextBlock Text="Tarefas" FontWeight="SemiBold" Foreground="#F6F8FC" />
             <TextBlock Text="{Binding TaskSummary}" Foreground="#9BA8BA" />
@@ -205,7 +205,87 @@
             <TextBlock Text="Dispositivo" FontWeight="SemiBold" Foreground="#F6F8FC" />
             <TextBlock Text="{Binding DeviceSummary}" Foreground="#9BA8BA" />
           </StackPanel>
-          <ListBox Grid.Row="3"
+
+          <Border Grid.Row="3" Background="#141820" Padding="12">
+            <StackPanel Spacing="10">
+              <Grid ColumnDefinitions="*,Auto">
+                <TextBlock Text="Importação"
+                           FontWeight="SemiBold"
+                           Foreground="#F6F8FC"
+                           VerticalAlignment="Center" />
+                <TextBlock Grid.Column="1"
+                           Text="{Binding ImportWizardState}"
+                           Foreground="#8EA0B8"
+                           FontSize="11"
+                           VerticalAlignment="Center" />
+              </Grid>
+
+              <ComboBox ItemsSource="{Binding ImportSteps}"
+                        SelectedItem="{Binding SelectedImportStep}"
+                        Height="32" />
+
+              <TextBox Text="{Binding ImportSourcePathsText, Mode=TwoWay}"
+                       Watermark="/jogos/mario.iso"
+                       AcceptsReturn="True"
+                       TextWrapping="Wrap"
+                       MinHeight="70" />
+
+              <ComboBox ItemsSource="{Binding Drives}"
+                        SelectedItem="{Binding SelectedImportDrive}"
+                        Height="32">
+                <ComboBox.ItemTemplate>
+                  <DataTemplate DataType="domain:UsbDrive">
+                    <TextBlock Text="{Binding Name}" />
+                  </DataTemplate>
+                </ComboBox.ItemTemplate>
+              </ComboBox>
+
+              <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                <Button Command="{Binding AnalyzeImportCommand}"
+                        IsEnabled="{Binding !IsBusy}"
+                        Padding="10,7">
+                  <TextBlock Text="Analisar" />
+                </Button>
+                <Button Grid.Column="1"
+                        Command="{Binding ExecuteImportCommand}"
+                        IsEnabled="{Binding CanExecuteImport}"
+                        Padding="10,7">
+                  <TextBlock Text="Importar" />
+                </Button>
+              </Grid>
+
+              <Button Command="{Binding CancelImportCommand}"
+                      Padding="10,7">
+                <TextBlock Text="Cancelar" />
+              </Button>
+
+              <TextBlock Text="{Binding ImportSummary}"
+                         Foreground="#9BA8BA"
+                         TextWrapping="Wrap" />
+
+              <ListBox ItemsSource="{Binding ImportPreviewItems}"
+                       MaxHeight="120"
+                       Background="Transparent"
+                       BorderThickness="0">
+                <ListBox.ItemTemplate>
+                  <DataTemplate DataType="vm:ImportPreviewItemViewModel">
+                    <Grid RowDefinitions="Auto,Auto" Margin="0,4">
+                      <TextBlock Text="{Binding SourcePath}"
+                                 Foreground="#F6F8FC"
+                                 TextTrimming="CharacterEllipsis" />
+                      <TextBlock Grid.Row="1"
+                                 Text="{Binding Message}"
+                                 Foreground="#8EA0B8"
+                                 FontSize="11"
+                                 TextTrimming="CharacterEllipsis" />
+                    </Grid>
+                  </DataTemplate>
+                </ListBox.ItemTemplate>
+              </ListBox>
+            </StackPanel>
+          </Border>
+
+          <ListBox Grid.Row="4"
                    ItemsSource="{Binding Drives}"
                    Background="#141820"
                    BorderThickness="0">
