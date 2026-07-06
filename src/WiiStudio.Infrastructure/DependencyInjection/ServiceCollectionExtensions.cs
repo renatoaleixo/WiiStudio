@@ -36,6 +36,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IFavoriteGameService, FavoriteGameService>();
         services.AddSingleton<IGameDetailsService, GameDetailsService>();
         services.AddSingleton<IGameSearchService, GameSearchService>();
+        services.AddSingleton<ILibraryViewService, LibraryViewService>();
         services.AddSingleton<IExportGameService, ExportGameService>();
         services.AddSingleton<IVerifyGameService, VerifyGameService>();
         services.AddSingleton<IRepairGameService, RepairGameService>();

@@ -11,6 +11,7 @@ namespace WiiStudio.App.ViewModels;
 public sealed partial class MainViewModel : ObservableObject
 {
     private readonly DetectUsbDrivesUseCase _detectUsbDrivesUseCase;
+    private readonly ILibraryViewService _libraryViewService;
     private readonly IMainWindowService _mainWindowService;
 
     [ObservableProperty]
@@ -28,9 +29,31 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private MainWindowState _state = MainWindowState.Initializing;
 
-    public MainViewModel(DetectUsbDrivesUseCase detectUsbDrivesUseCase, IMainWindowService mainWindowService)
+    [ObservableProperty]
+    private string? _librarySearchText;
+
+    [ObservableProperty]
+    private LibraryViewMode _selectedLibraryViewMode = LibraryViewMode.Detailed;
+
+    [ObservableProperty]
+    private LibraryViewState _libraryState = LibraryViewState.Loading;
+
+    [ObservableProperty]
+    private LibraryGameItem? _selectedGame;
+
+    [ObservableProperty]
+    private int _libraryTotalCount;
+
+    [ObservableProperty]
+    private int _selectedGameCount;
+
+    public MainViewModel(
+        DetectUsbDrivesUseCase detectUsbDrivesUseCase,
+        ILibraryViewService libraryViewService,
+        IMainWindowService mainWindowService)
     {
         _detectUsbDrivesUseCase = detectUsbDrivesUseCase;
+        _libraryViewService = libraryViewService;
         _mainWindowService = mainWindowService;
 
         foreach (var module in _mainWindowService.Modules)
@@ -43,9 +66,23 @@ public sealed partial class MainViewModel : ObservableObject
 
     public ObservableCollection<UsbDrive> Drives { get; } = new();
 
+    public ObservableCollection<LibraryGameItem> Games { get; } = new();
+
+    public IReadOnlyList<LibraryViewMode> LibraryViewModes { get; } =
+    [
+        LibraryViewMode.Grid,
+        LibraryViewMode.List,
+        LibraryViewMode.Compact,
+        LibraryViewMode.Detailed
+    ];
+
     public string SelectedModuleTitle => SelectedModule?.Title ?? "Dashboard";
 
     public string SelectedModuleDescription => SelectedModule?.Description ?? "Resumo do ambiente e atividades recentes.";
+
+    public string LibrarySummary => LibraryTotalCount == 1 ? "1 jogo" : $"{LibraryTotalCount} jogos";
+
+    public string SelectionSummary => SelectedGameCount == 1 ? "1 selecionado" : $"{SelectedGameCount} selecionados";
 
     public string TaskSummary => "0 tarefas ativas";
 
@@ -64,6 +101,46 @@ public sealed partial class MainViewModel : ObservableObject
             ?? Modules.FirstOrDefault();
         State = snapshot.State;
         StatusMessage = "Pronto";
+
+        await RefreshLibraryAsync(cancellationToken);
+    }
+
+    [RelayCommand]
+    private async Task RefreshLibraryAsync(CancellationToken cancellationToken)
+    {
+        IsBusy = true;
+        LibraryState = string.IsNullOrWhiteSpace(LibrarySearchText)
+            ? LibraryViewState.Refreshing
+            : LibraryViewState.Searching;
+        StatusMessage = "Carregando biblioteca...";
+
+        try
+        {
+            var snapshot = await _libraryViewService.RefreshAsync(
+                new SearchRequest(SearchText: LibrarySearchText),
+                cancellationToken);
+
+            ApplyLibrarySnapshot(snapshot);
+            StatusMessage = snapshot.TotalCount == 0
+                ? "Biblioteca vazia."
+                : $"{snapshot.TotalCount} jogo(s) carregado(s).";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    [RelayCommand]
+    private Task ClearLibrarySearchAsync(CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(LibrarySearchText))
+        {
+            return RefreshLibraryAsync(cancellationToken);
+        }
+
+        LibrarySearchText = null;
+        return Task.CompletedTask;
     }
 
     [RelayCommand]
@@ -101,6 +178,21 @@ public sealed partial class MainViewModel : ObservableObject
         await _mainWindowService.SaveLayoutAsync(cancellationToken);
     }
 
+    partial void OnLibrarySearchTextChanged(string? value)
+    {
+        _ = RefreshLibraryAsync(CancellationToken.None);
+    }
+
+    partial void OnSelectedLibraryViewModeChanged(LibraryViewMode value)
+    {
+        _ = ChangeLibraryViewModeAsync(value);
+    }
+
+    partial void OnSelectedGameChanged(LibraryGameItem? value)
+    {
+        _ = SelectVisibleGamesAsync(value);
+    }
+
     partial void OnSelectedModuleChanged(ShellModule? value)
     {
         OnPropertyChanged(nameof(SelectedModuleTitle));
@@ -118,5 +210,38 @@ public sealed partial class MainViewModel : ObservableObject
     {
         await _mainWindowService.SelectModuleAsync(moduleId, CancellationToken.None);
         await _mainWindowService.SaveLayoutAsync(CancellationToken.None);
+    }
+
+    private async Task ChangeLibraryViewModeAsync(LibraryViewMode mode)
+    {
+        var snapshot = await _libraryViewService.ChangeViewModeAsync(mode, CancellationToken.None);
+        ApplyLibrarySnapshot(snapshot, refreshGames: false);
+    }
+
+    private async Task SelectVisibleGamesAsync(LibraryGameItem? game)
+    {
+        IReadOnlyList<string> selectedIds = game is null ? [] : [game.Id];
+        var snapshot = await _libraryViewService.SelectGamesAsync(selectedIds, CancellationToken.None);
+        ApplyLibrarySnapshot(snapshot, refreshGames: false);
+    }
+
+    private void ApplyLibrarySnapshot(LibraryViewSnapshot snapshot, bool refreshGames = true)
+    {
+        LibraryState = snapshot.State;
+        LibraryTotalCount = snapshot.TotalCount;
+        SelectedLibraryViewMode = snapshot.ViewMode;
+        SelectedGameCount = snapshot.SelectedGameIds.Count;
+
+        if (refreshGames)
+        {
+            Games.Clear();
+            foreach (var game in snapshot.Games)
+            {
+                Games.Add(new LibraryGameItem(game));
+            }
+        }
+
+        OnPropertyChanged(nameof(LibrarySummary));
+        OnPropertyChanged(nameof(SelectionSummary));
     }
 }

@@ -2,6 +2,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:domain="clr-namespace:WiiStudio.Domain.Entities;assembly=WiiStudio.Domain"
         xmlns:dto="clr-namespace:WiiStudio.Application.DTOs;assembly=WiiStudio.Application"
+        xmlns:vm="clr-namespace:WiiStudio.App.ViewModels"
         x:Class="WiiStudio.App.Views.MainWindow"
         Title="WiiStudio"
         Width="1280"
@@ -34,6 +35,7 @@
 
         <TextBox Grid.Column="2"
                  Watermark="Pesquisar jogos, tarefas e logs"
+                 Text="{Binding LibrarySearchText, Mode=TwoWay}"
                  Height="36"
                  VerticalAlignment="Center" />
 
@@ -91,49 +93,96 @@
                      TextWrapping="Wrap" />
         </StackPanel>
 
-        <Grid Grid.Row="1" RowDefinitions="Auto,*" Margin="0,22,0,0">
+        <Grid Grid.Row="1" RowDefinitions="Auto,Auto,*" Margin="0,22,0,0">
           <Border Background="#171C25" Padding="16">
-            <Grid ColumnDefinitions="*,Auto">
+            <Grid ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="12">
               <StackPanel>
-                <TextBlock Text="Dispositivos detectados"
+                <TextBlock Text="Biblioteca"
                            FontSize="18"
                            FontWeight="SemiBold"
                            Foreground="#F6F8FC" />
-                <TextBlock Text="{Binding StatusMessage}" Foreground="#9BA8BA" />
+                <TextBlock Text="{Binding LibrarySummary}" Foreground="#9BA8BA" />
               </StackPanel>
               <TextBlock Grid.Column="1"
-                         Text="{Binding DeviceSummary}"
+                         Text="{Binding LibraryState}"
                          Foreground="#C7CEDA"
                          VerticalAlignment="Center" />
+              <ComboBox Grid.Column="2"
+                        ItemsSource="{Binding LibraryViewModes}"
+                        SelectedItem="{Binding SelectedLibraryViewMode}"
+                        Width="132"
+                        Height="34"
+                        VerticalAlignment="Center" />
+              <Button Grid.Column="3"
+                      Command="{Binding RefreshLibraryCommand}"
+                      IsEnabled="{Binding !IsBusy}"
+                      Padding="14,8"
+                      VerticalAlignment="Center">
+                <TextBlock Text="Atualizar" />
+              </Button>
             </Grid>
           </Border>
 
-          <ListBox Grid.Row="1"
-                   ItemsSource="{Binding Drives}"
-                   Margin="0,14,0,0"
-                   Background="#141820"
-                   BorderThickness="0">
-            <ListBox.ItemTemplate>
-              <DataTemplate DataType="domain:UsbDrive">
-                <Grid ColumnDefinitions="*,Auto,Auto" Margin="10" MinHeight="48">
-                  <StackPanel>
-                    <TextBlock Text="{Binding Name}" Foreground="#F6F8FC" FontWeight="SemiBold" />
-                    <TextBlock Text="{Binding MountPath}" Foreground="#8EA0B8" />
-                  </StackPanel>
-                  <TextBlock Grid.Column="1"
-                             Text="{Binding FileSystem}"
-                             Foreground="#C7CEDA"
-                             VerticalAlignment="Center"
-                             Margin="24,0,0,0" />
-                  <TextBlock Grid.Column="2"
-                             Text="{Binding AvailableSizeInBytes}"
-                             Foreground="#8EA0B8"
-                             VerticalAlignment="Center"
-                             Margin="24,0,0,0" />
-                </Grid>
-              </DataTemplate>
-            </ListBox.ItemTemplate>
-          </ListBox>
+          <Border Grid.Row="1" Background="#141820" Padding="12" Margin="0,14,0,0">
+            <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="12">
+              <TextBox Watermark="Filtrar por título, ID ou região"
+                       Text="{Binding LibrarySearchText, Mode=TwoWay}"
+                       Height="34" />
+              <TextBlock Grid.Column="1"
+                         Text="{Binding SelectionSummary}"
+                         Foreground="#9BA8BA"
+                         VerticalAlignment="Center" />
+              <Button Grid.Column="2"
+                      Command="{Binding ClearLibrarySearchCommand}"
+                      Padding="12,7"
+                      VerticalAlignment="Center">
+                <TextBlock Text="Limpar" />
+              </Button>
+            </Grid>
+          </Border>
+
+          <Grid Grid.Row="2" RowDefinitions="Auto,*" Margin="0,14,0,0" Background="#141820">
+            <Border Background="#1A1F28" Padding="12,10">
+              <Grid ColumnDefinitions="88,2*,120,110,100,90,90" ColumnSpacing="12">
+                <TextBlock Text="ID" Foreground="#8EA0B8" FontWeight="SemiBold" />
+                <TextBlock Grid.Column="1" Text="Título" Foreground="#8EA0B8" FontWeight="SemiBold" />
+                <TextBlock Grid.Column="2" Text="Região" Foreground="#8EA0B8" FontWeight="SemiBold" />
+                <TextBlock Grid.Column="3" Text="Formato" Foreground="#8EA0B8" FontWeight="SemiBold" />
+                <TextBlock Grid.Column="4" Text="Tamanho" Foreground="#8EA0B8" FontWeight="SemiBold" />
+                <TextBlock Grid.Column="5" Text="Adicionado" Foreground="#8EA0B8" FontWeight="SemiBold" />
+                <TextBlock Grid.Column="6" Text="Status" Foreground="#8EA0B8" FontWeight="SemiBold" />
+              </Grid>
+            </Border>
+
+            <ListBox Grid.Row="1"
+                     ItemsSource="{Binding Games}"
+                     SelectedItem="{Binding SelectedGame}"
+                     Background="Transparent"
+                     BorderThickness="0"
+                     ScrollViewer.VerticalScrollBarVisibility="Auto">
+              <ListBox.ItemTemplate>
+                <DataTemplate DataType="vm:LibraryGameItem">
+                  <Grid ColumnDefinitions="88,2*,120,110,100,90,90"
+                        ColumnSpacing="12"
+                        Margin="12,9"
+                        MinHeight="34">
+                    <TextBlock Text="{Binding Id}" Foreground="#C7CEDA" VerticalAlignment="Center" />
+                    <TextBlock Grid.Column="1"
+                               Text="{Binding Title}"
+                               Foreground="#F6F8FC"
+                               FontWeight="SemiBold"
+                               TextTrimming="CharacterEllipsis"
+                               VerticalAlignment="Center" />
+                    <TextBlock Grid.Column="2" Text="{Binding Region}" Foreground="#C7CEDA" VerticalAlignment="Center" />
+                    <TextBlock Grid.Column="3" Text="{Binding Format}" Foreground="#C7CEDA" VerticalAlignment="Center" />
+                    <TextBlock Grid.Column="4" Text="{Binding Size}" Foreground="#C7CEDA" VerticalAlignment="Center" />
+                    <TextBlock Grid.Column="5" Text="{Binding AddedAt}" Foreground="#8EA0B8" VerticalAlignment="Center" />
+                    <TextBlock Grid.Column="6" Text="{Binding Favorite}" Foreground="#7BD88F" VerticalAlignment="Center" />
+                  </Grid>
+                </DataTemplate>
+              </ListBox.ItemTemplate>
+            </ListBox>
+          </Grid>
         </Grid>
       </Grid>
 
@@ -143,20 +192,36 @@
               Background="#151922"
               Padding="16"
               IsVisible="{Binding IsSidePanelVisible}">
-        <StackPanel Spacing="18">
+        <Grid RowDefinitions="Auto,Auto,Auto,*" RowSpacing="18">
           <StackPanel Spacing="4">
             <TextBlock Text="Tarefas" FontWeight="SemiBold" Foreground="#F6F8FC" />
             <TextBlock Text="{Binding TaskSummary}" Foreground="#9BA8BA" />
           </StackPanel>
-          <StackPanel Spacing="4">
+          <StackPanel Grid.Row="1" Spacing="4">
             <TextBlock Text="Notificações" FontWeight="SemiBold" Foreground="#F6F8FC" />
             <TextBlock Text="{Binding NotificationSummary}" Foreground="#9BA8BA" />
           </StackPanel>
-          <StackPanel Spacing="4">
+          <StackPanel Grid.Row="2" Spacing="4">
             <TextBlock Text="Dispositivo" FontWeight="SemiBold" Foreground="#F6F8FC" />
             <TextBlock Text="{Binding DeviceSummary}" Foreground="#9BA8BA" />
           </StackPanel>
-        </StackPanel>
+          <ListBox Grid.Row="3"
+                   ItemsSource="{Binding Drives}"
+                   Background="#141820"
+                   BorderThickness="0">
+            <ListBox.ItemTemplate>
+              <DataTemplate DataType="domain:UsbDrive">
+                <Grid RowDefinitions="Auto,Auto" Margin="8" MinHeight="44">
+                  <TextBlock Text="{Binding Name}" Foreground="#F6F8FC" FontWeight="SemiBold" />
+                  <TextBlock Grid.Row="1"
+                             Text="{Binding MountPath}"
+                             Foreground="#8EA0B8"
+                             TextTrimming="CharacterEllipsis" />
+                </Grid>
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
+        </Grid>
       </Border>
     </Grid>
 
@@ -165,7 +230,7 @@
         <TextBlock Text="{Binding StatusMessage}" Foreground="#C7CEDA" />
         <TextBlock Grid.Column="1" Text="{Binding TaskSummary}" Foreground="#8EA0B8" />
         <TextBlock Grid.Column="2" Text="{Binding NotificationSummary}" Foreground="#8EA0B8" />
-        <TextBlock Grid.Column="3" Text="{Binding DeviceSummary}" Foreground="#8EA0B8" />
+        <TextBlock Grid.Column="3" Text="{Binding LibrarySummary}" Foreground="#8EA0B8" />
       </Grid>
     </Border>
   </Grid>
