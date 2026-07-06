@@ -5,12 +5,14 @@ using WiiStudio.Application.DTOs;
 using WiiStudio.Application.Interfaces;
 using WiiStudio.Application.UseCases;
 using WiiStudio.Domain.Entities;
+using WiiStudio.Domain.Enums;
 
 namespace WiiStudio.App.ViewModels;
 
 public sealed partial class MainViewModel : ObservableObject
 {
     private readonly DetectUsbDrivesUseCase _detectUsbDrivesUseCase;
+    private readonly IConversionWizardService _conversionWizardService;
     private readonly IImportWizardService _importWizardService;
     private readonly ILibraryViewService _libraryViewService;
     private readonly IMainWindowService _mainWindowService;
@@ -66,13 +68,36 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private bool _canExecuteImport;
 
+    [ObservableProperty]
+    private string? _conversionSourcePathsText;
+
+    [ObservableProperty]
+    private string? _conversionDestinationDirectory;
+
+    [ObservableProperty]
+    private FileFormat _selectedConversionTargetFormat = FileFormat.Wbfs;
+
+    [ObservableProperty]
+    private ConversionWizardState _conversionWizardState = ConversionWizardState.SelectingSource;
+
+    [ObservableProperty]
+    private ConversionWizardStep _selectedConversionStep = ConversionWizardStep.SelectingSource;
+
+    [ObservableProperty]
+    private string _conversionSummary = "Nenhuma conversão analisada";
+
+    [ObservableProperty]
+    private bool _canExecuteConversion;
+
     public MainViewModel(
         DetectUsbDrivesUseCase detectUsbDrivesUseCase,
+        IConversionWizardService conversionWizardService,
         IImportWizardService importWizardService,
         ILibraryViewService libraryViewService,
         IMainWindowService mainWindowService)
     {
         _detectUsbDrivesUseCase = detectUsbDrivesUseCase;
+        _conversionWizardService = conversionWizardService;
         _importWizardService = importWizardService;
         _libraryViewService = libraryViewService;
         _mainWindowService = mainWindowService;
@@ -91,6 +116,8 @@ public sealed partial class MainViewModel : ObservableObject
 
     public ObservableCollection<ImportPreviewItemViewModel> ImportPreviewItems { get; } = new();
 
+    public ObservableCollection<ConversionPreviewItemViewModel> ConversionPreviewItems { get; } = new();
+
     public IReadOnlyList<ImportWizardStep> ImportSteps { get; } =
     [
         ImportWizardStep.SelectingFiles,
@@ -100,6 +127,23 @@ public sealed partial class MainViewModel : ObservableObject
         ImportWizardStep.Reviewing,
         ImportWizardStep.Importing,
         ImportWizardStep.Completed
+    ];
+
+    public IReadOnlyList<ConversionWizardStep> ConversionSteps { get; } =
+    [
+        ConversionWizardStep.SelectingSource,
+        ConversionWizardStep.Analyzing,
+        ConversionWizardStep.SelectingTarget,
+        ConversionWizardStep.AdvancedOptions,
+        ConversionWizardStep.Reviewing,
+        ConversionWizardStep.Converting,
+        ConversionWizardStep.Completed
+    ];
+
+    public IReadOnlyList<FileFormat> ConversionTargetFormats { get; } =
+    [
+        FileFormat.Iso,
+        FileFormat.Wbfs
     ];
 
     public IReadOnlyList<LibraryViewMode> LibraryViewModes { get; } =
@@ -282,6 +326,79 @@ public sealed partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private async Task AnalyzeConversionAsync(CancellationToken cancellationToken)
+    {
+        ConversionWizardState = ConversionWizardState.Analyzing;
+        SelectedConversionStep = ConversionWizardStep.Analyzing;
+        StatusMessage = "Analisando conversões...";
+
+        var preview = await _conversionWizardService.AnalyzeAsync(CreateConversionRequest(), cancellationToken);
+
+        ConversionPreviewItems.Clear();
+        foreach (var item in preview.Items)
+        {
+            ConversionPreviewItems.Add(new ConversionPreviewItemViewModel(item));
+        }
+
+        ConversionWizardState = preview.State;
+        SelectedConversionStep = preview.CanConvert ? ConversionWizardStep.Reviewing : ConversionWizardStep.Analyzing;
+        CanExecuteConversion = preview.CanConvert;
+        ConversionSummary = preview.Items.Count == 0
+            ? "Informe ao menos uma origem."
+            : $"{preview.Items.Count} item(ns), ETA {preview.EstimatedDuration.TotalMinutes:0} min.";
+        StatusMessage = preview.CanConvert ? "Conversões prontas." : "Revise as conversões incompatíveis.";
+    }
+
+    [RelayCommand]
+    private async Task ExecuteConversionAsync(CancellationToken cancellationToken)
+    {
+        if (!CanExecuteConversion)
+        {
+            StatusMessage = "Analise conversões válidas antes de executar.";
+            return;
+        }
+
+        IsBusy = true;
+        ConversionWizardState = ConversionWizardState.Converting;
+        SelectedConversionStep = ConversionWizardStep.Converting;
+        StatusMessage = "Convertendo jogos...";
+
+        try
+        {
+            var result = await _conversionWizardService.ExecuteAsync(CreateConversionRequest(), cancellationToken);
+            ConversionWizardState = result.State;
+            SelectedConversionStep = result.State == ConversionWizardState.Completed
+                ? ConversionWizardStep.Completed
+                : ConversionWizardStep.Reviewing;
+            ConversionSummary = result.Message;
+            StatusMessage = $"{result.Jobs.Count} conversão(ões) processada(s).";
+            await RefreshLibraryAsync(cancellationToken);
+        }
+        catch (Exception exception)
+        {
+            ConversionWizardState = ConversionWizardState.Failed;
+            SelectedConversionStep = ConversionWizardStep.Reviewing;
+            ConversionSummary = exception.Message;
+            StatusMessage = "Falha ao converter jogos.";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    [RelayCommand]
+    private void CancelConversion()
+    {
+        ConversionWizardState = ConversionWizardState.Cancelled;
+        SelectedConversionStep = ConversionWizardStep.SelectingSource;
+        ConversionPreviewItems.Clear();
+        CanExecuteConversion = false;
+        ConversionSummary = "Conversão cancelada";
+        StatusMessage = "Conversão cancelada.";
+    }
+
+    [RelayCommand]
     private async Task ToggleSidePanelAsync(CancellationToken cancellationToken)
     {
         IsSidePanelVisible = !IsSidePanelVisible;
@@ -371,6 +488,28 @@ public sealed partial class MainViewModel : ObservableObject
         }
 
         return ImportSourcePathsText
+            .Split(['\r', '\n', ';'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Where(path => !string.IsNullOrWhiteSpace(path))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+    }
+
+    private ConversionWizardRequest CreateConversionRequest()
+    {
+        return new ConversionWizardRequest(
+            ParseSourcePaths(ConversionSourcePathsText),
+            ConversionDestinationDirectory ?? string.Empty,
+            SelectedConversionTargetFormat);
+    }
+
+    private static IReadOnlyList<string> ParseSourcePaths(string? sourcePathsText)
+    {
+        if (string.IsNullOrWhiteSpace(sourcePathsText))
+        {
+            return [];
+        }
+
+        return sourcePathsText
             .Split(['\r', '\n', ';'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             .Where(path => !string.IsNullOrWhiteSpace(path))
             .Distinct(StringComparer.OrdinalIgnoreCase)

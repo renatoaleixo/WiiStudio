@@ -30,6 +30,7 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddWiiStudioApplication(this IServiceCollection services)
     {
         services.AddSingleton<IValidator<ImportGameCommand>, ImportGameCommandValidator>();
+        services.AddSingleton<IValidator<ConvertGameCommand>, ConvertGameCommandValidator>();
         services.AddSingleton<IValidator<RemoveGameCommand>, RemoveGameCommandValidator>();
         services.AddTransient<IGameLibraryScanner, GameLibraryScanner>();
         services.AddSingleton<IGameLibraryService, GameLibraryService>();
@@ -38,6 +39,8 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IGameSearchService, GameSearchService>();
         services.AddSingleton<ILibraryViewService, LibraryViewService>();
         services.AddSingleton<IExportGameService, ExportGameService>();
+        services.AddTransient<IConversionService, ConversionService>();
+        services.AddTransient<IConversionWizardService, ConversionWizardService>();
         services.AddSingleton<IVerifyGameService, VerifyGameService>();
         services.AddSingleton<IRepairGameService, RepairGameService>();
         services.AddSingleton<IAssetManager, AssetManager>();

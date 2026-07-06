@@ -192,7 +192,7 @@
               Background="#151922"
               Padding="16"
               IsVisible="{Binding IsSidePanelVisible}">
-        <Grid RowDefinitions="Auto,Auto,Auto,Auto,*" RowSpacing="18">
+        <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,*" RowSpacing="18">
           <StackPanel Spacing="4">
             <TextBlock Text="Tarefas" FontWeight="SemiBold" Foreground="#F6F8FC" />
             <TextBlock Text="{Binding TaskSummary}" Foreground="#9BA8BA" />
@@ -285,7 +285,84 @@
             </StackPanel>
           </Border>
 
-          <ListBox Grid.Row="4"
+          <Border Grid.Row="4" Background="#141820" Padding="12">
+            <StackPanel Spacing="10">
+              <Grid ColumnDefinitions="*,Auto">
+                <TextBlock Text="Conversão"
+                           FontWeight="SemiBold"
+                           Foreground="#F6F8FC"
+                           VerticalAlignment="Center" />
+                <TextBlock Grid.Column="1"
+                           Text="{Binding ConversionWizardState}"
+                           Foreground="#8EA0B8"
+                           FontSize="11"
+                           VerticalAlignment="Center" />
+              </Grid>
+
+              <ComboBox ItemsSource="{Binding ConversionSteps}"
+                        SelectedItem="{Binding SelectedConversionStep}"
+                        Height="32" />
+
+              <TextBox Text="{Binding ConversionSourcePathsText, Mode=TwoWay}"
+                       Watermark="/jogos/mario.iso"
+                       AcceptsReturn="True"
+                       TextWrapping="Wrap"
+                       MinHeight="58" />
+
+              <TextBox Text="{Binding ConversionDestinationDirectory, Mode=TwoWay}"
+                       Watermark="/jogos/convertidos"
+                       Height="32" />
+
+              <ComboBox ItemsSource="{Binding ConversionTargetFormats}"
+                        SelectedItem="{Binding SelectedConversionTargetFormat}"
+                        Height="32" />
+
+              <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                <Button Command="{Binding AnalyzeConversionCommand}"
+                        IsEnabled="{Binding !IsBusy}"
+                        Padding="10,7">
+                  <TextBlock Text="Analisar" />
+                </Button>
+                <Button Grid.Column="1"
+                        Command="{Binding ExecuteConversionCommand}"
+                        IsEnabled="{Binding CanExecuteConversion}"
+                        Padding="10,7">
+                  <TextBlock Text="Converter" />
+                </Button>
+              </Grid>
+
+              <Button Command="{Binding CancelConversionCommand}"
+                      Padding="10,7">
+                <TextBlock Text="Cancelar" />
+              </Button>
+
+              <TextBlock Text="{Binding ConversionSummary}"
+                         Foreground="#9BA8BA"
+                         TextWrapping="Wrap" />
+
+              <ListBox ItemsSource="{Binding ConversionPreviewItems}"
+                       MaxHeight="110"
+                       Background="Transparent"
+                       BorderThickness="0">
+                <ListBox.ItemTemplate>
+                  <DataTemplate DataType="vm:ConversionPreviewItemViewModel">
+                    <Grid RowDefinitions="Auto,Auto" Margin="0,4">
+                      <TextBlock Text="{Binding SourcePath}"
+                                 Foreground="#F6F8FC"
+                                 TextTrimming="CharacterEllipsis" />
+                      <TextBlock Grid.Row="1"
+                                 Text="{Binding Pipeline}"
+                                 Foreground="#8EA0B8"
+                                 FontSize="11"
+                                 TextTrimming="CharacterEllipsis" />
+                    </Grid>
+                  </DataTemplate>
+                </ListBox.ItemTemplate>
+              </ListBox>
+            </StackPanel>
+          </Border>
+
+          <ListBox Grid.Row="5"
                    ItemsSource="{Binding Drives}"
                    Background="#141820"
                    BorderThickness="0">
