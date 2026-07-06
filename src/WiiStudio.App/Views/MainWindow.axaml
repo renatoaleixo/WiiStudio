@@ -505,11 +505,16 @@
     </Grid>
 
     <Border Grid.Row="2" Background="#1A1F28" Padding="14,8">
-      <Grid ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="20">
-        <TextBlock Text="{Binding StatusMessage}" Foreground="#C7CEDA" />
-        <TextBlock Grid.Column="1" Text="{Binding TaskSummary}" Foreground="#8EA0B8" />
-        <TextBlock Grid.Column="2" Text="{Binding NotificationSummary}" Foreground="#8EA0B8" />
-        <TextBlock Grid.Column="3" Text="{Binding LibrarySummary}" Foreground="#8EA0B8" />
+      <Grid ColumnDefinitions="1.6*,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto" ColumnSpacing="18">
+        <TextBlock Text="{Binding StatusMessage}" Foreground="#C7CEDA" TextTrimming="CharacterEllipsis" />
+        <TextBlock Grid.Column="1" Text="{Binding StatusActiveDevice}" Foreground="#8EA0B8" />
+        <TextBlock Grid.Column="2" Text="{Binding StatusFileSystem}" Foreground="#8EA0B8" />
+        <TextBlock Grid.Column="3" Text="{Binding StatusFreeSpace}" Foreground="#8EA0B8" />
+        <TextBlock Grid.Column="4" Text="{Binding SelectionSummary}" Foreground="#8EA0B8" />
+        <TextBlock Grid.Column="5" Text="{Binding StatusTasks}" Foreground="#8EA0B8" />
+        <TextBlock Grid.Column="6" Text="{Binding StatusNotifications}" Foreground="#8EA0B8" />
+        <TextBlock Grid.Column="7" Text="{Binding StatusMemory}" Foreground="#8EA0B8" />
+        <TextBlock Grid.Column="8" Text="{Binding StatusVersion}" Foreground="#8EA0B8" />
       </Grid>
     </Border>
   </Grid>

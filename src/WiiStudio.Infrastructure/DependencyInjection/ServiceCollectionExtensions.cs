@@ -54,6 +54,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<ILoggingCenter, JsonLineLoggingCenter>();
         services.AddSingleton<IDeviceManagerService, DeviceManagerService>();
         services.AddSingleton<IDashboardService, DashboardService>();
+        services.AddSingleton<IStatusBarService, StatusBarService>();
         services.AddTransient<IImportWizardService, ImportWizardService>();
         services.AddSingleton<IMainWindowService, JsonMainWindowService>();
         services.AddSingleton<ISearchPresetService, SearchPresetService>();

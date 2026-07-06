@@ -18,6 +18,7 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly IImportWizardService _importWizardService;
     private readonly ILibraryViewService _libraryViewService;
     private readonly IMainWindowService _mainWindowService;
+    private readonly IStatusBarService _statusBarService;
 
     [ObservableProperty]
     private string _statusMessage = "Pronto";
@@ -106,6 +107,30 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private string _dashboardUpdatedAt = "Nunca";
 
+    [ObservableProperty]
+    private StatusBarState _statusBarState = StatusBarState.Initializing;
+
+    [ObservableProperty]
+    private string _statusActiveDevice = "Nenhum dispositivo";
+
+    [ObservableProperty]
+    private string _statusFileSystem = "-";
+
+    [ObservableProperty]
+    private string _statusFreeSpace = "-";
+
+    [ObservableProperty]
+    private string _statusTasks = "0 tarefas";
+
+    [ObservableProperty]
+    private string _statusNotifications = "0 notificações";
+
+    [ObservableProperty]
+    private string _statusMemory = "-";
+
+    [ObservableProperty]
+    private string _statusVersion = "0.0.0";
+
     public MainViewModel(
         DetectUsbDrivesUseCase detectUsbDrivesUseCase,
         IConversionWizardService conversionWizardService,
@@ -113,7 +138,8 @@ public sealed partial class MainViewModel : ObservableObject
         IDeviceManagerService deviceManagerService,
         IImportWizardService importWizardService,
         ILibraryViewService libraryViewService,
-        IMainWindowService mainWindowService)
+        IMainWindowService mainWindowService,
+        IStatusBarService statusBarService)
     {
         _detectUsbDrivesUseCase = detectUsbDrivesUseCase;
         _conversionWizardService = conversionWizardService;
@@ -122,6 +148,7 @@ public sealed partial class MainViewModel : ObservableObject
         _importWizardService = importWizardService;
         _libraryViewService = libraryViewService;
         _mainWindowService = mainWindowService;
+        _statusBarService = statusBarService;
 
         foreach (var module in _mainWindowService.Modules)
         {
@@ -212,6 +239,7 @@ public sealed partial class MainViewModel : ObservableObject
         await RefreshDevicesAsync(cancellationToken);
         await RefreshLibraryAsync(cancellationToken);
         await RefreshDashboardAsync(cancellationToken);
+        await RefreshStatusBarAsync(cancellationToken);
     }
 
     [RelayCommand]
@@ -233,6 +261,7 @@ public sealed partial class MainViewModel : ObservableObject
             StatusMessage = snapshot.TotalCount == 0
                 ? "Biblioteca vazia."
                 : $"{snapshot.TotalCount} jogo(s) carregado(s).";
+            await RefreshStatusBarAsync(cancellationToken);
         }
         finally
         {
@@ -251,6 +280,15 @@ public sealed partial class MainViewModel : ObservableObject
 
         DashboardState = DashboardState.Ready;
         StatusMessage = "Dashboard atualizado.";
+        await RefreshStatusBarAsync(cancellationToken);
+    }
+
+    [RelayCommand]
+    private async Task RefreshStatusBarAsync(CancellationToken cancellationToken)
+    {
+        StatusBarState = StatusBarState.Updating;
+        var info = await _statusBarService.RefreshAsync(cancellationToken);
+        ApplyStatusBar(info);
     }
 
     [RelayCommand]
@@ -287,6 +325,7 @@ public sealed partial class MainViewModel : ObservableObject
                 ? "Nenhum dispositivo encontrado."
                 : $"{drives.Count} dispositivo(s) encontrado(s).";
             OnPropertyChanged(nameof(DeviceSummary));
+            await RefreshStatusBarAsync(cancellationToken);
         }
         finally
         {
@@ -308,6 +347,7 @@ public sealed partial class MainViewModel : ObservableObject
             StatusMessage = snapshot.Devices.Count == 0
                 ? "Nenhum dispositivo encontrado."
                 : $"{snapshot.Devices.Count} dispositivo(s) atualizado(s).";
+            await RefreshStatusBarAsync(cancellationToken);
         }
         finally
         {
@@ -331,6 +371,7 @@ public sealed partial class MainViewModel : ObservableObject
         ReplaceDevice(ejected);
         DeviceManagerState = DeviceManagerState.Ready;
         StatusMessage = "Dispositivo marcado para ejeção segura.";
+        await RefreshStatusBarAsync(cancellationToken);
     }
 
     [RelayCommand]
@@ -383,6 +424,7 @@ public sealed partial class MainViewModel : ObservableObject
             ImportSummary = result.Message;
             StatusMessage = $"{result.ImportedCount} jogo(s) importado(s).";
             await RefreshLibraryAsync(cancellationToken);
+            await RefreshStatusBarAsync(cancellationToken);
         }
         catch (Exception exception)
         {
@@ -456,6 +498,7 @@ public sealed partial class MainViewModel : ObservableObject
             ConversionSummary = result.Message;
             StatusMessage = $"{result.Jobs.Count} conversão(ões) processada(s).";
             await RefreshLibraryAsync(cancellationToken);
+            await RefreshStatusBarAsync(cancellationToken);
         }
         catch (Exception exception)
         {
@@ -618,6 +661,20 @@ public sealed partial class MainViewModel : ObservableObject
         }
 
         DashboardUpdatedAt = data.LoadedAt.ToLocalTime().ToString("dd/MM HH:mm");
+    }
+
+    private void ApplyStatusBar(StatusBarInfo info)
+    {
+        StatusBarState = info.State;
+        StatusActiveDevice = info.ActiveDevice;
+        StatusFileSystem = info.FileSystem;
+        StatusFreeSpace = info.FreeSpace;
+        StatusTasks = info.ActiveTasks == 1 ? "1 tarefa" : $"{info.ActiveTasks} tarefas";
+        StatusNotifications = info.PendingNotifications == 1
+            ? "1 notificação"
+            : $"{info.PendingNotifications} notificações";
+        StatusMemory = info.MemoryUsage;
+        StatusVersion = info.Version;
     }
 
     private IReadOnlyList<string> ParseImportSourcePaths()
