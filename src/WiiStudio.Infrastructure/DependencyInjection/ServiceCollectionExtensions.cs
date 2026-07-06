@@ -9,6 +9,7 @@ using WiiStudio.Infrastructure.Covers;
 using WiiStudio.Infrastructure.Diagnostics;
 using WiiStudio.Infrastructure.Export;
 using WiiStudio.Infrastructure.Favorites;
+using WiiStudio.Infrastructure.GameTdb;
 using WiiStudio.Infrastructure.Metadata;
 using WiiStudio.Infrastructure.Processes;
 using WiiStudio.Infrastructure.Usb;
@@ -35,6 +36,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<ICoverService, CoverService>();
         services.AddSingleton<ICoverDownloadService, CoverDownloadService>();
         services.AddSingleton<IMetadataSynchronizationService, MetadataSynchronizationService>();
+        services.AddSingleton<IGameTdbUpdateService, GameTdbUpdateService>();
         services.AddSingleton<ISearchPresetService, SearchPresetService>();
         services.AddTransient<DetectUsbDrivesUseCase>();
         services.AddTransient<ScanUsbDrivesUseCase>();
@@ -52,6 +54,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton(new FavoriteGameStoreOptions());
         services.AddSingleton(new CoverCacheOptions());
         services.AddSingleton(new MetadataCacheOptions());
+        services.AddSingleton(new GameTdbUpdateStateStoreOptions());
         services.AddSingleton<IProcessRunner, ProcessRunner>();
         services.AddSingleton<IExportFileSystem, PhysicalExportFileSystem>();
         services.AddSingleton<IFavoriteGameStore, JsonFavoriteGameStore>();
@@ -59,6 +62,8 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<ICoverProvider, NullCoverProvider>();
         services.AddSingleton<IMetadataCacheService, JsonMetadataCacheService>();
         services.AddSingleton<IGameMetadataProvider, NullGameMetadataProvider>();
+        services.AddSingleton<IGameTdbUpdateSource, NullGameTdbUpdateSource>();
+        services.AddSingleton<IGameTdbUpdateStateStore, JsonGameTdbUpdateStateStore>();
         services.AddSingleton<IWiimmsToolLocator, WiimmsToolLocator>();
         services.AddSingleton<IUsbProvider, LinuxUsbProvider>();
         services.AddSingleton<IUsbDetectionService, UsbDetectionService>();
