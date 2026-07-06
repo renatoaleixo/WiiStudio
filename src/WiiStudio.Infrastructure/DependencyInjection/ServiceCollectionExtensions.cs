@@ -12,6 +12,7 @@ using WiiStudio.Infrastructure.Favorites;
 using WiiStudio.Infrastructure.GameTdb;
 using WiiStudio.Infrastructure.Metadata;
 using WiiStudio.Infrastructure.Processes;
+using WiiStudio.Infrastructure.Settings;
 using WiiStudio.Infrastructure.Usb;
 using WiiStudio.Infrastructure.Wiimms;
 
@@ -55,9 +56,11 @@ public static class ServiceCollectionExtensions
         services.AddSingleton(new CoverCacheOptions());
         services.AddSingleton(new MetadataCacheOptions());
         services.AddSingleton(new GameTdbUpdateStateStoreOptions());
+        services.AddSingleton(new SettingsStoreOptions());
         services.AddSingleton<IProcessRunner, ProcessRunner>();
         services.AddSingleton<IExportFileSystem, PhysicalExportFileSystem>();
         services.AddSingleton<IFavoriteGameStore, JsonFavoriteGameStore>();
+        services.AddSingleton<ISettingsService, JsonSettingsService>();
         services.AddSingleton<ICoverCache, FileSystemCoverCache>();
         services.AddSingleton<ICoverProvider, NullCoverProvider>();
         services.AddSingleton<IMetadataCacheService, JsonMetadataCacheService>();
