@@ -13,6 +13,7 @@ public sealed partial class MainViewModel : ObservableObject
 {
     private readonly DetectUsbDrivesUseCase _detectUsbDrivesUseCase;
     private readonly IConversionWizardService _conversionWizardService;
+    private readonly IDashboardService _dashboardService;
     private readonly IDeviceManagerService _deviceManagerService;
     private readonly IImportWizardService _importWizardService;
     private readonly ILibraryViewService _libraryViewService;
@@ -99,9 +100,16 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private string _deviceManagerSummary = "Nenhum dispositivo";
 
+    [ObservableProperty]
+    private DashboardState _dashboardState = DashboardState.Loading;
+
+    [ObservableProperty]
+    private string _dashboardUpdatedAt = "Nunca";
+
     public MainViewModel(
         DetectUsbDrivesUseCase detectUsbDrivesUseCase,
         IConversionWizardService conversionWizardService,
+        IDashboardService dashboardService,
         IDeviceManagerService deviceManagerService,
         IImportWizardService importWizardService,
         ILibraryViewService libraryViewService,
@@ -109,6 +117,7 @@ public sealed partial class MainViewModel : ObservableObject
     {
         _detectUsbDrivesUseCase = detectUsbDrivesUseCase;
         _conversionWizardService = conversionWizardService;
+        _dashboardService = dashboardService;
         _deviceManagerService = deviceManagerService;
         _importWizardService = importWizardService;
         _libraryViewService = libraryViewService;
@@ -125,6 +134,12 @@ public sealed partial class MainViewModel : ObservableObject
     public ObservableCollection<UsbDrive> Drives { get; } = new();
 
     public ObservableCollection<DeviceInfoViewModel> Devices { get; } = new();
+
+    public ObservableCollection<DashboardWidgetViewModel> DashboardWidgets { get; } = new();
+
+    public ObservableCollection<DashboardActivityViewModel> DashboardActivities { get; } = new();
+
+    public ObservableCollection<DashboardQuickActionViewModel> DashboardQuickActions { get; } = new();
 
     public ObservableCollection<LibraryGameItem> Games { get; } = new();
 
@@ -196,6 +211,7 @@ public sealed partial class MainViewModel : ObservableObject
 
         await RefreshDevicesAsync(cancellationToken);
         await RefreshLibraryAsync(cancellationToken);
+        await RefreshDashboardAsync(cancellationToken);
     }
 
     [RelayCommand]
@@ -222,6 +238,19 @@ public sealed partial class MainViewModel : ObservableObject
         {
             IsBusy = false;
         }
+    }
+
+    [RelayCommand]
+    private async Task RefreshDashboardAsync(CancellationToken cancellationToken)
+    {
+        DashboardState = DashboardState.Refreshing;
+        StatusMessage = "Atualizando dashboard...";
+
+        var data = await _dashboardService.RefreshAsync(cancellationToken);
+        ApplyDashboard(data);
+
+        DashboardState = DashboardState.Ready;
+        StatusMessage = "Dashboard atualizado.";
     }
 
     [RelayCommand]
@@ -453,6 +482,33 @@ public sealed partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private async Task RunDashboardQuickActionAsync(DashboardQuickActionViewModel? action)
+    {
+        if (action is null)
+        {
+            return;
+        }
+
+        switch (action.Id)
+        {
+            case "scan-library":
+                await RefreshLibraryAsync(CancellationToken.None);
+                break;
+            case "detect-devices":
+                await RefreshDevicesAsync(CancellationToken.None);
+                break;
+            case "import-games":
+                SelectedImportStep = ImportWizardStep.SelectingFiles;
+                StatusMessage = "Fluxo de importação pronto.";
+                break;
+            case "convert-games":
+                SelectedConversionStep = ConversionWizardStep.SelectingSource;
+                StatusMessage = "Fluxo de conversão pronto.";
+                break;
+        }
+    }
+
+    [RelayCommand]
     private async Task ToggleSidePanelAsync(CancellationToken cancellationToken)
     {
         IsSidePanelVisible = !IsSidePanelVisible;
@@ -539,6 +595,29 @@ public sealed partial class MainViewModel : ObservableObject
 
         OnPropertyChanged(nameof(LibrarySummary));
         OnPropertyChanged(nameof(SelectionSummary));
+    }
+
+    private void ApplyDashboard(DashboardData data)
+    {
+        DashboardWidgets.Clear();
+        foreach (var widget in data.Widgets)
+        {
+            DashboardWidgets.Add(new DashboardWidgetViewModel(widget));
+        }
+
+        DashboardActivities.Clear();
+        foreach (var activity in data.Activities)
+        {
+            DashboardActivities.Add(new DashboardActivityViewModel(activity));
+        }
+
+        DashboardQuickActions.Clear();
+        foreach (var action in data.QuickActions)
+        {
+            DashboardQuickActions.Add(new DashboardQuickActionViewModel(action));
+        }
+
+        DashboardUpdatedAt = data.LoadedAt.ToLocalTime().ToString("dd/MM HH:mm");
     }
 
     private IReadOnlyList<string> ParseImportSourcePaths()

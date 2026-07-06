@@ -53,6 +53,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IBackupService, ZipBackupService>();
         services.AddSingleton<ILoggingCenter, JsonLineLoggingCenter>();
         services.AddSingleton<IDeviceManagerService, DeviceManagerService>();
+        services.AddSingleton<IDashboardService, DashboardService>();
         services.AddTransient<IImportWizardService, ImportWizardService>();
         services.AddSingleton<IMainWindowService, JsonMainWindowService>();
         services.AddSingleton<ISearchPresetService, SearchPresetService>();
