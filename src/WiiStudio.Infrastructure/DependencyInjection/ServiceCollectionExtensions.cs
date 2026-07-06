@@ -5,6 +5,7 @@ using WiiStudio.Application.Interfaces;
 using WiiStudio.Application.Services;
 using WiiStudio.Application.UseCases;
 using WiiStudio.Application.Validators;
+using WiiStudio.Infrastructure.AppUpdates;
 using WiiStudio.Infrastructure.Covers;
 using WiiStudio.Infrastructure.Diagnostics;
 using WiiStudio.Infrastructure.Export;
@@ -41,6 +42,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<ICoverDownloadService, CoverDownloadService>();
         services.AddSingleton<IMetadataSynchronizationService, MetadataSynchronizationService>();
         services.AddSingleton<IGameTdbUpdateService, GameTdbUpdateService>();
+        services.AddSingleton<IApplicationUpdateService, ApplicationUpdateService>();
         services.AddSingleton<ISearchPresetService, SearchPresetService>();
         services.AddTransient<DetectUsbDrivesUseCase>();
         services.AddTransient<ScanUsbDrivesUseCase>();
@@ -63,6 +65,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton(new ProfileStoreOptions());
         services.AddSingleton(new NotificationStoreOptions());
         services.AddSingleton(new TaskManagerOptions());
+        services.AddSingleton(new ApplicationUpdateStateStoreOptions());
         services.AddSingleton<IProcessRunner, ProcessRunner>();
         services.AddSingleton<IExportFileSystem, PhysicalExportFileSystem>();
         services.AddSingleton<IFavoriteGameStore, JsonFavoriteGameStore>();
@@ -70,6 +73,9 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IProfileService, JsonProfileService>();
         services.AddSingleton<INotificationService, JsonNotificationService>();
         services.AddSingleton<ITaskManager, JsonTaskManager>();
+        services.AddSingleton<IApplicationUpdateProvider, NullApplicationUpdateProvider>();
+        services.AddSingleton<IApplicationUpdateInstaller, NullApplicationUpdateInstaller>();
+        services.AddSingleton<IApplicationUpdateStateStore, JsonApplicationUpdateStateStore>();
         services.AddSingleton<ICoverCache, FileSystemCoverCache>();
         services.AddSingleton<ICoverProvider, NullCoverProvider>();
         services.AddSingleton<IMetadataCacheService, JsonMetadataCacheService>();
