@@ -12,6 +12,7 @@ using WiiStudio.Infrastructure.Diagnostics;
 using WiiStudio.Infrastructure.Export;
 using WiiStudio.Infrastructure.Favorites;
 using WiiStudio.Infrastructure.GameTdb;
+using WiiStudio.Infrastructure.Logging;
 using WiiStudio.Infrastructure.Metadata;
 using WiiStudio.Infrastructure.Notifications;
 using WiiStudio.Infrastructure.Processes;
@@ -45,6 +46,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IGameTdbUpdateService, GameTdbUpdateService>();
         services.AddSingleton<IApplicationUpdateService, ApplicationUpdateService>();
         services.AddSingleton<IBackupService, ZipBackupService>();
+        services.AddSingleton<ILoggingCenter, JsonLineLoggingCenter>();
         services.AddSingleton<ISearchPresetService, SearchPresetService>();
         services.AddTransient<DetectUsbDrivesUseCase>();
         services.AddTransient<ScanUsbDrivesUseCase>();
@@ -69,6 +71,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton(new TaskManagerOptions());
         services.AddSingleton(new ApplicationUpdateStateStoreOptions());
         services.AddSingleton(new BackupServiceOptions());
+        services.AddSingleton(new LoggingCenterOptions());
         services.AddSingleton<IProcessRunner, ProcessRunner>();
         services.AddSingleton<IExportFileSystem, PhysicalExportFileSystem>();
         services.AddSingleton<IFavoriteGameStore, JsonFavoriteGameStore>();
