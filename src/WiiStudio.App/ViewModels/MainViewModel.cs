@@ -13,6 +13,7 @@ public sealed partial class MainViewModel : ObservableObject
 {
     private readonly DetectUsbDrivesUseCase _detectUsbDrivesUseCase;
     private readonly IConversionWizardService _conversionWizardService;
+    private readonly IDeviceManagerService _deviceManagerService;
     private readonly IImportWizardService _importWizardService;
     private readonly ILibraryViewService _libraryViewService;
     private readonly IMainWindowService _mainWindowService;
@@ -89,15 +90,26 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private bool _canExecuteConversion;
 
+    [ObservableProperty]
+    private DeviceManagerState _deviceManagerState = DeviceManagerState.Detecting;
+
+    [ObservableProperty]
+    private DeviceInfoViewModel? _selectedDevice;
+
+    [ObservableProperty]
+    private string _deviceManagerSummary = "Nenhum dispositivo";
+
     public MainViewModel(
         DetectUsbDrivesUseCase detectUsbDrivesUseCase,
         IConversionWizardService conversionWizardService,
+        IDeviceManagerService deviceManagerService,
         IImportWizardService importWizardService,
         ILibraryViewService libraryViewService,
         IMainWindowService mainWindowService)
     {
         _detectUsbDrivesUseCase = detectUsbDrivesUseCase;
         _conversionWizardService = conversionWizardService;
+        _deviceManagerService = deviceManagerService;
         _importWizardService = importWizardService;
         _libraryViewService = libraryViewService;
         _mainWindowService = mainWindowService;
@@ -111,6 +123,8 @@ public sealed partial class MainViewModel : ObservableObject
     public ObservableCollection<ShellModule> Modules { get; } = new();
 
     public ObservableCollection<UsbDrive> Drives { get; } = new();
+
+    public ObservableCollection<DeviceInfoViewModel> Devices { get; } = new();
 
     public ObservableCollection<LibraryGameItem> Games { get; } = new();
 
@@ -180,6 +194,7 @@ public sealed partial class MainViewModel : ObservableObject
         State = snapshot.State;
         StatusMessage = "Pronto";
 
+        await RefreshDevicesAsync(cancellationToken);
         await RefreshLibraryAsync(cancellationToken);
     }
 
@@ -248,6 +263,45 @@ public sealed partial class MainViewModel : ObservableObject
         {
             IsBusy = false;
         }
+    }
+
+    [RelayCommand]
+    private async Task RefreshDevicesAsync(CancellationToken cancellationToken)
+    {
+        IsBusy = true;
+        DeviceManagerState = DeviceManagerState.Refreshing;
+        StatusMessage = "Atualizando dispositivos...";
+
+        try
+        {
+            var snapshot = await _deviceManagerService.RefreshAsync(cancellationToken);
+            ApplyDeviceSnapshot(snapshot);
+            StatusMessage = snapshot.Devices.Count == 0
+                ? "Nenhum dispositivo encontrado."
+                : $"{snapshot.Devices.Count} dispositivo(s) atualizado(s).";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task EjectSelectedDeviceAsync(CancellationToken cancellationToken)
+    {
+        if (SelectedDevice is null)
+        {
+            StatusMessage = "Selecione um dispositivo.";
+            return;
+        }
+
+        DeviceManagerState = DeviceManagerState.Busy;
+        StatusMessage = "Ejetando dispositivo...";
+
+        var ejected = await _deviceManagerService.EjectAsync(SelectedDevice.DeviceId, cancellationToken);
+        ReplaceDevice(ejected);
+        DeviceManagerState = DeviceManagerState.Ready;
+        StatusMessage = "Dispositivo marcado para ejeção segura.";
     }
 
     [RelayCommand]
@@ -428,6 +482,13 @@ public sealed partial class MainViewModel : ObservableObject
             && ImportPreviewItems.All(item => item.Status != ImportWizardFileStatus.Error.ToString());
     }
 
+    partial void OnSelectedDeviceChanged(DeviceInfoViewModel? value)
+    {
+        DeviceManagerSummary = value is null
+            ? DeviceSummary
+            : $"{value.Name} · {value.FileSystem} · {value.FreeSpace} livre";
+    }
+
     partial void OnSelectedModuleChanged(ShellModule? value)
     {
         OnPropertyChanged(nameof(SelectedModuleTitle));
@@ -492,6 +553,43 @@ public sealed partial class MainViewModel : ObservableObject
             .Where(path => !string.IsNullOrWhiteSpace(path))
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToArray();
+    }
+
+    private void ApplyDeviceSnapshot(DeviceManagerSnapshot snapshot)
+    {
+        DeviceManagerState = snapshot.State;
+        Devices.Clear();
+
+        foreach (var device in snapshot.Devices)
+        {
+            Devices.Add(new DeviceInfoViewModel(device));
+        }
+
+        SelectedDevice = Devices.FirstOrDefault();
+        DeviceManagerSummary = Devices.Count == 0
+            ? "Nenhum dispositivo"
+            : $"{Devices.Count} dispositivo(s)";
+    }
+
+    private void ReplaceDevice(DeviceInfo device)
+    {
+        var replacement = new DeviceInfoViewModel(device);
+        var index = Devices
+            .Select((item, itemIndex) => new { item, itemIndex })
+            .FirstOrDefault(candidate => candidate.item.DeviceId == device.DeviceId)
+            ?.itemIndex;
+
+        if (index is null)
+        {
+            Devices.Add(replacement);
+        }
+        else
+        {
+            Devices[index.Value] = replacement;
+        }
+
+        SelectedDevice = replacement;
+        DeviceManagerSummary = $"{replacement.Name} · {replacement.Status}";
     }
 
     private ConversionWizardRequest CreateConversionRequest()

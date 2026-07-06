@@ -124,7 +124,7 @@
           </Border>
 
           <Border Grid.Row="1" Background="#141820" Padding="12" Margin="0,14,0,0">
-            <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="12">
+            <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto" ColumnSpacing="12">
               <TextBox Watermark="Filtrar por título, ID ou região"
                        Text="{Binding LibrarySearchText, Mode=TwoWay}"
                        Height="34" />
@@ -137,6 +137,19 @@
                       Padding="12,7"
                       VerticalAlignment="Center">
                 <TextBlock Text="Limpar" />
+              </Button>
+              <Button Grid.Column="3"
+                      Command="{Binding RefreshDevicesCommand}"
+                      IsEnabled="{Binding !IsBusy}"
+                      Padding="12,7"
+                      VerticalAlignment="Center">
+                <TextBlock Text="Dispositivos" />
+              </Button>
+              <Button Grid.Column="4"
+                      Command="{Binding EjectSelectedDeviceCommand}"
+                      Padding="12,7"
+                      VerticalAlignment="Center">
+                <TextBlock Text="Ejetar" />
               </Button>
             </Grid>
           </Border>
@@ -203,7 +216,7 @@
           </StackPanel>
           <StackPanel Grid.Row="2" Spacing="4">
             <TextBlock Text="Dispositivo" FontWeight="SemiBold" Foreground="#F6F8FC" />
-            <TextBlock Text="{Binding DeviceSummary}" Foreground="#9BA8BA" />
+            <TextBlock Text="{Binding DeviceManagerSummary}" Foreground="#9BA8BA" TextWrapping="Wrap" />
           </StackPanel>
 
           <Border Grid.Row="3" Background="#141820" Padding="12">
@@ -363,17 +376,31 @@
           </Border>
 
           <ListBox Grid.Row="5"
-                   ItemsSource="{Binding Drives}"
+                   ItemsSource="{Binding Devices}"
+                   SelectedItem="{Binding SelectedDevice}"
                    Background="#141820"
                    BorderThickness="0">
             <ListBox.ItemTemplate>
-              <DataTemplate DataType="domain:UsbDrive">
-                <Grid RowDefinitions="Auto,Auto" Margin="8" MinHeight="44">
-                  <TextBlock Text="{Binding Name}" Foreground="#F6F8FC" FontWeight="SemiBold" />
+              <DataTemplate DataType="vm:DeviceInfoViewModel">
+                <Grid RowDefinitions="Auto,Auto,Auto" Margin="8" MinHeight="58">
+                  <Grid ColumnDefinitions="*,Auto">
+                    <TextBlock Text="{Binding Name}" Foreground="#F6F8FC" FontWeight="SemiBold" />
+                    <TextBlock Grid.Column="1"
+                               Text="{Binding Status}"
+                               Foreground="#8EA0B8"
+                               FontSize="11" />
+                  </Grid>
                   <TextBlock Grid.Row="1"
-                             Text="{Binding MountPath}"
+                             Text="{Binding MountPoint}"
                              Foreground="#8EA0B8"
                              TextTrimming="CharacterEllipsis" />
+                  <Grid Grid.Row="2" ColumnDefinitions="*,Auto" Margin="0,4,0,0">
+                    <TextBlock Text="{Binding FileSystem}" Foreground="#C7CEDA" FontSize="11" />
+                    <TextBlock Grid.Column="1"
+                               Text="{Binding FreeSpace}"
+                               Foreground="#C7CEDA"
+                               FontSize="11" />
+                  </Grid>
                 </Grid>
               </DataTemplate>
             </ListBox.ItemTemplate>
