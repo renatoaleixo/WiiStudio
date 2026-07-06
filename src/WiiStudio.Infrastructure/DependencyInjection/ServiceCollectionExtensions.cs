@@ -15,6 +15,7 @@ using WiiStudio.Infrastructure.Notifications;
 using WiiStudio.Infrastructure.Processes;
 using WiiStudio.Infrastructure.Profiles;
 using WiiStudio.Infrastructure.Settings;
+using WiiStudio.Infrastructure.Tasks;
 using WiiStudio.Infrastructure.Usb;
 using WiiStudio.Infrastructure.Wiimms;
 
@@ -61,12 +62,14 @@ public static class ServiceCollectionExtensions
         services.AddSingleton(new SettingsStoreOptions());
         services.AddSingleton(new ProfileStoreOptions());
         services.AddSingleton(new NotificationStoreOptions());
+        services.AddSingleton(new TaskManagerOptions());
         services.AddSingleton<IProcessRunner, ProcessRunner>();
         services.AddSingleton<IExportFileSystem, PhysicalExportFileSystem>();
         services.AddSingleton<IFavoriteGameStore, JsonFavoriteGameStore>();
         services.AddSingleton<ISettingsService, JsonSettingsService>();
         services.AddSingleton<IProfileService, JsonProfileService>();
         services.AddSingleton<INotificationService, JsonNotificationService>();
+        services.AddSingleton<ITaskManager, JsonTaskManager>();
         services.AddSingleton<ICoverCache, FileSystemCoverCache>();
         services.AddSingleton<ICoverProvider, NullCoverProvider>();
         services.AddSingleton<IMetadataCacheService, JsonMetadataCacheService>();
