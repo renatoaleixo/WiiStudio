@@ -14,6 +14,7 @@ namespace WiiStudio.App.ViewModels;
 
 public sealed partial class MainViewModel : ObservableObject
 {
+    private readonly ICommandPaletteService _commandPaletteService;
     private readonly DetectUsbDrivesUseCase _detectUsbDrivesUseCase;
     private readonly IConversionWizardService _conversionWizardService;
     private readonly IDashboardService _dashboardService;
@@ -154,7 +155,20 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private string _themeSummary = "Tema do sistema";
 
+    [ObservableProperty]
+    private CommandPaletteState _commandPaletteState = CommandPaletteState.Hidden;
+
+    [ObservableProperty]
+    private bool _isCommandPaletteOpen;
+
+    [ObservableProperty]
+    private string? _commandPaletteQuery;
+
+    [ObservableProperty]
+    private CommandPaletteItemViewModel? _selectedCommandPaletteItem;
+
     public MainViewModel(
+        ICommandPaletteService commandPaletteService,
         DetectUsbDrivesUseCase detectUsbDrivesUseCase,
         IConversionWizardService conversionWizardService,
         IDashboardService dashboardService,
@@ -164,8 +178,10 @@ public sealed partial class MainViewModel : ObservableObject
         ILibraryViewService libraryViewService,
         IMainWindowService mainWindowService,
         IStatusBarService statusBarService,
+        ShellCommandExecutor shellCommandExecutor,
         IThemeService themeService)
     {
+        _commandPaletteService = commandPaletteService;
         _detectUsbDrivesUseCase = detectUsbDrivesUseCase;
         _conversionWizardService = conversionWizardService;
         _dashboardService = dashboardService;
@@ -176,6 +192,7 @@ public sealed partial class MainViewModel : ObservableObject
         _mainWindowService = mainWindowService;
         _statusBarService = statusBarService;
         _themeService = themeService;
+        shellCommandExecutor.SetHandler(ExecuteShellCommandAsync);
 
         foreach (var module in _mainWindowService.Modules)
         {
@@ -198,6 +215,8 @@ public sealed partial class MainViewModel : ObservableObject
     public ObservableCollection<string> DockLayouts { get; } = new();
 
     public ObservableCollection<ThemeOptionViewModel> Themes { get; } = new();
+
+    public ObservableCollection<CommandPaletteItemViewModel> CommandPaletteItems { get; } = new();
 
     public ObservableCollection<LibraryGameItem> Games { get; } = new();
 
@@ -410,6 +429,94 @@ public sealed partial class MainViewModel : ObservableObject
         ThemeEngineState = snapshot.State;
         ThemeSummary = $"Tema {snapshot.ActiveTheme.Name}";
         await RefreshThemesAsync(cancellationToken);
+    }
+
+    [RelayCommand]
+    private async Task OpenCommandPaletteAsync(CancellationToken cancellationToken)
+    {
+        IsCommandPaletteOpen = true;
+        CommandPaletteState = CommandPaletteState.Opening;
+        CommandPaletteQuery = null;
+        await LoadRecentCommandPaletteItemsAsync(cancellationToken);
+        CommandPaletteState = CommandPaletteState.Searching;
+    }
+
+    [RelayCommand]
+    private void CloseCommandPalette()
+    {
+        IsCommandPaletteOpen = false;
+        CommandPaletteState = CommandPaletteState.Hidden;
+        CommandPaletteItems.Clear();
+        SelectedCommandPaletteItem = null;
+    }
+
+    [RelayCommand]
+    private async Task ExecuteSelectedCommandPaletteItemAsync(CancellationToken cancellationToken)
+    {
+        if (SelectedCommandPaletteItem is null)
+        {
+            return;
+        }
+
+        CommandPaletteState = CommandPaletteState.Executing;
+        try
+        {
+            await _commandPaletteService.ExecuteAsync(SelectedCommandPaletteItem.Id, cancellationToken);
+            CommandPaletteState = CommandPaletteState.Completed;
+            CloseCommandPalette();
+        }
+        catch
+        {
+            CommandPaletteState = CommandPaletteState.Failed;
+            throw;
+        }
+    }
+
+    private async Task ExecuteShellCommandAsync(string commandId, CancellationToken cancellationToken)
+    {
+        switch (commandId)
+        {
+            case "navigation.dashboard":
+                SelectedModule = Modules.FirstOrDefault(module => module.Id == ShellModuleId.Dashboard);
+                break;
+            case "navigation.library":
+                SelectedModule = Modules.FirstOrDefault(module => module.Id == ShellModuleId.Library);
+                break;
+            case "navigation.devices":
+                SelectedModule = Modules.FirstOrDefault(module => module.Id == ShellModuleId.Devices);
+                break;
+            case "navigation.diagnostics":
+                SelectedModule = Modules.FirstOrDefault(module => module.Id == ShellModuleId.Diagnostics);
+                break;
+            case "library.refresh":
+                await RefreshLibraryAsync(cancellationToken);
+                break;
+            case "devices.refresh":
+                await RefreshDevicesAsync(cancellationToken);
+                break;
+            case "import.open":
+                SelectedImportStep = ImportWizardStep.SelectingFiles;
+                StatusMessage = "Fluxo de importação pronto.";
+                break;
+            case "conversion.open":
+                SelectedConversionStep = ConversionWizardStep.SelectingSource;
+                StatusMessage = "Fluxo de conversão pronto.";
+                break;
+            case "theme.light":
+                await ApplyThemeByIdAsync("Light", cancellationToken);
+                break;
+            case "theme.dark":
+                await ApplyThemeByIdAsync("Dark", cancellationToken);
+                break;
+            case "dock.reset":
+                await ResetDockLayoutAsync(cancellationToken);
+                break;
+            case "status.refresh":
+                await RefreshStatusBarAsync(cancellationToken);
+                break;
+            default:
+                throw new InvalidOperationException($"Command '{commandId}' is not supported by the shell.");
+        }
     }
 
     [RelayCommand]
@@ -702,6 +809,16 @@ public sealed partial class MainViewModel : ObservableObject
             && ImportPreviewItems.All(item => item.Status != ImportWizardFileStatus.Error.ToString());
     }
 
+    partial void OnCommandPaletteQueryChanged(string? value)
+    {
+        if (!IsCommandPaletteOpen)
+        {
+            return;
+        }
+
+        _ = SearchCommandPaletteAsync(value, CancellationToken.None);
+    }
+
     partial void OnSelectedDeviceChanged(DeviceInfoViewModel? value)
     {
         DeviceManagerSummary = value is null
@@ -796,6 +913,42 @@ public sealed partial class MainViewModel : ObservableObject
             : $"{info.PendingNotifications} notificações";
         StatusMemory = info.MemoryUsage;
         StatusVersion = info.Version;
+    }
+
+    private async Task SearchCommandPaletteAsync(string? query, CancellationToken cancellationToken)
+    {
+        CommandPaletteState = CommandPaletteState.Searching;
+        var results = await _commandPaletteService.SearchAsync(query ?? string.Empty, cancellationToken);
+        ApplyCommandPaletteItems(results);
+    }
+
+    private async Task LoadRecentCommandPaletteItemsAsync(CancellationToken cancellationToken)
+    {
+        var recent = await _commandPaletteService.GetRecentCommandsAsync(cancellationToken);
+        if (recent.Count == 0)
+        {
+            recent = await _commandPaletteService.SearchAsync(string.Empty, cancellationToken);
+        }
+
+        ApplyCommandPaletteItems(recent);
+    }
+
+    private void ApplyCommandPaletteItems(IReadOnlyList<CommandItem> commands)
+    {
+        CommandPaletteItems.Clear();
+        foreach (var command in commands)
+        {
+            CommandPaletteItems.Add(new CommandPaletteItemViewModel(command));
+        }
+
+        SelectedCommandPaletteItem = CommandPaletteItems.FirstOrDefault();
+    }
+
+    private async Task ApplyThemeByIdAsync(string themeId, CancellationToken cancellationToken)
+    {
+        var snapshot = await _themeService.ApplyThemeAsync(themeId, cancellationToken);
+        ApplyAvaloniaTheme(snapshot.ActiveTheme.Id);
+        await RefreshThemesAsync(cancellationToken);
     }
 
     private static void ApplyAvaloniaTheme(string themeId)

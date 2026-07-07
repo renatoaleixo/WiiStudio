@@ -4,6 +4,7 @@ using Microsoft.Extensions.Hosting;
 using Serilog;
 using WiiStudio.App.ViewModels;
 using WiiStudio.App.Views;
+using WiiStudio.Application.Interfaces;
 using WiiStudio.Infrastructure.DependencyInjection;
 
 namespace WiiStudio.App;
@@ -42,7 +43,9 @@ public static class Program
                 services.AddWiiStudioApplication();
                 services.AddWiiStudioInfrastructure();
                 services.AddSingleton<MainWindow>();
-                services.AddTransient<MainViewModel>();
+                services.AddSingleton<ShellCommandExecutor>();
+                services.AddSingleton<MainViewModel>();
+                services.AddSingleton<ICommandExecutor>(services => services.GetRequiredService<ShellCommandExecutor>());
             });
     }
 }

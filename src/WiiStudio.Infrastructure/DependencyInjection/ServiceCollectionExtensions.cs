@@ -7,6 +7,7 @@ using WiiStudio.Application.UseCases;
 using WiiStudio.Application.Validators;
 using WiiStudio.Infrastructure.AppUpdates;
 using WiiStudio.Infrastructure.Backups;
+using WiiStudio.Infrastructure.Commands;
 using WiiStudio.Infrastructure.Covers;
 using WiiStudio.Infrastructure.Diagnostics;
 using WiiStudio.Infrastructure.Export;
@@ -58,6 +59,8 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IDashboardService, DashboardService>();
         services.AddSingleton<IStatusBarService, StatusBarService>();
         services.AddSingleton<IThemeService, JsonThemeService>();
+        services.AddSingleton<ICommandPaletteService, CommandPaletteService>();
+        services.AddSingleton<ICommandHistoryStore, JsonCommandHistoryStore>();
         services.AddTransient<IImportWizardService, ImportWizardService>();
         services.AddSingleton<IMainWindowService, JsonMainWindowService>();
         services.AddSingleton<ISearchPresetService, SearchPresetService>();
@@ -88,6 +91,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton(new MainWindowStoreOptions());
         services.AddSingleton(new DockLayoutStoreOptions());
         services.AddSingleton(new ThemeStoreOptions());
+        services.AddSingleton(new CommandHistoryStoreOptions());
         services.AddSingleton<IProcessRunner, ProcessRunner>();
         services.AddSingleton<IExportFileSystem, PhysicalExportFileSystem>();
         services.AddSingleton<IFavoriteGameStore, JsonFavoriteGameStore>();
