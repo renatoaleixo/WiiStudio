@@ -1,0 +1,72 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <ResourceDictionary.ThemeDictionaries>
+    <ResourceDictionary x:Key="Light">
+      <Color x:Key="WiiColorPrimary">#2563EB</Color>
+      <Color x:Key="WiiColorPrimaryHover">#1D4ED8</Color>
+      <Color x:Key="WiiColorSecondary">#64748B</Color>
+      <Color x:Key="WiiColorAccent">#0EA5E9</Color>
+      <Color x:Key="WiiColorBackground">#F5F7FB</Color>
+      <Color x:Key="WiiColorChrome">#FFFFFF</Color>
+      <Color x:Key="WiiColorSidebar">#EEF2F7</Color>
+      <Color x:Key="WiiColorSurface">#FFFFFF</Color>
+      <Color x:Key="WiiColorSurfaceAlt">#E8EEF6</Color>
+      <Color x:Key="WiiColorSurfaceRaised">#FFFFFF</Color>
+      <Color x:Key="WiiColorBorder">#CBD5E1</Color>
+      <Color x:Key="WiiColorTextPrimary">#172033</Color>
+      <Color x:Key="WiiColorTextSecondary">#475569</Color>
+      <Color x:Key="WiiColorTextMuted">#64748B</Color>
+      <Color x:Key="WiiColorSuccess">#15803D</Color>
+      <Color x:Key="WiiColorWarning">#B45309</Color>
+      <Color x:Key="WiiColorError">#DC2626</Color>
+      <Color x:Key="WiiColorInfo">#0369A1</Color>
+      <Color x:Key="WiiColorDisabled">#94A3B8</Color>
+      <Color x:Key="WiiColorFocus">#60A5FA</Color>
+    </ResourceDictionary>
+
+    <ResourceDictionary x:Key="Dark">
+      <Color x:Key="WiiColorPrimary">#6EA8FF</Color>
+      <Color x:Key="WiiColorPrimaryHover">#8BB9FF</Color>
+      <Color x:Key="WiiColorSecondary">#9BA8BA</Color>
+      <Color x:Key="WiiColorAccent">#38BDF8</Color>
+      <Color x:Key="WiiColorBackground">#101319</Color>
+      <Color x:Key="WiiColorChrome">#1A1F28</Color>
+      <Color x:Key="WiiColorSidebar">#151922</Color>
+      <Color x:Key="WiiColorSurface">#171C25</Color>
+      <Color x:Key="WiiColorSurfaceAlt">#141820</Color>
+      <Color x:Key="WiiColorSurfaceRaised">#202632</Color>
+      <Color x:Key="WiiColorBorder">#242B36</Color>
+      <Color x:Key="WiiColorTextPrimary">#F6F8FC</Color>
+      <Color x:Key="WiiColorTextSecondary">#C7CEDA</Color>
+      <Color x:Key="WiiColorTextMuted">#8EA0B8</Color>
+      <Color x:Key="WiiColorSuccess">#7BD88F</Color>
+      <Color x:Key="WiiColorWarning">#FBBF24</Color>
+      <Color x:Key="WiiColorError">#F87171</Color>
+      <Color x:Key="WiiColorInfo">#7DD3FC</Color>
+      <Color x:Key="WiiColorDisabled">#536174</Color>
+      <Color x:Key="WiiColorFocus">#93C5FD</Color>
+    </ResourceDictionary>
+  </ResourceDictionary.ThemeDictionaries>
+
+  <SolidColorBrush x:Key="WiiBrushPrimary" Color="{DynamicResource WiiColorPrimary}" />
+  <SolidColorBrush x:Key="WiiBrushPrimaryHover" Color="{DynamicResource WiiColorPrimaryHover}" />
+  <SolidColorBrush x:Key="WiiBrushSecondary" Color="{DynamicResource WiiColorSecondary}" />
+  <SolidColorBrush x:Key="WiiBrushAccent" Color="{DynamicResource WiiColorAccent}" />
+  <SolidColorBrush x:Key="WiiBrushBackground" Color="{DynamicResource WiiColorBackground}" />
+  <SolidColorBrush x:Key="WiiBrushChrome" Color="{DynamicResource WiiColorChrome}" />
+  <SolidColorBrush x:Key="WiiBrushSidebar" Color="{DynamicResource WiiColorSidebar}" />
+  <SolidColorBrush x:Key="WiiBrushSurface" Color="{DynamicResource WiiColorSurface}" />
+  <SolidColorBrush x:Key="WiiBrushSurfaceAlt" Color="{DynamicResource WiiColorSurfaceAlt}" />
+  <SolidColorBrush x:Key="WiiBrushSurfaceRaised" Color="{DynamicResource WiiColorSurfaceRaised}" />
+  <SolidColorBrush x:Key="WiiBrushBorder" Color="{DynamicResource WiiColorBorder}" />
+  <SolidColorBrush x:Key="WiiBrushTextPrimary" Color="{DynamicResource WiiColorTextPrimary}" />
+  <SolidColorBrush x:Key="WiiBrushTextSecondary" Color="{DynamicResource WiiColorTextSecondary}" />
+  <SolidColorBrush x:Key="WiiBrushTextMuted" Color="{DynamicResource WiiColorTextMuted}" />
+  <SolidColorBrush x:Key="WiiBrushSuccess" Color="{DynamicResource WiiColorSuccess}" />
+  <SolidColorBrush x:Key="WiiBrushWarning" Color="{DynamicResource WiiColorWarning}" />
+  <SolidColorBrush x:Key="WiiBrushError" Color="{DynamicResource WiiColorError}" />
+  <SolidColorBrush x:Key="WiiBrushInfo" Color="{DynamicResource WiiColorInfo}" />
+  <SolidColorBrush x:Key="WiiBrushDisabled" Color="{DynamicResource WiiColorDisabled}" />
+  <SolidColorBrush x:Key="WiiBrushFocus" Color="{DynamicResource WiiColorFocus}" />
+  <SolidColorBrush x:Key="WiiBrushTransparent" Color="Transparent" />
+</ResourceDictionary>

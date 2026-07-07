@@ -1,0 +1,14 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Style Selector="ListBox">
+    <Setter Property="Background" Value="{DynamicResource WiiBrushTransparent}" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="FontFamily" Value="{StaticResource WiiFontFamily}" />
+    <Setter Property="FontSize" Value="{StaticResource WiiFontSizeBody}" />
+  </Style>
+
+  <Style Selector="ListBoxItem">
+    <Setter Property="MinHeight" Value="{StaticResource WiiInteractiveTargetMin}" />
+    <Setter Property="Foreground" Value="{DynamicResource WiiBrushTextPrimary}" />
+  </Style>
+</Styles>

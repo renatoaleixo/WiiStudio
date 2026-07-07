@@ -1,0 +1,25 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Style Selector="Border.card">
+    <Setter Property="Background" Value="{DynamicResource WiiBrushSurface}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource WiiBrushBorder}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource WiiRadiusLarge}" />
+    <Setter Property="BoxShadow" Value="0 0 0 0 Transparent" />
+  </Style>
+
+  <Style Selector="Border.panel">
+    <Setter Property="Background" Value="{DynamicResource WiiBrushSurfaceAlt}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource WiiBrushBorder}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource WiiRadiusMedium}" />
+  </Style>
+
+  <Style Selector="Border.overlay">
+    <Setter Property="Background" Value="{DynamicResource WiiBrushSurfaceRaised}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource WiiBrushBorder}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource WiiRadiusLarge}" />
+    <Setter Property="BoxShadow" Value="{StaticResource WiiShadowMedium}" />
+  </Style>
+</Styles>

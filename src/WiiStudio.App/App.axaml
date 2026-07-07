@@ -3,5 +3,6 @@
              x:Class="WiiStudio.App.App">
   <Application.Styles>
     <FluentTheme />
+    <StyleInclude Source="avares://WiiStudio.App/Styles/DesignSystem.axaml" />
   </Application.Styles>
 </Application>

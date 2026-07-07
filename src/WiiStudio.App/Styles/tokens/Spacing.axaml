@@ -1,0 +1,25 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=System.Runtime">
+  <sys:Double x:Key="WiiSpace4">4</sys:Double>
+  <sys:Double x:Key="WiiSpace8">8</sys:Double>
+  <sys:Double x:Key="WiiSpace12">12</sys:Double>
+  <sys:Double x:Key="WiiSpace16">16</sys:Double>
+  <sys:Double x:Key="WiiSpace24">24</sys:Double>
+  <sys:Double x:Key="WiiSpace32">32</sys:Double>
+  <sys:Double x:Key="WiiSpace48">48</sys:Double>
+  <sys:Double x:Key="WiiSpace64">64</sys:Double>
+
+  <Thickness x:Key="WiiInsetXs">4</Thickness>
+  <Thickness x:Key="WiiInsetSm">8</Thickness>
+  <Thickness x:Key="WiiInsetMd">12</Thickness>
+  <Thickness x:Key="WiiInsetLg">16</Thickness>
+  <Thickness x:Key="WiiInsetToolbar">18,14</Thickness>
+  <Thickness x:Key="WiiInsetStatus">14,8</Thickness>
+  <Thickness x:Key="WiiButtonPadding">14,8</Thickness>
+  <Thickness x:Key="WiiButtonPaddingCompact">10,7</Thickness>
+
+  <sys:Double x:Key="WiiControlHeight">34</sys:Double>
+  <sys:Double x:Key="WiiInputHeight">36</sys:Double>
+  <sys:Double x:Key="WiiInteractiveTargetMin">32</sys:Double>
+</ResourceDictionary>

@@ -1,0 +1,19 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Styles.Resources>
+    <ResourceDictionary>
+      <ResourceDictionary.MergedDictionaries>
+        <ResourceInclude Source="avares://WiiStudio.App/Styles/tokens/Colors.axaml" />
+        <ResourceInclude Source="avares://WiiStudio.App/Styles/tokens/Typography.axaml" />
+        <ResourceInclude Source="avares://WiiStudio.App/Styles/tokens/Spacing.axaml" />
+        <ResourceInclude Source="avares://WiiStudio.App/Styles/tokens/Radius.axaml" />
+        <ResourceInclude Source="avares://WiiStudio.App/Styles/tokens/Elevation.axaml" />
+      </ResourceDictionary.MergedDictionaries>
+    </ResourceDictionary>
+  </Styles.Resources>
+
+  <StyleInclude Source="avares://WiiStudio.App/Styles/components/Buttons.axaml" />
+  <StyleInclude Source="avares://WiiStudio.App/Styles/components/Inputs.axaml" />
+  <StyleInclude Source="avares://WiiStudio.App/Styles/components/Cards.axaml" />
+  <StyleInclude Source="avares://WiiStudio.App/Styles/components/Lists.axaml" />
+</Styles>
