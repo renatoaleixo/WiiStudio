@@ -10,7 +10,7 @@ consistência, qualidade e facilidade de manutenção.
 
 # Convenções Gerais
 
--   Linguagem: C# 13 / .NET 9
+-   Linguagem: C# / .NET 10
 -   Nullable: habilitado
 -   ImplicitUsings: habilitado
 -   Warnings tratados como erros

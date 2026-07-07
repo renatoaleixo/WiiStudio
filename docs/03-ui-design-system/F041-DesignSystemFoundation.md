@@ -1,9 +1,9 @@
 
 # F041 - Design System Foundation
 
-> Feature ID: F041  
-> Status: Ready for Development  
-> Priority: Critical  
+> Feature ID: F041
+> Status: Ready for Development
+> Priority: Critical
 > Epic: Design System
 
 # Objetivo
