@@ -52,6 +52,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IApplicationUpdateService, ApplicationUpdateService>();
         services.AddSingleton<IBackupService, ZipBackupService>();
         services.AddSingleton<ILoggingCenter, JsonLineLoggingCenter>();
+        services.AddSingleton<IDockService, JsonDockService>();
         services.AddSingleton<IDeviceManagerService, DeviceManagerService>();
         services.AddSingleton<IDashboardService, DashboardService>();
         services.AddSingleton<IStatusBarService, StatusBarService>();
@@ -83,6 +84,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton(new BackupServiceOptions());
         services.AddSingleton(new LoggingCenterOptions());
         services.AddSingleton(new MainWindowStoreOptions());
+        services.AddSingleton(new DockLayoutStoreOptions());
         services.AddSingleton<IProcessRunner, ProcessRunner>();
         services.AddSingleton<IExportFileSystem, PhysicalExportFileSystem>();
         services.AddSingleton<IFavoriteGameStore, JsonFavoriteGameStore>();

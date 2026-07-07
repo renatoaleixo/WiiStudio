@@ -31,6 +31,23 @@
           <Button Command="{Binding ToggleSidePanelCommand}" Padding="14,8">
             <TextBlock Text="Painel" />
           </Button>
+          <TextBox Text="{Binding DockLayoutName, Mode=TwoWay}"
+                   Width="110"
+                   Height="34"
+                   Watermark="Layout" />
+          <ComboBox ItemsSource="{Binding DockLayouts}"
+                    SelectedItem="{Binding SelectedDockLayout}"
+                    Width="132"
+                    Height="34" />
+          <Button Command="{Binding SaveDockLayoutCommand}" Padding="10,8">
+            <TextBlock Text="Salvar" />
+          </Button>
+          <Button Command="{Binding LoadDockLayoutCommand}" Padding="10,8">
+            <TextBlock Text="Carregar" />
+          </Button>
+          <Button Command="{Binding ResetDockLayoutCommand}" Padding="10,8">
+            <TextBlock Text="Reset" />
+          </Button>
         </StackPanel>
 
         <TextBox Grid.Column="2"
@@ -300,7 +317,7 @@
               Background="#151922"
               Padding="16"
               IsVisible="{Binding IsSidePanelVisible}">
-        <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,*" RowSpacing="18">
+        <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,*" RowSpacing="18">
           <StackPanel Spacing="4">
             <TextBlock Text="Tarefas" FontWeight="SemiBold" Foreground="#F6F8FC" />
             <TextBlock Text="{Binding TaskSummary}" Foreground="#9BA8BA" />
@@ -313,8 +330,12 @@
             <TextBlock Text="Dispositivo" FontWeight="SemiBold" Foreground="#F6F8FC" />
             <TextBlock Text="{Binding DeviceManagerSummary}" Foreground="#9BA8BA" TextWrapping="Wrap" />
           </StackPanel>
+          <StackPanel Grid.Row="3" Spacing="4">
+            <TextBlock Text="Layout" FontWeight="SemiBold" Foreground="#F6F8FC" />
+            <TextBlock Text="{Binding DockLayoutSummary}" Foreground="#9BA8BA" TextWrapping="Wrap" />
+          </StackPanel>
 
-          <Border Grid.Row="3" Background="#141820" Padding="12">
+          <Border Grid.Row="4" Background="#141820" Padding="12">
             <StackPanel Spacing="10">
               <Grid ColumnDefinitions="*,Auto">
                 <TextBlock Text="Importação"
@@ -393,7 +414,7 @@
             </StackPanel>
           </Border>
 
-          <Border Grid.Row="4" Background="#141820" Padding="12">
+          <Border Grid.Row="5" Background="#141820" Padding="12">
             <StackPanel Spacing="10">
               <Grid ColumnDefinitions="*,Auto">
                 <TextBlock Text="Conversão"
@@ -470,7 +491,7 @@
             </StackPanel>
           </Border>
 
-          <ListBox Grid.Row="5"
+          <ListBox Grid.Row="6"
                    ItemsSource="{Binding Devices}"
                    SelectedItem="{Binding SelectedDevice}"
                    Background="#141820"

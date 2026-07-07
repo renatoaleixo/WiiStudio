@@ -15,6 +15,7 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly IConversionWizardService _conversionWizardService;
     private readonly IDashboardService _dashboardService;
     private readonly IDeviceManagerService _deviceManagerService;
+    private readonly IDockService _dockService;
     private readonly IImportWizardService _importWizardService;
     private readonly ILibraryViewService _libraryViewService;
     private readonly IMainWindowService _mainWindowService;
@@ -131,11 +132,21 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private string _statusVersion = "0.0.0";
 
+    [ObservableProperty]
+    private string _dockLayoutName = "Default";
+
+    [ObservableProperty]
+    private string? _selectedDockLayout;
+
+    [ObservableProperty]
+    private string _dockLayoutSummary = "Layout Default";
+
     public MainViewModel(
         DetectUsbDrivesUseCase detectUsbDrivesUseCase,
         IConversionWizardService conversionWizardService,
         IDashboardService dashboardService,
         IDeviceManagerService deviceManagerService,
+        IDockService dockService,
         IImportWizardService importWizardService,
         ILibraryViewService libraryViewService,
         IMainWindowService mainWindowService,
@@ -145,6 +156,7 @@ public sealed partial class MainViewModel : ObservableObject
         _conversionWizardService = conversionWizardService;
         _dashboardService = dashboardService;
         _deviceManagerService = deviceManagerService;
+        _dockService = dockService;
         _importWizardService = importWizardService;
         _libraryViewService = libraryViewService;
         _mainWindowService = mainWindowService;
@@ -167,6 +179,8 @@ public sealed partial class MainViewModel : ObservableObject
     public ObservableCollection<DashboardActivityViewModel> DashboardActivities { get; } = new();
 
     public ObservableCollection<DashboardQuickActionViewModel> DashboardQuickActions { get; } = new();
+
+    public ObservableCollection<string> DockLayouts { get; } = new();
 
     public ObservableCollection<LibraryGameItem> Games { get; } = new();
 
@@ -239,6 +253,7 @@ public sealed partial class MainViewModel : ObservableObject
         await RefreshDevicesAsync(cancellationToken);
         await RefreshLibraryAsync(cancellationToken);
         await RefreshDashboardAsync(cancellationToken);
+        await RefreshDockLayoutsAsync(cancellationToken);
         await RefreshStatusBarAsync(cancellationToken);
     }
 
@@ -289,6 +304,56 @@ public sealed partial class MainViewModel : ObservableObject
         StatusBarState = StatusBarState.Updating;
         var info = await _statusBarService.RefreshAsync(cancellationToken);
         ApplyStatusBar(info);
+    }
+
+    [RelayCommand]
+    private async Task RefreshDockLayoutsAsync(CancellationToken cancellationToken)
+    {
+        var layouts = await _dockService.GetLayoutsAsync(cancellationToken);
+        DockLayouts.Clear();
+
+        foreach (var layout in layouts)
+        {
+            DockLayouts.Add(layout);
+        }
+
+        SelectedDockLayout ??= DockLayouts.FirstOrDefault();
+        DockLayoutSummary = $"{DockLayouts.Count} layout(s)";
+    }
+
+    [RelayCommand]
+    private async Task SaveDockLayoutAsync(CancellationToken cancellationToken)
+    {
+        var layoutName = string.IsNullOrWhiteSpace(DockLayoutName) ? "Default" : DockLayoutName;
+        await _dockService.SaveLayoutAsync(layoutName, cancellationToken);
+        DockLayoutName = layoutName;
+        SelectedDockLayout = layoutName;
+        DockLayoutSummary = $"Layout {layoutName} salvo.";
+        await RefreshDockLayoutsAsync(cancellationToken);
+    }
+
+    [RelayCommand]
+    private async Task LoadDockLayoutAsync(CancellationToken cancellationToken)
+    {
+        var layoutName = SelectedDockLayout ?? DockLayoutName;
+        if (string.IsNullOrWhiteSpace(layoutName))
+        {
+            return;
+        }
+
+        await _dockService.LoadLayoutAsync(layoutName, cancellationToken);
+        DockLayoutName = layoutName;
+        DockLayoutSummary = $"Layout {layoutName} carregado.";
+    }
+
+    [RelayCommand]
+    private async Task ResetDockLayoutAsync(CancellationToken cancellationToken)
+    {
+        await _dockService.ResetLayoutAsync(cancellationToken);
+        DockLayoutName = "Default";
+        SelectedDockLayout = "Default";
+        DockLayoutSummary = "Layout Default restaurado.";
+        await RefreshDockLayoutsAsync(cancellationToken);
     }
 
     [RelayCommand]
