@@ -48,6 +48,19 @@
           <Button Command="{Binding ResetDockLayoutCommand}" Padding="10,8">
             <TextBlock Text="Reset" />
           </Button>
+          <ComboBox ItemsSource="{Binding Themes}"
+                    SelectedItem="{Binding SelectedTheme}"
+                    Width="120"
+                    Height="34">
+            <ComboBox.ItemTemplate>
+              <DataTemplate DataType="vm:ThemeOptionViewModel">
+                <TextBlock Text="{Binding Name}" />
+              </DataTemplate>
+            </ComboBox.ItemTemplate>
+          </ComboBox>
+          <Button Command="{Binding ApplySelectedThemeCommand}" Padding="10,8">
+            <TextBlock Text="Tema" />
+          </Button>
         </StackPanel>
 
         <TextBox Grid.Column="2"
@@ -317,7 +330,7 @@
               Background="#151922"
               Padding="16"
               IsVisible="{Binding IsSidePanelVisible}">
-        <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,*" RowSpacing="18">
+        <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,*" RowSpacing="18">
           <StackPanel Spacing="4">
             <TextBlock Text="Tarefas" FontWeight="SemiBold" Foreground="#F6F8FC" />
             <TextBlock Text="{Binding TaskSummary}" Foreground="#9BA8BA" />
@@ -334,8 +347,12 @@
             <TextBlock Text="Layout" FontWeight="SemiBold" Foreground="#F6F8FC" />
             <TextBlock Text="{Binding DockLayoutSummary}" Foreground="#9BA8BA" TextWrapping="Wrap" />
           </StackPanel>
+          <StackPanel Grid.Row="4" Spacing="4">
+            <TextBlock Text="Tema" FontWeight="SemiBold" Foreground="#F6F8FC" />
+            <TextBlock Text="{Binding ThemeSummary}" Foreground="#9BA8BA" TextWrapping="Wrap" />
+          </StackPanel>
 
-          <Border Grid.Row="4" Background="#141820" Padding="12">
+          <Border Grid.Row="5" Background="#141820" Padding="12">
             <StackPanel Spacing="10">
               <Grid ColumnDefinitions="*,Auto">
                 <TextBlock Text="Importação"
@@ -414,7 +431,7 @@
             </StackPanel>
           </Border>
 
-          <Border Grid.Row="5" Background="#141820" Padding="12">
+          <Border Grid.Row="6" Background="#141820" Padding="12">
             <StackPanel Spacing="10">
               <Grid ColumnDefinitions="*,Auto">
                 <TextBlock Text="Conversão"
@@ -491,7 +508,7 @@
             </StackPanel>
           </Border>
 
-          <ListBox Grid.Row="6"
+          <ListBox Grid.Row="7"
                    ItemsSource="{Binding Devices}"
                    SelectedItem="{Binding SelectedDevice}"
                    Background="#141820"

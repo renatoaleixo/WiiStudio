@@ -20,6 +20,7 @@ using WiiStudio.Infrastructure.Profiles;
 using WiiStudio.Infrastructure.Settings;
 using WiiStudio.Infrastructure.Shell;
 using WiiStudio.Infrastructure.Tasks;
+using WiiStudio.Infrastructure.Themes;
 using WiiStudio.Infrastructure.Usb;
 using WiiStudio.Infrastructure.Wiimms;
 
@@ -56,6 +57,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IDeviceManagerService, DeviceManagerService>();
         services.AddSingleton<IDashboardService, DashboardService>();
         services.AddSingleton<IStatusBarService, StatusBarService>();
+        services.AddSingleton<IThemeService, JsonThemeService>();
         services.AddTransient<IImportWizardService, ImportWizardService>();
         services.AddSingleton<IMainWindowService, JsonMainWindowService>();
         services.AddSingleton<ISearchPresetService, SearchPresetService>();
@@ -85,6 +87,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton(new LoggingCenterOptions());
         services.AddSingleton(new MainWindowStoreOptions());
         services.AddSingleton(new DockLayoutStoreOptions());
+        services.AddSingleton(new ThemeStoreOptions());
         services.AddSingleton<IProcessRunner, ProcessRunner>();
         services.AddSingleton<IExportFileSystem, PhysicalExportFileSystem>();
         services.AddSingleton<IFavoriteGameStore, JsonFavoriteGameStore>();

@@ -1,4 +1,6 @@
 using System.Collections.ObjectModel;
+using Avalonia;
+using Avalonia.Styling;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using WiiStudio.Application.DTOs;
@@ -6,6 +8,7 @@ using WiiStudio.Application.Interfaces;
 using WiiStudio.Application.UseCases;
 using WiiStudio.Domain.Entities;
 using WiiStudio.Domain.Enums;
+using AvaloniaApp = Avalonia.Application;
 
 namespace WiiStudio.App.ViewModels;
 
@@ -20,6 +23,7 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly ILibraryViewService _libraryViewService;
     private readonly IMainWindowService _mainWindowService;
     private readonly IStatusBarService _statusBarService;
+    private readonly IThemeService _themeService;
 
     [ObservableProperty]
     private string _statusMessage = "Pronto";
@@ -141,6 +145,15 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private string _dockLayoutSummary = "Layout Default";
 
+    [ObservableProperty]
+    private ThemeEngineState _themeEngineState = ThemeEngineState.Loading;
+
+    [ObservableProperty]
+    private ThemeOptionViewModel? _selectedTheme;
+
+    [ObservableProperty]
+    private string _themeSummary = "Tema do sistema";
+
     public MainViewModel(
         DetectUsbDrivesUseCase detectUsbDrivesUseCase,
         IConversionWizardService conversionWizardService,
@@ -150,7 +163,8 @@ public sealed partial class MainViewModel : ObservableObject
         IImportWizardService importWizardService,
         ILibraryViewService libraryViewService,
         IMainWindowService mainWindowService,
-        IStatusBarService statusBarService)
+        IStatusBarService statusBarService,
+        IThemeService themeService)
     {
         _detectUsbDrivesUseCase = detectUsbDrivesUseCase;
         _conversionWizardService = conversionWizardService;
@@ -161,6 +175,7 @@ public sealed partial class MainViewModel : ObservableObject
         _libraryViewService = libraryViewService;
         _mainWindowService = mainWindowService;
         _statusBarService = statusBarService;
+        _themeService = themeService;
 
         foreach (var module in _mainWindowService.Modules)
         {
@@ -181,6 +196,8 @@ public sealed partial class MainViewModel : ObservableObject
     public ObservableCollection<DashboardQuickActionViewModel> DashboardQuickActions { get; } = new();
 
     public ObservableCollection<string> DockLayouts { get; } = new();
+
+    public ObservableCollection<ThemeOptionViewModel> Themes { get; } = new();
 
     public ObservableCollection<LibraryGameItem> Games { get; } = new();
 
@@ -254,6 +271,7 @@ public sealed partial class MainViewModel : ObservableObject
         await RefreshLibraryAsync(cancellationToken);
         await RefreshDashboardAsync(cancellationToken);
         await RefreshDockLayoutsAsync(cancellationToken);
+        await RefreshThemesAsync(cancellationToken);
         await RefreshStatusBarAsync(cancellationToken);
     }
 
@@ -354,6 +372,44 @@ public sealed partial class MainViewModel : ObservableObject
         SelectedDockLayout = "Default";
         DockLayoutSummary = "Layout Default restaurado.";
         await RefreshDockLayoutsAsync(cancellationToken);
+    }
+
+    [RelayCommand]
+    private async Task RefreshThemesAsync(CancellationToken cancellationToken)
+    {
+        ThemeEngineState = ThemeEngineState.Loading;
+        var themes = await _themeService.GetThemesAsync(cancellationToken);
+        Themes.Clear();
+
+        foreach (var theme in themes)
+        {
+            var option = new ThemeOptionViewModel(theme);
+            Themes.Add(option);
+            if (option.IsActive)
+            {
+                SelectedTheme = option;
+            }
+        }
+
+        ApplyAvaloniaTheme(SelectedTheme?.Id ?? "System");
+        ThemeEngineState = ThemeEngineState.Ready;
+        ThemeSummary = SelectedTheme is null ? "Tema do sistema" : $"Tema {SelectedTheme.Name}";
+    }
+
+    [RelayCommand]
+    private async Task ApplySelectedThemeAsync(CancellationToken cancellationToken)
+    {
+        if (SelectedTheme is null)
+        {
+            return;
+        }
+
+        ThemeEngineState = ThemeEngineState.Applying;
+        var snapshot = await _themeService.ApplyThemeAsync(SelectedTheme.Id, cancellationToken);
+        ApplyAvaloniaTheme(snapshot.ActiveTheme.Id);
+        ThemeEngineState = snapshot.State;
+        ThemeSummary = $"Tema {snapshot.ActiveTheme.Name}";
+        await RefreshThemesAsync(cancellationToken);
     }
 
     [RelayCommand]
@@ -740,6 +796,21 @@ public sealed partial class MainViewModel : ObservableObject
             : $"{info.PendingNotifications} notificações";
         StatusMemory = info.MemoryUsage;
         StatusVersion = info.Version;
+    }
+
+    private static void ApplyAvaloniaTheme(string themeId)
+    {
+        if (AvaloniaApp.Current is null)
+        {
+            return;
+        }
+
+        AvaloniaApp.Current.RequestedThemeVariant = themeId switch
+        {
+            "Light" => ThemeVariant.Light,
+            "Dark" => ThemeVariant.Dark,
+            _ => ThemeVariant.Default
+        };
     }
 
     private IReadOnlyList<string> ParseImportSourcePaths()
