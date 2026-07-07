@@ -1,0 +1,12 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=System.Runtime">
+  <sys:Double x:Key="WiiFontSizeDisplay">28</sys:Double>
+  <sys:Double x:Key="WiiFontSizeHeading">24</sys:Double>
+  <sys:Double x:Key="WiiFontSizeTitle">22</sys:Double>
+  <sys:Double x:Key="WiiFontSizeSubtitle">18</sys:Double>
+  <sys:Double x:Key="WiiFontSizeBody">14</sys:Double>
+  <sys:Double x:Key="WiiFontSizeCaption">12</sys:Double>
+  <sys:Double x:Key="WiiFontSizeMicro">11</sys:Double>
+  <sys:Double x:Key="WiiFontSizeCode">13</sys:Double>
+</ResourceDictionary>

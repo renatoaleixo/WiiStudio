@@ -22,3 +22,5 @@ This document defines how UI work should consume the WiiStudio design system.
 ## Current Foundation
 
 F041 introduces the shared resource dictionaries and migrates the main shell colors to semantic tokens. Later design system features refine the token set and component-specific details.
+
+F042-F046 extend this foundation with official color palettes, typography resources, icon registrations, spacing/layout tokens, and button variants. See `DESIGN_SYSTEM_REFERENCE.md` for the implemented resource names.

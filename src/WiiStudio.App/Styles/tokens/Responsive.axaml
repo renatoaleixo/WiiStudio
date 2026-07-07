@@ -1,0 +1,7 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <x:String x:Key="WiiResponsiveSmall">Compact navigation, single-column content, hidden optional panels.</x:String>
+  <x:String x:Key="WiiResponsiveMedium">Standard shell layout with sidebar, workspace, and optional right panel.</x:String>
+  <x:String x:Key="WiiResponsiveLarge">Expanded workspace and denser dashboard composition.</x:String>
+  <x:String x:Key="WiiResponsiveUltraWide">Additional panels may remain visible without crowding the workspace.</x:String>
+</ResourceDictionary>

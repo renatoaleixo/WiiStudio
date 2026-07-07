@@ -1,0 +1,11 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=System.Runtime">
+  <sys:Double x:Key="WiiButtonHeightSmall">28</sys:Double>
+  <sys:Double x:Key="WiiButtonHeightMedium">36</sys:Double>
+  <sys:Double x:Key="WiiButtonHeightLarge">44</sys:Double>
+  <sys:Double x:Key="WiiButtonHeightExtraLarge">52</sys:Double>
+  <sys:Double x:Key="WiiIconButtonSizeSmall">28</sys:Double>
+  <sys:Double x:Key="WiiIconButtonSizeMedium">36</sys:Double>
+  <sys:Double x:Key="WiiIconButtonSizeLarge">44</sys:Double>
+</ResourceDictionary>

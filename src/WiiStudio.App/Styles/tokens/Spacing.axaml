@@ -1,6 +1,7 @@
 <ResourceDictionary xmlns="https://github.com/avaloniaui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:sys="clr-namespace:System;assembly=System.Runtime">
+  <sys:Double x:Key="WiiSpace2">2</sys:Double>
   <sys:Double x:Key="WiiSpace4">4</sys:Double>
   <sys:Double x:Key="WiiSpace8">8</sys:Double>
   <sys:Double x:Key="WiiSpace12">12</sys:Double>
@@ -16,8 +17,24 @@
   <Thickness x:Key="WiiInsetLg">16</Thickness>
   <Thickness x:Key="WiiInsetToolbar">18,14</Thickness>
   <Thickness x:Key="WiiInsetStatus">14,8</Thickness>
+  <Thickness x:Key="WiiInsetTableHeader">12,10</Thickness>
   <Thickness x:Key="WiiButtonPadding">14,8</Thickness>
   <Thickness x:Key="WiiButtonPaddingCompact">10,7</Thickness>
+  <Thickness x:Key="WiiButtonPaddingLarge">18,11</Thickness>
+  <Thickness x:Key="WiiToolbarItemMargin">0,0,8,0</Thickness>
+  <Thickness x:Key="WiiSidebarHeadingMargin">8,4,8,12</Thickness>
+  <Thickness x:Key="WiiModuleItemMargin">6</Thickness>
+  <Thickness x:Key="WiiWorkspaceMargin">22</Thickness>
+  <Thickness x:Key="WiiWorkspaceContentMargin">0,22,0,0</Thickness>
+  <Thickness x:Key="WiiSectionTopMargin">0,14,0,0</Thickness>
+  <Thickness x:Key="WiiDashboardCardMargin">0,0,10,0</Thickness>
+  <Thickness x:Key="WiiMetricValueMargin">0,6,0,0</Thickness>
+  <Thickness x:Key="WiiListItemCompactMargin">0,4</Thickness>
+  <Thickness x:Key="WiiListButtonMargin">0,4,0,0</Thickness>
+  <Thickness x:Key="WiiLibraryRowMargin">12,9</Thickness>
+  <Thickness x:Key="WiiDeviceDetailMargin">0,4,0,0</Thickness>
+  <Thickness x:Key="WiiCommandPaletteMargin">0,36,0,0</Thickness>
+  <Thickness x:Key="WiiCommandPaletteItemMargin">10,7</Thickness>
 
   <sys:Double x:Key="WiiControlHeight">34</sys:Double>
   <sys:Double x:Key="WiiInputHeight">36</sys:Double>

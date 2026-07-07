@@ -1,0 +1,29 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Style Selector="Button.icon">
+    <Setter Property="Width" Value="{StaticResource WiiIconButtonSizeMedium}" />
+    <Setter Property="Height" Value="{StaticResource WiiIconButtonSizeMedium}" />
+    <Setter Property="MinWidth" Value="{StaticResource WiiIconButtonSizeMedium}" />
+    <Setter Property="MinHeight" Value="{StaticResource WiiIconButtonSizeMedium}" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="HorizontalContentAlignment" Value="Center" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+    <Setter Property="Background" Value="{DynamicResource WiiBrushSurfaceRaised}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource WiiBrushBorder}" />
+    <Setter Property="CornerRadius" Value="{StaticResource WiiRadiusMedium}" />
+  </Style>
+
+  <Style Selector="Button.icon.small">
+    <Setter Property="Width" Value="{StaticResource WiiIconButtonSizeSmall}" />
+    <Setter Property="Height" Value="{StaticResource WiiIconButtonSizeSmall}" />
+    <Setter Property="MinWidth" Value="{StaticResource WiiIconButtonSizeSmall}" />
+    <Setter Property="MinHeight" Value="{StaticResource WiiIconButtonSizeSmall}" />
+  </Style>
+
+  <Style Selector="Button.icon.large">
+    <Setter Property="Width" Value="{StaticResource WiiIconButtonSizeLarge}" />
+    <Setter Property="Height" Value="{StaticResource WiiIconButtonSizeLarge}" />
+    <Setter Property="MinWidth" Value="{StaticResource WiiIconButtonSizeLarge}" />
+    <Setter Property="MinHeight" Value="{StaticResource WiiIconButtonSizeLarge}" />
+  </Style>
+</Styles>

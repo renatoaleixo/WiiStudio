@@ -1,0 +1,51 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Style Selector="TextBlock">
+    <Setter Property="FontFamily" Value="{StaticResource WiiFontFamily}" />
+    <Setter Property="FontSize" Value="{StaticResource WiiFontSizeBody}" />
+    <Setter Property="LineHeight" Value="{StaticResource WiiLineHeightBody}" />
+    <Setter Property="Foreground" Value="{DynamicResource WiiBrushTextPrimary}" />
+  </Style>
+
+  <Style Selector="TextBlock.display">
+    <Setter Property="FontSize" Value="{StaticResource WiiFontSizeDisplay}" />
+    <Setter Property="LineHeight" Value="{StaticResource WiiLineHeightDisplay}" />
+    <Setter Property="FontWeight" Value="{StaticResource WiiFontWeightSemiBold}" />
+  </Style>
+
+  <Style Selector="TextBlock.heading">
+    <Setter Property="FontSize" Value="{StaticResource WiiFontSizeHeading}" />
+    <Setter Property="LineHeight" Value="{StaticResource WiiLineHeightHeading}" />
+    <Setter Property="FontWeight" Value="{StaticResource WiiFontWeightSemiBold}" />
+  </Style>
+
+  <Style Selector="TextBlock.title">
+    <Setter Property="FontSize" Value="{StaticResource WiiFontSizeTitle}" />
+    <Setter Property="LineHeight" Value="{StaticResource WiiLineHeightTitle}" />
+    <Setter Property="FontWeight" Value="{StaticResource WiiFontWeightSemiBold}" />
+  </Style>
+
+  <Style Selector="TextBlock.subtitle">
+    <Setter Property="FontSize" Value="{StaticResource WiiFontSizeSubtitle}" />
+    <Setter Property="LineHeight" Value="{StaticResource WiiLineHeightSubtitle}" />
+    <Setter Property="FontWeight" Value="{StaticResource WiiFontWeightSemiBold}" />
+  </Style>
+
+  <Style Selector="TextBlock.caption">
+    <Setter Property="FontSize" Value="{StaticResource WiiFontSizeCaption}" />
+    <Setter Property="LineHeight" Value="{StaticResource WiiLineHeightCaption}" />
+    <Setter Property="Foreground" Value="{DynamicResource WiiBrushTextMuted}" />
+  </Style>
+
+  <Style Selector="TextBlock.micro">
+    <Setter Property="FontSize" Value="{StaticResource WiiFontSizeMicro}" />
+    <Setter Property="LineHeight" Value="{StaticResource WiiLineHeightCaption}" />
+    <Setter Property="Foreground" Value="{DynamicResource WiiBrushTextMuted}" />
+  </Style>
+
+  <Style Selector="TextBlock.code">
+    <Setter Property="FontFamily" Value="{StaticResource WiiCodeFontFamily}" />
+    <Setter Property="FontSize" Value="{StaticResource WiiFontSizeCode}" />
+    <Setter Property="LineHeight" Value="{StaticResource WiiLineHeightCode}" />
+  </Style>
+</Styles>

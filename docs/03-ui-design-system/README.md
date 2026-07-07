@@ -20,6 +20,8 @@ Documentos de UI, Design System, componentes, temas, responsividade e estados vi
 - `F044-Iconography.md`
 - `F045-SpacingAndLayout.md`
 - `F046-Buttons.md`
+- `DESIGN_SYSTEM_USAGE.md`
+- `DESIGN_SYSTEM_REFERENCE.md`
 - `F047-InputsAndForms.md`
 - `F048-DialogsAndModals.md`
 - `F049-DataGrid.md`

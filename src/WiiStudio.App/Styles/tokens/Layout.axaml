@@ -1,0 +1,30 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=System.Runtime">
+  <Thickness x:Key="WiiPagePadding">24</Thickness>
+  <Thickness x:Key="WiiPanelPadding">16</Thickness>
+  <Thickness x:Key="WiiDialogPadding">24</Thickness>
+  <Thickness x:Key="WiiCardPadding">16</Thickness>
+  <Thickness x:Key="WiiFormGap">0,0,0,16</Thickness>
+
+  <sys:Double x:Key="WiiSectionGap">32</sys:Double>
+  <sys:Double x:Key="WiiToolbarHeight">48</sys:Double>
+  <sys:Double x:Key="WiiStatusBarHeight">28</sys:Double>
+  <sys:Double x:Key="WiiSidebarWidth">260</sys:Double>
+  <sys:Double x:Key="WiiSidebarCollapsedWidth">64</sys:Double>
+  <sys:Double x:Key="WiiRightPanelWidth">320</sys:Double>
+  <sys:Double x:Key="WiiLegacySidebarWidth">232</sys:Double>
+  <sys:Double x:Key="WiiSplitterWidth">5</sys:Double>
+  <sys:Double x:Key="WiiCommandPaletteWidth">620</sys:Double>
+  <sys:Double x:Key="WiiCommandPaletteMaxHeight">420</sys:Double>
+  <sys:Double x:Key="WiiCommandPaletteListMaxHeight">280</sys:Double>
+  <sys:Double x:Key="WiiDashboardListMaxHeight">98</sys:Double>
+  <sys:Double x:Key="WiiPreviewListMaxHeight">120</sys:Double>
+  <sys:Double x:Key="WiiConversionPreviewListMaxHeight">110</sys:Double>
+  <sys:Double x:Key="WiiDialogSmallWidth">360</sys:Double>
+  <sys:Double x:Key="WiiDialogMediumWidth">520</sys:Double>
+  <sys:Double x:Key="WiiDialogLargeWidth">720</sys:Double>
+  <sys:Double x:Key="WiiDialogExtraLargeWidth">960</sys:Double>
+  <sys:Double x:Key="WiiFormMaxWidth">720</sys:Double>
+  <sys:Double x:Key="WiiReadingMaxWidth">920</sys:Double>
+</ResourceDictionary>

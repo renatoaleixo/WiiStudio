@@ -1,0 +1,23 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Style Selector="PathIcon">
+    <Setter Property="Width" Value="{StaticResource WiiIconSizeDefault}" />
+    <Setter Property="Height" Value="{StaticResource WiiIconSizeDefault}" />
+    <Setter Property="Foreground" Value="{DynamicResource WiiBrushTextSecondary}" />
+  </Style>
+
+  <Style Selector="PathIcon.small">
+    <Setter Property="Width" Value="{StaticResource WiiIconSizeSmall}" />
+    <Setter Property="Height" Value="{StaticResource WiiIconSizeSmall}" />
+  </Style>
+
+  <Style Selector="PathIcon.medium">
+    <Setter Property="Width" Value="{StaticResource WiiIconSizeMedium}" />
+    <Setter Property="Height" Value="{StaticResource WiiIconSizeMedium}" />
+  </Style>
+
+  <Style Selector="PathIcon.large">
+    <Setter Property="Width" Value="{StaticResource WiiIconSizeLarge}" />
+    <Setter Property="Height" Value="{StaticResource WiiIconSizeLarge}" />
+  </Style>
+</Styles>

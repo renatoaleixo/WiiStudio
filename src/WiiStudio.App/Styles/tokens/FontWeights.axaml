@@ -1,0 +1,7 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <FontWeight x:Key="WiiFontWeightRegular">Regular</FontWeight>
+  <FontWeight x:Key="WiiFontWeightMedium">Medium</FontWeight>
+  <FontWeight x:Key="WiiFontWeightSemiBold">SemiBold</FontWeight>
+  <FontWeight x:Key="WiiFontWeightBold">Bold</FontWeight>
+</ResourceDictionary>

@@ -1,7 +1,7 @@
 <Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
   <Style Selector="Button">
-    <Setter Property="MinHeight" Value="{StaticResource WiiInteractiveTargetMin}" />
+    <Setter Property="MinHeight" Value="{StaticResource WiiButtonHeightMedium}" />
     <Setter Property="Padding" Value="{StaticResource WiiButtonPadding}" />
     <Setter Property="CornerRadius" Value="{StaticResource WiiRadiusMedium}" />
     <Setter Property="Background" Value="{DynamicResource WiiBrushSurfaceRaised}" />
@@ -12,6 +12,58 @@
     <Setter Property="FontSize" Value="{StaticResource WiiFontSizeBody}" />
   </Style>
 
+  <Style Selector="Button.primary">
+    <Setter Property="Background" Value="{DynamicResource WiiBrushPrimary}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource WiiBrushPrimary}" />
+    <Setter Property="Foreground" Value="{DynamicResource WiiBrushTextInverted}" />
+  </Style>
+
+  <Style Selector="Button.secondary">
+    <Setter Property="Background" Value="{DynamicResource WiiBrushSurfaceRaised}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource WiiBrushBorder}" />
+    <Setter Property="Foreground" Value="{DynamicResource WiiBrushTextPrimary}" />
+  </Style>
+
+  <Style Selector="Button.tertiary">
+    <Setter Property="Background" Value="{DynamicResource WiiBrushTransparent}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource WiiBrushTransparent}" />
+    <Setter Property="Foreground" Value="{DynamicResource WiiBrushTextSecondary}" />
+  </Style>
+
+  <Style Selector="Button.danger">
+    <Setter Property="Background" Value="{DynamicResource WiiBrushError}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource WiiBrushError}" />
+    <Setter Property="Foreground" Value="{DynamicResource WiiBrushTextInverted}" />
+  </Style>
+
+  <Style Selector="Button.success">
+    <Setter Property="Background" Value="{DynamicResource WiiBrushSuccess}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource WiiBrushSuccess}" />
+    <Setter Property="Foreground" Value="{DynamicResource WiiBrushTextInverted}" />
+  </Style>
+
+  <Style Selector="Button.small">
+    <Setter Property="MinHeight" Value="{StaticResource WiiButtonHeightSmall}" />
+    <Setter Property="Padding" Value="{StaticResource WiiButtonPaddingCompact}" />
+    <Setter Property="FontSize" Value="{StaticResource WiiFontSizeCaption}" />
+  </Style>
+
+  <Style Selector="Button.large">
+    <Setter Property="MinHeight" Value="{StaticResource WiiButtonHeightLarge}" />
+    <Setter Property="Padding" Value="{StaticResource WiiButtonPaddingLarge}" />
+  </Style>
+
+  <Style Selector="Button.extraLarge">
+    <Setter Property="MinHeight" Value="{StaticResource WiiButtonHeightExtraLarge}" />
+    <Setter Property="Padding" Value="{StaticResource WiiButtonPaddingLarge}" />
+    <Setter Property="FontSize" Value="{StaticResource WiiFontSizeSubtitle}" />
+  </Style>
+
+  <Style Selector="Button.loading">
+    <Setter Property="IsEnabled" Value="False" />
+    <Setter Property="Opacity" Value="0.72" />
+  </Style>
+
   <Style Selector="Button:pointerover /template/ ContentPresenter">
     <Setter Property="Background" Value="{DynamicResource WiiBrushPrimary}" />
     <Setter Property="BorderBrush" Value="{DynamicResource WiiBrushPrimaryHover}" />
@@ -19,7 +71,22 @@
   </Style>
 
   <Style Selector="Button:pressed /template/ ContentPresenter">
-    <Setter Property="Background" Value="{DynamicResource WiiBrushPrimaryHover}" />
+    <Setter Property="Background" Value="{DynamicResource WiiBrushPrimaryPressed}" />
+  </Style>
+
+  <Style Selector="Button.danger:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource WiiBrushErrorHover}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource WiiBrushErrorHover}" />
+  </Style>
+
+  <Style Selector="Button.success:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource WiiBrushSuccessHover}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource WiiBrushSuccessHover}" />
+  </Style>
+
+  <Style Selector="Button.tertiary:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource WiiBrushSurfaceAlt}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource WiiBrushBorder}" />
   </Style>
 
   <Style Selector="Button:disabled">

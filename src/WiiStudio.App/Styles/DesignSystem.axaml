@@ -4,16 +4,28 @@
     <ResourceDictionary>
       <ResourceDictionary.MergedDictionaries>
         <ResourceInclude Source="avares://WiiStudio.App/Styles/tokens/Colors.axaml" />
+        <ResourceInclude Source="avares://WiiStudio.App/Styles/tokens/FontSizes.axaml" />
+        <ResourceInclude Source="avares://WiiStudio.App/Styles/tokens/FontWeights.axaml" />
         <ResourceInclude Source="avares://WiiStudio.App/Styles/tokens/Typography.axaml" />
         <ResourceInclude Source="avares://WiiStudio.App/Styles/tokens/Spacing.axaml" />
+        <ResourceInclude Source="avares://WiiStudio.App/Styles/tokens/Layout.axaml" />
+        <ResourceInclude Source="avares://WiiStudio.App/Styles/tokens/Grid.axaml" />
+        <ResourceInclude Source="avares://WiiStudio.App/Styles/tokens/Breakpoints.axaml" />
+        <ResourceInclude Source="avares://WiiStudio.App/Styles/tokens/Responsive.axaml" />
         <ResourceInclude Source="avares://WiiStudio.App/Styles/tokens/Radius.axaml" />
         <ResourceInclude Source="avares://WiiStudio.App/Styles/tokens/Elevation.axaml" />
+        <ResourceInclude Source="avares://WiiStudio.App/Styles/icons/IconTokens.axaml" />
+        <ResourceInclude Source="avares://WiiStudio.App/Styles/icons/FluentIcons.axaml" />
+        <ResourceInclude Source="avares://WiiStudio.App/Styles/components/ButtonTokens.axaml" />
       </ResourceDictionary.MergedDictionaries>
     </ResourceDictionary>
   </Styles.Resources>
 
+  <StyleInclude Source="avares://WiiStudio.App/Styles/components/TextStyles.axaml" />
   <StyleInclude Source="avares://WiiStudio.App/Styles/components/Buttons.axaml" />
+  <StyleInclude Source="avares://WiiStudio.App/Styles/components/IconButtons.axaml" />
   <StyleInclude Source="avares://WiiStudio.App/Styles/components/Inputs.axaml" />
   <StyleInclude Source="avares://WiiStudio.App/Styles/components/Cards.axaml" />
   <StyleInclude Source="avares://WiiStudio.App/Styles/components/Lists.axaml" />
+  <StyleInclude Source="avares://WiiStudio.App/Styles/icons/IconStyles.axaml" />
 </Styles>

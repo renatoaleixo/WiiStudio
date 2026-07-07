@@ -1,0 +1,9 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=System.Runtime">
+  <sys:Double x:Key="WiiIconSizeSmall">16</sys:Double>
+  <sys:Double x:Key="WiiIconSizeMedium">20</sys:Double>
+  <sys:Double x:Key="WiiIconSizeDefault">24</sys:Double>
+  <sys:Double x:Key="WiiIconSizeLarge">32</sys:Double>
+  <sys:Double x:Key="WiiIconSizeExtraLarge">48</sys:Double>
+</ResourceDictionary>

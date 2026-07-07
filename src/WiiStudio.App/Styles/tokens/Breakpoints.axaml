@@ -1,0 +1,7 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=System.Runtime">
+  <sys:Double x:Key="WiiBreakpointSmall">800</sys:Double>
+  <sys:Double x:Key="WiiBreakpointMedium">1200</sys:Double>
+  <sys:Double x:Key="WiiBreakpointLarge">1600</sys:Double>
+</ResourceDictionary>
