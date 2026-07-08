@@ -17,6 +17,12 @@
         <ResourceInclude Source="avares://WiiStudio.App/Styles/icons/IconTokens.axaml" />
         <ResourceInclude Source="avares://WiiStudio.App/Styles/icons/FluentIcons.axaml" />
         <ResourceInclude Source="avares://WiiStudio.App/Styles/components/ButtonTokens.axaml" />
+        <ResourceInclude Source="avares://WiiStudio.App/Styles/components/FormTokens.axaml" />
+        <ResourceInclude Source="avares://WiiStudio.App/Styles/components/DialogTokens.axaml" />
+        <ResourceInclude Source="avares://WiiStudio.App/Styles/components/DataGridTokens.axaml" />
+        <ResourceInclude Source="avares://WiiStudio.App/Styles/components/CardTokens.axaml" />
+        <ResourceInclude Source="avares://WiiStudio.App/Styles/components/NavigationTokens.axaml" />
+        <ResourceInclude Source="avares://WiiStudio.App/Styles/components/ToolbarTokens.axaml" />
       </ResourceDictionary.MergedDictionaries>
     </ResourceDictionary>
   </Styles.Resources>
@@ -25,7 +31,26 @@
   <StyleInclude Source="avares://WiiStudio.App/Styles/components/Buttons.axaml" />
   <StyleInclude Source="avares://WiiStudio.App/Styles/components/IconButtons.axaml" />
   <StyleInclude Source="avares://WiiStudio.App/Styles/components/Inputs.axaml" />
+  <StyleInclude Source="avares://WiiStudio.App/Styles/components/Forms.axaml" />
+  <StyleInclude Source="avares://WiiStudio.App/Styles/components/Validation.axaml" />
+  <StyleInclude Source="avares://WiiStudio.App/Styles/components/SearchBox.axaml" />
+  <StyleInclude Source="avares://WiiStudio.App/Styles/components/FilePicker.axaml" />
+  <StyleInclude Source="avares://WiiStudio.App/Styles/components/DirectoryPicker.axaml" />
+  <StyleInclude Source="avares://WiiStudio.App/Styles/components/Dialogs.axaml" />
+  <StyleInclude Source="avares://WiiStudio.App/Styles/components/Modals.axaml" />
+  <StyleInclude Source="avares://WiiStudio.App/Styles/components/DataGrid.axaml" />
+  <StyleInclude Source="avares://WiiStudio.App/Styles/components/DataGridToolbar.axaml" />
+  <StyleInclude Source="avares://WiiStudio.App/Styles/components/DataGridStates.axaml" />
   <StyleInclude Source="avares://WiiStudio.App/Styles/components/Cards.axaml" />
+  <StyleInclude Source="avares://WiiStudio.App/Styles/components/Containers.axaml" />
+  <StyleInclude Source="avares://WiiStudio.App/Styles/components/Panels.axaml" />
+  <StyleInclude Source="avares://WiiStudio.App/Styles/components/Sections.axaml" />
+  <StyleInclude Source="avares://WiiStudio.App/Styles/components/Tiles.axaml" />
+  <StyleInclude Source="avares://WiiStudio.App/Styles/components/StateContainers.axaml" />
+  <StyleInclude Source="avares://WiiStudio.App/Styles/components/Navigation.axaml" />
+  <StyleInclude Source="avares://WiiStudio.App/Styles/components/Toolbars.axaml" />
+  <StyleInclude Source="avares://WiiStudio.App/Styles/components/ToolbarButtons.axaml" />
+  <StyleInclude Source="avares://WiiStudio.App/Styles/components/ToolbarOverflow.axaml" />
   <StyleInclude Source="avares://WiiStudio.App/Styles/components/Lists.axaml" />
   <StyleInclude Source="avares://WiiStudio.App/Styles/icons/IconStyles.axaml" />
 </Styles>

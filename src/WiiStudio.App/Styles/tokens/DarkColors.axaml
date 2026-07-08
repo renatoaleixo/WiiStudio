@@ -25,4 +25,5 @@
   <Color x:Key="WiiDarkColorInfo">#7DD3FC</Color>
   <Color x:Key="WiiDarkColorDisabled">#536174</Color>
   <Color x:Key="WiiDarkColorFocus">#93C5FD</Color>
+  <Color x:Key="WiiDarkColorScrim">#80000000</Color>
 </ResourceDictionary>

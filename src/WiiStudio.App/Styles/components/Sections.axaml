@@ -1,0 +1,12 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Style Selector="StackPanel.section">
+    <Setter Property="Spacing" Value="{StaticResource WiiSpace8}" />
+    <Setter Property="Margin" Value="{StaticResource WiiSectionTopMargin}" />
+  </Style>
+
+  <Style Selector="TextBlock.sectionTitle">
+    <Setter Property="FontSize" Value="{StaticResource WiiFontSizeSubtitle}" />
+    <Setter Property="FontWeight" Value="{StaticResource WiiFontWeightSemiBold}" />
+  </Style>
+</Styles>

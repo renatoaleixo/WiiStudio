@@ -1,6 +1,6 @@
 # WiiStudio Design System Reference
 
-This reference documents the implemented F042-F046 design system layer.
+This reference documents the implemented F042-F052 design system layer.
 
 ## F042 Color System
 
@@ -117,3 +117,79 @@ Official button classes:
 - `loading`
 
 Buttons should bind to commands and avoid inline colors, padding, or business logic.
+
+## F047 Inputs & Forms
+
+Implemented files:
+
+- `src/WiiStudio.App/Styles/components/FormTokens.axaml`
+- `src/WiiStudio.App/Styles/components/Inputs.axaml`
+- `src/WiiStudio.App/Styles/components/Forms.axaml`
+- `src/WiiStudio.App/Styles/components/Validation.axaml`
+- `src/WiiStudio.App/Styles/components/SearchBox.axaml`
+- `src/WiiStudio.App/Styles/components/FilePicker.axaml`
+- `src/WiiStudio.App/Styles/components/DirectoryPicker.axaml`
+
+Official classes include `form`, `formSection`, `field`, `fieldLabel`, `fieldHelp`, `validationError`, `validationSuccess`, and `searchBox`.
+
+## F048 Dialogs & Modals
+
+Implemented files:
+
+- `src/WiiStudio.App/Styles/components/DialogTokens.axaml`
+- `src/WiiStudio.App/Styles/components/Dialogs.axaml`
+- `src/WiiStudio.App/Styles/components/Modals.axaml`
+- `src/WiiStudio.Application/DTOs/DialogModels.cs`
+- `src/WiiStudio.Application/Interfaces/IDialogService.cs`
+
+Official dialog classes include `dialog`, `small`, `medium`, `large`, `extraLarge`, `dialogContent`, `dialogActions`, `modalScrim`, and `flyoutPanel`.
+
+## F049 DataGrid
+
+Implemented files:
+
+- `src/WiiStudio.App/Styles/components/DataGridTokens.axaml`
+- `src/WiiStudio.App/Styles/components/DataGrid.axaml`
+- `src/WiiStudio.App/Styles/components/DataGridToolbar.axaml`
+- `src/WiiStudio.App/Styles/components/DataGridStates.axaml`
+- `src/WiiStudio.Application/DTOs/DataGridModels.cs`
+
+Official classes include `dataGrid`, `dataGridHeader`, `dataGridHeaderText`, `dataGridRow`, `dataGridToolbar`, and `gridState`.
+
+## F050 Cards & Containers
+
+Implemented files:
+
+- `src/WiiStudio.App/Styles/components/CardTokens.axaml`
+- `src/WiiStudio.App/Styles/components/Cards.axaml`
+- `src/WiiStudio.App/Styles/components/Containers.axaml`
+- `src/WiiStudio.App/Styles/components/Panels.axaml`
+- `src/WiiStudio.App/Styles/components/Sections.axaml`
+- `src/WiiStudio.App/Styles/components/Tiles.axaml`
+- `src/WiiStudio.App/Styles/components/StateContainers.axaml`
+- `src/WiiStudio.Application/DTOs/CardModels.cs`
+
+Official classes include `card`, `panel`, `overlay`, `tile`, `metricTile`, `container`, `contentBlock`, `sidePanel`, `section`, `emptyState`, `errorState`, and `loadingState`.
+
+## F051 Navigation System
+
+Implemented files:
+
+- `src/WiiStudio.App/Styles/components/NavigationTokens.axaml`
+- `src/WiiStudio.App/Styles/components/Navigation.axaml`
+- `src/WiiStudio.Application/DTOs/NavigationModels.cs`
+- `src/WiiStudio.Application/Interfaces/INavigationService.cs`
+
+Official classes include `navigation`, `navigationItem`, `active`, and `navigationGroup`.
+
+## F052 Toolbar System
+
+Implemented files:
+
+- `src/WiiStudio.App/Styles/components/ToolbarTokens.axaml`
+- `src/WiiStudio.App/Styles/components/Toolbars.axaml`
+- `src/WiiStudio.App/Styles/components/ToolbarButtons.axaml`
+- `src/WiiStudio.App/Styles/components/ToolbarOverflow.axaml`
+- `src/WiiStudio.Application/DTOs/ToolbarModels.cs`
+
+Official classes include `toolbar`, `toolbarGroup`, `toolbarSeparator`, `toolbarButton`, `toolbarPrimary`, `toolbarDanger`, and `toolbarOverflow`.

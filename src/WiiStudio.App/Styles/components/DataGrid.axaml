@@ -1,0 +1,28 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Style Selector="Grid.dataGrid">
+    <Setter Property="Background" Value="{DynamicResource WiiBrushSurfaceAlt}" />
+  </Style>
+
+  <Style Selector="Border.dataGridHeader">
+    <Setter Property="Background" Value="{DynamicResource WiiBrushChrome}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource WiiBrushBorder}" />
+    <Setter Property="BorderThickness" Value="0,0,0,1" />
+    <Setter Property="Padding" Value="{StaticResource WiiDataGridCellPadding}" />
+    <Setter Property="MinHeight" Value="{StaticResource WiiDataGridHeaderHeight}" />
+  </Style>
+
+  <Style Selector="TextBlock.dataGridHeaderText">
+    <Setter Property="Foreground" Value="{DynamicResource WiiBrushTextMuted}" />
+    <Setter Property="FontWeight" Value="{StaticResource WiiFontWeightSemiBold}" />
+    <Setter Property="FontSize" Value="{StaticResource WiiFontSizeCaption}" />
+  </Style>
+
+  <Style Selector="Grid.dataGridRow">
+    <Setter Property="MinHeight" Value="{StaticResource WiiDataGridRowMinHeight}" />
+  </Style>
+
+  <Style Selector="Grid.dataGridRow:pointerover">
+    <Setter Property="Background" Value="{DynamicResource WiiBrushSurface}" />
+  </Style>
+</Styles>

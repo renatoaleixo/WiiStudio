@@ -1,0 +1,26 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Style Selector="TextBlock.validationError">
+    <Setter Property="FontSize" Value="{StaticResource WiiFontSizeCaption}" />
+    <Setter Property="Foreground" Value="{DynamicResource WiiBrushError}" />
+    <Setter Property="Margin" Value="{StaticResource WiiFieldHelpMargin}" />
+  </Style>
+
+  <Style Selector="TextBlock.validationSuccess">
+    <Setter Property="FontSize" Value="{StaticResource WiiFontSizeCaption}" />
+    <Setter Property="Foreground" Value="{DynamicResource WiiBrushSuccess}" />
+    <Setter Property="Margin" Value="{StaticResource WiiFieldHelpMargin}" />
+  </Style>
+
+  <Style Selector="TextBox.error">
+    <Setter Property="BorderBrush" Value="{DynamicResource WiiBrushError}" />
+  </Style>
+
+  <Style Selector="TextBox.success">
+    <Setter Property="BorderBrush" Value="{DynamicResource WiiBrushSuccess}" />
+  </Style>
+
+  <Style Selector="ComboBox.error">
+    <Setter Property="BorderBrush" Value="{DynamicResource WiiBrushError}" />
+  </Style>
+</Styles>

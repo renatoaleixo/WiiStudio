@@ -1,0 +1,7 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=System.Runtime">
+  <sys:Double x:Key="WiiNavigationItemHeight">44</sys:Double>
+  <Thickness x:Key="WiiNavigationItemPadding">10,8</Thickness>
+  <Thickness x:Key="WiiNavigationGroupMargin">0,12,0,4</Thickness>
+</ResourceDictionary>

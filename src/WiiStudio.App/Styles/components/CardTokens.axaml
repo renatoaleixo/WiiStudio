@@ -1,0 +1,7 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=System.Runtime">
+  <sys:Double x:Key="WiiCardMinHeight">96</sys:Double>
+  <sys:Double x:Key="WiiTileMinHeight">84</sys:Double>
+  <Thickness x:Key="WiiCardFooterMargin">0,16,0,0</Thickness>
+</ResourceDictionary>

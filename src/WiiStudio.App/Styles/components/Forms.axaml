@@ -1,0 +1,29 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Style Selector="StackPanel.form">
+    <Setter Property="Spacing" Value="{StaticResource WiiSpace16}" />
+    <Setter Property="MaxWidth" Value="{StaticResource WiiFormFieldMaxWidth}" />
+  </Style>
+
+  <Style Selector="StackPanel.formSection">
+    <Setter Property="Spacing" Value="{StaticResource WiiSpace12}" />
+    <Setter Property="Margin" Value="{StaticResource WiiFormSectionMargin}" />
+  </Style>
+
+  <Style Selector="StackPanel.field">
+    <Setter Property="Spacing" Value="{StaticResource WiiSpace4}" />
+    <Setter Property="MinWidth" Value="{StaticResource WiiFormFieldMinWidth}" />
+  </Style>
+
+  <Style Selector="TextBlock.fieldLabel">
+    <Setter Property="FontWeight" Value="{StaticResource WiiFontWeightSemiBold}" />
+    <Setter Property="Foreground" Value="{DynamicResource WiiBrushTextPrimary}" />
+  </Style>
+
+  <Style Selector="TextBlock.fieldHelp">
+    <Setter Property="FontSize" Value="{StaticResource WiiFontSizeCaption}" />
+    <Setter Property="LineHeight" Value="{StaticResource WiiLineHeightCaption}" />
+    <Setter Property="Foreground" Value="{DynamicResource WiiBrushTextMuted}" />
+    <Setter Property="Margin" Value="{StaticResource WiiFieldHelpMargin}" />
+  </Style>
+</Styles>

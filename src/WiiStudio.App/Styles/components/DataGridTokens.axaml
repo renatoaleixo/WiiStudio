@@ -1,0 +1,8 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=System.Runtime">
+  <sys:Double x:Key="WiiDataGridRowMinHeight">36</sys:Double>
+  <sys:Double x:Key="WiiDataGridHeaderHeight">40</sys:Double>
+  <Thickness x:Key="WiiDataGridCellPadding">12,8</Thickness>
+  <Thickness x:Key="WiiDataGridToolbarPadding">12</Thickness>
+</ResourceDictionary>

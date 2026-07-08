@@ -6,6 +6,32 @@
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="CornerRadius" Value="{StaticResource WiiRadiusLarge}" />
     <Setter Property="BoxShadow" Value="0 0 0 0 Transparent" />
+    <Setter Property="MinHeight" Value="{StaticResource WiiCardMinHeight}" />
+  </Style>
+
+  <Style Selector="Border.card:pointerover">
+    <Setter Property="BorderBrush" Value="{DynamicResource WiiBrushFocus}" />
+  </Style>
+
+  <Style Selector="Border.card.selected">
+    <Setter Property="BorderBrush" Value="{DynamicResource WiiBrushPrimary}" />
+    <Setter Property="Background" Value="{DynamicResource WiiBrushSurfaceRaised}" />
+  </Style>
+
+  <Style Selector="Border.card.error">
+    <Setter Property="BorderBrush" Value="{DynamicResource WiiBrushError}" />
+  </Style>
+
+  <Style Selector="Border.card.success">
+    <Setter Property="BorderBrush" Value="{DynamicResource WiiBrushSuccess}" />
+  </Style>
+
+  <Style Selector="Border.card.loading">
+    <Setter Property="Opacity" Value="0.72" />
+  </Style>
+
+  <Style Selector="Border.card.disabled">
+    <Setter Property="Opacity" Value="0.56" />
   </Style>
 
   <Style Selector="Border.panel">
@@ -13,6 +39,15 @@
     <Setter Property="BorderBrush" Value="{DynamicResource WiiBrushBorder}" />
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="CornerRadius" Value="{StaticResource WiiRadiusMedium}" />
+  </Style>
+
+  <Style Selector="Border.tile">
+    <Setter Property="Background" Value="{DynamicResource WiiBrushSurface}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource WiiBrushBorder}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource WiiRadiusMedium}" />
+    <Setter Property="Padding" Value="{StaticResource WiiCardPadding}" />
+    <Setter Property="MinHeight" Value="{StaticResource WiiTileMinHeight}" />
   </Style>
 
   <Style Selector="Border.overlay">

@@ -1,0 +1,40 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Style Selector="Border.dialog">
+    <Setter Property="Background" Value="{DynamicResource WiiBrushSurfaceRaised}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource WiiBrushBorder}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource WiiRadiusLarge}" />
+    <Setter Property="Padding" Value="{StaticResource WiiDialogPadding}" />
+    <Setter Property="BoxShadow" Value="{StaticResource WiiShadowLarge}" />
+    <Setter Property="MaxWidth" Value="{StaticResource WiiDialogLargeWidth}" />
+  </Style>
+
+  <Style Selector="Border.dialog.small">
+    <Setter Property="Width" Value="{StaticResource WiiDialogSmallWidth}" />
+  </Style>
+
+  <Style Selector="Border.dialog.medium">
+    <Setter Property="Width" Value="{StaticResource WiiDialogMediumWidth}" />
+  </Style>
+
+  <Style Selector="Border.dialog.large">
+    <Setter Property="Width" Value="{StaticResource WiiDialogLargeWidth}" />
+  </Style>
+
+  <Style Selector="Border.dialog.extraLarge">
+    <Setter Property="Width" Value="{StaticResource WiiDialogExtraLargeWidth}" />
+  </Style>
+
+  <Style Selector="StackPanel.dialogContent">
+    <Setter Property="Spacing" Value="{StaticResource WiiSpace12}" />
+    <Setter Property="Margin" Value="{StaticResource WiiDialogContentMargin}" />
+  </Style>
+
+  <Style Selector="StackPanel.dialogActions">
+    <Setter Property="Orientation" Value="Horizontal" />
+    <Setter Property="Spacing" Value="{StaticResource WiiSpace8}" />
+    <Setter Property="HorizontalAlignment" Value="Right" />
+    <Setter Property="Margin" Value="{StaticResource WiiDialogActionsMargin}" />
+  </Style>
+</Styles>

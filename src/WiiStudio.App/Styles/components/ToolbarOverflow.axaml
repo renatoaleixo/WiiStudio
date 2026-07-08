@@ -1,0 +1,10 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Style Selector="Button.toolbarOverflow">
+    <Setter Property="Width" Value="{StaticResource WiiIconButtonSizeSmall}" />
+    <Setter Property="Height" Value="{StaticResource WiiIconButtonSizeSmall}" />
+    <Setter Property="MinWidth" Value="{StaticResource WiiIconButtonSizeSmall}" />
+    <Setter Property="MinHeight" Value="{StaticResource WiiIconButtonSizeSmall}" />
+    <Setter Property="Padding" Value="0" />
+  </Style>
+</Styles>

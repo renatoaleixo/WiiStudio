@@ -1,0 +1,24 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Style Selector="Button.toolbarButton">
+    <Setter Property="MinHeight" Value="{StaticResource WiiButtonHeightSmall}" />
+    <Setter Property="Padding" Value="{StaticResource WiiButtonPaddingCompact}" />
+    <Setter Property="Background" Value="{DynamicResource WiiBrushSurfaceRaised}" />
+  </Style>
+
+  <Style Selector="Button.toolbarPrimary">
+    <Setter Property="MinHeight" Value="{StaticResource WiiButtonHeightSmall}" />
+    <Setter Property="Padding" Value="{StaticResource WiiButtonPaddingCompact}" />
+    <Setter Property="Background" Value="{DynamicResource WiiBrushPrimary}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource WiiBrushPrimary}" />
+    <Setter Property="Foreground" Value="{DynamicResource WiiBrushTextInverted}" />
+  </Style>
+
+  <Style Selector="Button.toolbarDanger">
+    <Setter Property="MinHeight" Value="{StaticResource WiiButtonHeightSmall}" />
+    <Setter Property="Padding" Value="{StaticResource WiiButtonPaddingCompact}" />
+    <Setter Property="Background" Value="{DynamicResource WiiBrushError}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource WiiBrushError}" />
+    <Setter Property="Foreground" Value="{DynamicResource WiiBrushTextInverted}" />
+  </Style>
+</Styles>

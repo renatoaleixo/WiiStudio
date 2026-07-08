@@ -11,8 +11,16 @@
     <Setter Property="FontSize" Value="{StaticResource WiiFontSizeBody}" />
   </Style>
 
+  <Style Selector="TextBox:pointerover">
+    <Setter Property="BorderBrush" Value="{DynamicResource WiiBrushTextMuted}" />
+  </Style>
+
   <Style Selector="TextBox:focus">
     <Setter Property="BorderBrush" Value="{DynamicResource WiiBrushFocus}" />
+  </Style>
+
+  <Style Selector="TextBox:disabled">
+    <Setter Property="Opacity" Value="0.56" />
   </Style>
 
   <Style Selector="ComboBox">
@@ -21,6 +29,26 @@
     <Setter Property="BorderBrush" Value="{DynamicResource WiiBrushBorder}" />
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="CornerRadius" Value="{StaticResource WiiRadiusMedium}" />
+    <Setter Property="Foreground" Value="{DynamicResource WiiBrushTextPrimary}" />
+    <Setter Property="FontFamily" Value="{StaticResource WiiFontFamily}" />
+    <Setter Property="FontSize" Value="{StaticResource WiiFontSizeBody}" />
+  </Style>
+
+  <Style Selector="ComboBox:pointerover">
+    <Setter Property="BorderBrush" Value="{DynamicResource WiiBrushTextMuted}" />
+  </Style>
+
+  <Style Selector="ComboBox:focus">
+    <Setter Property="BorderBrush" Value="{DynamicResource WiiBrushFocus}" />
+  </Style>
+
+  <Style Selector="CheckBox">
+    <Setter Property="Foreground" Value="{DynamicResource WiiBrushTextPrimary}" />
+    <Setter Property="FontFamily" Value="{StaticResource WiiFontFamily}" />
+    <Setter Property="FontSize" Value="{StaticResource WiiFontSizeBody}" />
+  </Style>
+
+  <Style Selector="RadioButton">
     <Setter Property="Foreground" Value="{DynamicResource WiiBrushTextPrimary}" />
     <Setter Property="FontFamily" Value="{StaticResource WiiFontFamily}" />
     <Setter Property="FontSize" Value="{StaticResource WiiFontSizeBody}" />

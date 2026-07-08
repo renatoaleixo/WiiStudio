@@ -14,7 +14,7 @@
   </Design.DataContext>
 
   <Grid RowDefinitions="Auto,*,Auto" Background="{DynamicResource WiiBrushBackground}">
-    <Border Grid.Row="0" Background="{DynamicResource WiiBrushChrome}" Padding="{StaticResource WiiInsetToolbar}">
+    <Border Grid.Row="0" Classes="toolbar" Padding="{StaticResource WiiInsetToolbar}">
       <Grid ColumnDefinitions="Auto,*,320,Auto,Auto" ColumnSpacing="14" VerticalAlignment="Center">
         <TextBlock Text="WiiStudio"
                    FontSize="{StaticResource WiiFontSizeTitle}"
@@ -35,6 +35,7 @@
             <TextBlock Text="Painel" />
           </Button>
           <TextBox Text="{Binding DockLayoutName, Mode=TwoWay}"
+                   Classes="small"
                    Width="110"
                    Height="34"
                    Watermark="Layout" />
@@ -76,6 +77,7 @@
         </StackPanel>
 
         <TextBox Grid.Column="2"
+                 Classes="searchBox"
                  Watermark="Pesquisar jogos, tarefas e logs"
                  Text="{Binding LibrarySearchText, Mode=TwoWay}"
                  Height="36"
@@ -102,12 +104,14 @@
                      FontWeight="SemiBold"
                      Margin="{StaticResource WiiSidebarHeadingMargin}" />
           <ListBox ItemsSource="{Binding Modules}"
+                   Classes="navigation"
                    SelectedItem="{Binding SelectedModule}"
                    Background="Transparent"
                    BorderThickness="0">
             <ListBox.ItemTemplate>
               <DataTemplate DataType="dto:ShellModule">
-                <Grid RowDefinitions="Auto,Auto" Margin="{StaticResource WiiModuleItemMargin}" MinHeight="48">
+                <Border Classes="navigationItem" Margin="{StaticResource WiiModuleItemMargin}">
+                  <Grid RowDefinitions="Auto,Auto">
                   <TextBlock Text="{Binding Title}" Foreground="{DynamicResource WiiBrushTextPrimary}" FontWeight="SemiBold" />
                   <TextBlock Grid.Row="1"
                              Text="{Binding Description}"
@@ -115,7 +119,8 @@
                              FontSize="{StaticResource WiiFontSizeMicro}"
                              TextWrapping="NoWrap"
                              TextTrimming="CharacterEllipsis" />
-                </Grid>
+                  </Grid>
+                </Border>
               </DataTemplate>
             </ListBox.ItemTemplate>
           </ListBox>
@@ -145,17 +150,16 @@
               </ItemsControl.ItemsPanel>
               <ItemsControl.ItemTemplate>
                 <DataTemplate DataType="vm:DashboardWidgetViewModel">
-                  <Border Background="{DynamicResource WiiBrushSurface}" Padding="{StaticResource WiiInsetStatus}" Margin="{StaticResource WiiDashboardCardMargin}">
+                  <Border Classes="metricTile" Margin="{StaticResource WiiDashboardCardMargin}">
                     <Grid RowDefinitions="Auto,Auto,Auto">
                       <TextBlock Text="{Binding Title}"
                                  Foreground="{DynamicResource WiiBrushTextMuted}"
                                  FontWeight="SemiBold"
                                  FontSize="{StaticResource WiiFontSizeCaption}" />
                       <TextBlock Grid.Row="1"
+                                 Classes="metricValue"
                                  Text="{Binding Value}"
                                  Foreground="{DynamicResource WiiBrushTextPrimary}"
-                                 FontWeight="SemiBold"
-                                 FontSize="{StaticResource WiiFontSizeTitle}"
                                  Margin="{StaticResource WiiMetricValueMargin}" />
                       <TextBlock Grid.Row="2"
                                  Text="{Binding Detail}"
@@ -169,7 +173,7 @@
             </ItemsControl>
 
             <Grid Grid.Column="1" ColumnDefinitions="*,*" ColumnSpacing="10">
-              <Border Background="{DynamicResource WiiBrushSurface}" Padding="{StaticResource WiiInsetMd}">
+              <Border Classes="card" Padding="{StaticResource WiiInsetMd}">
                 <Grid RowDefinitions="Auto,*">
                   <TextBlock Text="Atividades"
                              Foreground="{DynamicResource WiiBrushTextPrimary}"
@@ -198,7 +202,7 @@
                 </Grid>
               </Border>
 
-              <Border Grid.Column="1" Background="{DynamicResource WiiBrushSurface}" Padding="{StaticResource WiiInsetMd}">
+              <Border Grid.Column="1" Classes="card" Padding="{StaticResource WiiInsetMd}">
                 <Grid RowDefinitions="Auto,*">
                   <Grid ColumnDefinitions="*,Auto">
                     <TextBlock Text="Atalhos"
@@ -232,7 +236,7 @@
             </Grid>
           </Grid>
 
-          <Border Grid.Row="1" Background="{DynamicResource WiiBrushSurface}" Padding="{StaticResource WiiPanelPadding}" Margin="{StaticResource WiiSectionTopMargin}">
+          <Border Grid.Row="1" Classes="contentBlock" Margin="{StaticResource WiiSectionTopMargin}">
             <Grid ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="12">
               <StackPanel>
                 <TextBlock Text="Biblioteca"
@@ -264,9 +268,10 @@
             </Grid>
           </Border>
 
-          <Border Grid.Row="2" Background="{DynamicResource WiiBrushSurfaceAlt}" Padding="{StaticResource WiiInsetMd}" Margin="{StaticResource WiiSectionTopMargin}">
+          <Border Grid.Row="2" Classes="dataGridToolbar" Margin="{StaticResource WiiSectionTopMargin}">
             <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto" ColumnSpacing="12">
-              <TextBox Watermark="Filtrar por título, ID ou região"
+              <TextBox Classes="searchBox"
+                       Watermark="Filtrar por título, ID ou região"
                        Text="{Binding LibrarySearchText, Mode=TwoWay}"
                        Height="34" />
               <TextBlock Grid.Column="1"
@@ -295,16 +300,16 @@
             </Grid>
           </Border>
 
-          <Grid Grid.Row="3" RowDefinitions="Auto,*" Margin="{StaticResource WiiSectionTopMargin}" Background="{DynamicResource WiiBrushSurfaceAlt}">
-            <Border Background="{DynamicResource WiiBrushChrome}" Padding="{StaticResource WiiInsetTableHeader}">
+          <Grid Grid.Row="3" Classes="dataGrid" RowDefinitions="Auto,*" Margin="{StaticResource WiiSectionTopMargin}">
+            <Border Classes="dataGridHeader">
               <Grid ColumnDefinitions="88,2*,120,110,100,90,90" ColumnSpacing="12">
-                <TextBlock Text="ID" Foreground="{DynamicResource WiiBrushTextMuted}" FontWeight="SemiBold" />
-                <TextBlock Grid.Column="1" Text="Título" Foreground="{DynamicResource WiiBrushTextMuted}" FontWeight="SemiBold" />
-                <TextBlock Grid.Column="2" Text="Região" Foreground="{DynamicResource WiiBrushTextMuted}" FontWeight="SemiBold" />
-                <TextBlock Grid.Column="3" Text="Formato" Foreground="{DynamicResource WiiBrushTextMuted}" FontWeight="SemiBold" />
-                <TextBlock Grid.Column="4" Text="Tamanho" Foreground="{DynamicResource WiiBrushTextMuted}" FontWeight="SemiBold" />
-                <TextBlock Grid.Column="5" Text="Adicionado" Foreground="{DynamicResource WiiBrushTextMuted}" FontWeight="SemiBold" />
-                <TextBlock Grid.Column="6" Text="Status" Foreground="{DynamicResource WiiBrushTextMuted}" FontWeight="SemiBold" />
+                <TextBlock Classes="dataGridHeaderText" Text="ID" />
+                <TextBlock Classes="dataGridHeaderText" Grid.Column="1" Text="Título" />
+                <TextBlock Classes="dataGridHeaderText" Grid.Column="2" Text="Região" />
+                <TextBlock Classes="dataGridHeaderText" Grid.Column="3" Text="Formato" />
+                <TextBlock Classes="dataGridHeaderText" Grid.Column="4" Text="Tamanho" />
+                <TextBlock Classes="dataGridHeaderText" Grid.Column="5" Text="Adicionado" />
+                <TextBlock Classes="dataGridHeaderText" Grid.Column="6" Text="Status" />
               </Grid>
             </Border>
 
@@ -316,7 +321,8 @@
                      ScrollViewer.VerticalScrollBarVisibility="Auto">
               <ListBox.ItemTemplate>
                 <DataTemplate DataType="vm:LibraryGameItem">
-                  <Grid ColumnDefinitions="88,2*,120,110,100,90,90"
+                  <Grid Classes="dataGridRow"
+                        ColumnDefinitions="88,2*,120,110,100,90,90"
                         ColumnSpacing="12"
                         Margin="{StaticResource WiiLibraryRowMargin}"
                         MinHeight="34">
@@ -343,8 +349,7 @@
       <GridSplitter Grid.Column="3" Background="{DynamicResource WiiBrushBorder}" ResizeDirection="Columns" IsVisible="{Binding IsSidePanelVisible}" />
 
       <Border Grid.Column="4"
-              Background="{DynamicResource WiiBrushSidebar}"
-              Padding="{StaticResource WiiPanelPadding}"
+              Classes="sidePanel"
               IsVisible="{Binding IsSidePanelVisible}">
         <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,*" RowSpacing="18">
           <StackPanel Spacing="4">

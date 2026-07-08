@@ -27,6 +27,7 @@
       <Color x:Key="WiiColorInfo">#0369A1</Color>
       <Color x:Key="WiiColorDisabled">#94A3B8</Color>
       <Color x:Key="WiiColorFocus">#60A5FA</Color>
+      <Color x:Key="WiiColorScrim">#66000000</Color>
     </ResourceDictionary>
 
     <ResourceDictionary x:Key="Dark">
@@ -55,6 +56,7 @@
       <Color x:Key="WiiColorInfo">#7DD3FC</Color>
       <Color x:Key="WiiColorDisabled">#536174</Color>
       <Color x:Key="WiiColorFocus">#93C5FD</Color>
+      <Color x:Key="WiiColorScrim">#80000000</Color>
     </ResourceDictionary>
   </ResourceDictionary.ThemeDictionaries>
 
@@ -83,5 +85,6 @@
   <SolidColorBrush x:Key="WiiBrushInfo" Color="{DynamicResource WiiColorInfo}" />
   <SolidColorBrush x:Key="WiiBrushDisabled" Color="{DynamicResource WiiColorDisabled}" />
   <SolidColorBrush x:Key="WiiBrushFocus" Color="{DynamicResource WiiColorFocus}" />
+  <SolidColorBrush x:Key="WiiBrushScrim" Color="{DynamicResource WiiColorScrim}" />
   <SolidColorBrush x:Key="WiiBrushTransparent" Color="Transparent" />
 </ResourceDictionary>

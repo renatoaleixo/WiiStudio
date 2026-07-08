@@ -1,0 +1,8 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=System.Runtime">
+  <Thickness x:Key="WiiToolbarPadding">8</Thickness>
+  <Thickness x:Key="WiiToolbarGroupMargin">0,0,12,0</Thickness>
+  <sys:Double x:Key="WiiToolbarSeparatorWidth">1</sys:Double>
+  <sys:Double x:Key="WiiToolbarSeparatorHeight">24</sys:Double>
+</ResourceDictionary>
