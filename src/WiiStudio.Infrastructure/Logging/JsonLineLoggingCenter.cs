@@ -1,26 +1,24 @@
 using System.Text.Json;
-using System.Text.RegularExpressions;
 using WiiStudio.Application.DTOs;
 using WiiStudio.Application.Interfaces;
+using WiiStudio.Infrastructure.Security;
 
 namespace WiiStudio.Infrastructure.Logging;
 
 public sealed class JsonLineLoggingCenter : ILoggingCenter
 {
-    private static readonly Regex SensitiveValueRegex = new(
-        @"(?<key>password|token|secret)=[^\s;,\}]+",
-        RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
-
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         WriteIndented = false
     };
 
     private readonly LoggingCenterOptions _options;
+    private readonly ILogRedactionService _redactionService;
 
-    public JsonLineLoggingCenter(LoggingCenterOptions options)
+    public JsonLineLoggingCenter(LoggingCenterOptions options, ILogRedactionService? redactionService = null)
     {
         _options = options;
+        _redactionService = redactionService ?? new LogRedactionService();
     }
 
     public async Task RecordAsync(LogEntry entry, CancellationToken cancellationToken)
@@ -188,28 +186,14 @@ public sealed class JsonLineLoggingCenter : ILoggingCenter
         return true;
     }
 
-    private static LogEntry Mask(LogEntry entry)
+    private LogEntry Mask(LogEntry entry)
     {
         return entry with
         {
-            Message = MaskSensitive(entry.Message),
-            Exception = entry.Exception is null ? null : MaskSensitive(entry.Exception),
-            Properties = entry.Properties?.ToDictionary(
-                property => property.Key,
-                property => IsSensitiveKey(property.Key) ? "***" : MaskSensitive(property.Value))
+            Message = _redactionService.Redact(entry.Message),
+            Exception = entry.Exception is null ? null : _redactionService.Redact(entry.Exception),
+            Properties = entry.Properties is null ? null : _redactionService.Redact(entry.Properties)
         };
-    }
-
-    private static string MaskSensitive(string value)
-    {
-        return SensitiveValueRegex.Replace(value, match => $"{match.Groups["key"].Value}=***");
-    }
-
-    private static bool IsSensitiveKey(string key)
-    {
-        return key.Contains("password", StringComparison.OrdinalIgnoreCase)
-            || key.Contains("token", StringComparison.OrdinalIgnoreCase)
-            || key.Contains("secret", StringComparison.OrdinalIgnoreCase);
     }
 
     private static void Validate(LogEntry entry)

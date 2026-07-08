@@ -115,8 +115,8 @@ public sealed class JsonLineLoggingCenterTests
         await center.RecordAsync(entry, CancellationToken.None);
 
         var content = await File.ReadAllTextAsync(fixture.LogPath);
-        content.Should().Contain("token=***");
-        content.Should().Contain("\"password\":\"***\"");
+        content.Should().Contain("token=[REDACTED]");
+        content.Should().Contain("\"password\":\"[REDACTED]\"");
         content.Should().NotContain("abc123");
         content.Should().NotContain("secret-value");
     }

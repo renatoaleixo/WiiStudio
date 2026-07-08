@@ -10,6 +10,7 @@ using WiiStudio.Infrastructure.GameTdb;
 using WiiStudio.Infrastructure.Metadata;
 using WiiStudio.Infrastructure.Notifications;
 using WiiStudio.Infrastructure.Profiles;
+using WiiStudio.Infrastructure.Security;
 using WiiStudio.Infrastructure.Settings;
 using WiiStudio.Infrastructure.Tasks;
 
@@ -34,6 +35,7 @@ public sealed class ZipBackupService : IBackupService
     private readonly GameTdbUpdateStateStoreOptions _gameTdbOptions;
     private readonly ApplicationUpdateStateStoreOptions _appUpdateOptions;
     private readonly CoverCacheOptions _coverOptions;
+    private readonly IBackupSecurityService _backupSecurityService;
 
     public ZipBackupService(
         BackupServiceOptions options,
@@ -45,7 +47,8 @@ public sealed class ZipBackupService : IBackupService
         TaskManagerOptions taskOptions,
         GameTdbUpdateStateStoreOptions gameTdbOptions,
         ApplicationUpdateStateStoreOptions appUpdateOptions,
-        CoverCacheOptions coverOptions)
+        CoverCacheOptions coverOptions,
+        IBackupSecurityService? backupSecurityService = null)
     {
         _options = options;
         _settingsOptions = settingsOptions;
@@ -57,6 +60,7 @@ public sealed class ZipBackupService : IBackupService
         _gameTdbOptions = gameTdbOptions;
         _appUpdateOptions = appUpdateOptions;
         _coverOptions = coverOptions;
+        _backupSecurityService = backupSecurityService ?? new BackupSecurityService(new SafePathService());
     }
 
     public Task<BackupPreview> AnalyzeAsync(CancellationToken cancellationToken)
@@ -77,6 +81,7 @@ public sealed class ZipBackupService : IBackupService
     {
         ArgumentNullException.ThrowIfNull(options);
         ValidatePath(outputFile, nameof(outputFile));
+        ValidateBackupSecurity(_backupSecurityService.ValidateDestination(outputFile));
         cancellationToken.ThrowIfCancellationRequested();
 
         var directory = Path.GetDirectoryName(outputFile);
@@ -137,6 +142,7 @@ public sealed class ZipBackupService : IBackupService
         foreach (var entry in manifest.Entries.Where(entry => ShouldRestore(entry.Kind, options)))
         {
             cancellationToken.ThrowIfCancellationRequested();
+            ValidateBackupSecurity(_backupSecurityService.ValidateEntry(entry.EntryPath, entry.RelativePath, entry.Sha256));
 
             var archiveEntry = archive.GetEntry(entry.EntryPath)
                 ?? throw new InvalidOperationException($"Backup entry '{entry.EntryPath}' was not found.");
@@ -329,6 +335,14 @@ public sealed class ZipBackupService : IBackupService
         if (filePath.IndexOfAny(Path.GetInvalidPathChars()) >= 0)
         {
             throw new ArgumentException("Path contains invalid characters.", parameterName);
+        }
+    }
+
+    private static void ValidateBackupSecurity(BackupSecurityResult result)
+    {
+        if (!result.Success)
+        {
+            throw new InvalidOperationException(result.ErrorKey);
         }
     }
 

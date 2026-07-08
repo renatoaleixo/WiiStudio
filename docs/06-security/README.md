@@ -14,3 +14,4 @@ Documentos de segurança, permissões, paths, processos externos, logs, backups 
 - `F088-LogRedaction.md`
 - `F089-UpdateSecurity.md`
 - `F090-SecurityChecklist.md`
+- `SECURITY_REFERENCE.md`
