@@ -14,3 +14,4 @@ Documentos do Plugin SDK, manifesto, discovery, loading, permissões, providers 
 - `F078-PluginConversionProviders.md`
 - `F079-PluginDiagnostics.md`
 - `F080-PluginMarketplacePreparation.md`
+- `PLUGIN_SDK_REFERENCE.md`

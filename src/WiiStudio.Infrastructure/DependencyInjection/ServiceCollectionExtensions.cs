@@ -24,6 +24,10 @@ using WiiStudio.Infrastructure.Tasks;
 using WiiStudio.Infrastructure.Themes;
 using WiiStudio.Infrastructure.Usb;
 using WiiStudio.Infrastructure.Wiimms;
+using WiiStudio.Plugin.Abstractions;
+using WiiStudio.Plugin.Diagnostics;
+using WiiStudio.Plugin.Hosting;
+using WiiStudio.Plugin.Security;
 
 namespace WiiStudio.Infrastructure.DependencyInjection;
 
@@ -99,6 +103,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton(new DockLayoutStoreOptions());
         services.AddSingleton(new ThemeStoreOptions());
         services.AddSingleton(new CommandHistoryStoreOptions());
+        services.AddSingleton(new PluginHostOptions());
         services.AddSingleton<IProcessRunner, ProcessRunner>();
         services.AddSingleton<IExportFileSystem, PhysicalExportFileSystem>();
         services.AddSingleton<IFavoriteGameStore, JsonFavoriteGameStore>();
@@ -122,6 +127,16 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IWitService, WitService>();
         services.AddSingleton<IWwtService, WwtService>();
         services.AddSingleton<IDiagnosticsService, DiagnosticsService>();
+        services.AddSingleton<IPluginPermissionPolicy, DefaultPluginPermissionPolicy>();
+        services.AddSingleton<IPluginPermissionService, PluginPermissionService>();
+        services.AddSingleton<IPluginDiagnosticService, PluginDiagnosticService>();
+        services.AddSingleton<IPluginManifestReader, JsonPluginManifestReader>();
+        services.AddSingleton<IPluginManifestValidator, PluginManifestValidator>();
+        services.AddSingleton<IPluginRegistry, PluginRegistry>();
+        services.AddSingleton<IPluginStorage, FileSystemPluginStorage>();
+        services.AddSingleton<IPluginNotificationService, NullPluginNotificationService>();
+        services.AddSingleton<IPluginDiscoveryService, FileSystemPluginDiscoveryService>();
+        services.AddSingleton<IPluginLoaderService, PluginLoaderService>();
 
         return services;
     }

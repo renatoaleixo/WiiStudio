@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\WiiStudio.Plugin.Abstractions\WiiStudio.Plugin.Abstractions.csproj" />
+    <ProjectReference Include="..\WiiStudio.Plugin.Diagnostics\WiiStudio.Plugin.Diagnostics.csproj" />
+    <ProjectReference Include="..\WiiStudio.Plugin.Security\WiiStudio.Plugin.Security.csproj" />
+  </ItemGroup>
+</Project>
