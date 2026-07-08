@@ -15,6 +15,47 @@
 
   <Grid RowDefinitions="Auto,*,Auto" Background="{DynamicResource WiiBrushBackground}">
     <Border Grid.Row="0" Classes="toolbar" Padding="{StaticResource WiiInsetToolbar}">
+      <DockPanel LastChildFill="True">
+      <Menu DockPanel.Dock="Top">
+        <MenuItem Header="Arquivo">
+          <MenuItem Header="Importar jogo..." Command="{Binding ExecuteImportCommand}" InputGesture="Ctrl+I" />
+          <MenuItem Header="Exportar selecionados..." />
+          <Separator />
+          <MenuItem Header="Configurações" InputGesture="Ctrl+," />
+          <MenuItem Header="Sair" InputGesture="Ctrl+Q" />
+        </MenuItem>
+        <MenuItem Header="Editar">
+          <MenuItem Header="Copiar" InputGesture="Ctrl+C" />
+          <MenuItem Header="Selecionar tudo" InputGesture="Ctrl+A" />
+          <MenuItem Header="Limpar filtros" Command="{Binding ClearLibrarySearchCommand}" />
+        </MenuItem>
+        <MenuItem Header="Exibir">
+          <MenuItem Header="Dashboard" />
+          <MenuItem Header="Biblioteca" />
+          <MenuItem Header="Dispositivos" />
+          <Separator />
+          <MenuItem Header="Mostrar/Ocultar painel lateral" Command="{Binding ToggleSidePanelCommand}" InputGesture="Ctrl+B" />
+        </MenuItem>
+        <MenuItem Header="Biblioteca">
+          <MenuItem Header="Atualizar biblioteca" Command="{Binding RefreshLibraryCommand}" InputGesture="Ctrl+R" />
+          <MenuItem Header="Sincronizar metadados" />
+          <MenuItem Header="Baixar capas" />
+          <MenuItem Header="Remover selecionados" Classes="danger" InputGesture="Delete" />
+        </MenuItem>
+        <MenuItem Header="Ferramentas">
+          <MenuItem Header="Executar diagnóstico" InputGesture="Ctrl+Shift+D" />
+          <MenuItem Header="Abrir Command Palette" Command="{Binding OpenCommandPaletteCommand}" InputGesture="Ctrl+Shift+P" />
+        </MenuItem>
+        <MenuItem Header="Plugins">
+          <MenuItem Header="Gerenciar plugins" />
+          <MenuItem Header="Recarregar plugins" />
+        </MenuItem>
+        <MenuItem Header="Ajuda">
+          <MenuItem Header="Documentação" />
+          <MenuItem Header="Atalhos de teclado" />
+          <MenuItem Header="Sobre o WiiStudio" />
+        </MenuItem>
+      </Menu>
       <Grid ColumnDefinitions="Auto,*,320,Auto,Auto" ColumnSpacing="14" VerticalAlignment="Center">
         <TextBlock Text="WiiStudio"
                    FontSize="{StaticResource WiiFontSizeTitle}"
@@ -93,6 +134,7 @@
                    Foreground="{DynamicResource WiiBrushTextMuted}"
                    VerticalAlignment="Center" />
       </Grid>
+      </DockPanel>
     </Border>
 
     <Grid Grid.Row="1" ColumnDefinitions="232,5,*,5,300">
@@ -645,6 +687,31 @@
         <TextBlock Grid.Column="7" Text="{Binding StatusMemory}" Foreground="{DynamicResource WiiBrushTextMuted}" />
         <TextBlock Grid.Column="8" Text="{Binding StatusVersion}" Foreground="{DynamicResource WiiBrushTextMuted}" />
       </Grid>
+    </Border>
+
+    <StackPanel Grid.Row="0"
+                Grid.RowSpan="3"
+                Classes="toastHost"
+                Margin="{StaticResource WiiFeedbackStackMargin}"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Top"
+                IsVisible="False" />
+
+    <Border Grid.Row="0"
+            Grid.RowSpan="3"
+            Classes="modalScrim"
+            IsVisible="False" />
+
+    <Border Grid.Row="0"
+            Grid.RowSpan="3"
+            Classes="loadingState"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            IsVisible="False">
+      <StackPanel Classes="loadingContent">
+        <ProgressBar Classes="spinner" />
+        <TextBlock Text="Carregando..." />
+      </StackPanel>
     </Border>
   </Grid>
 </Window>

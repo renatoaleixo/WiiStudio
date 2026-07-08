@@ -61,6 +61,13 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IThemeService, JsonThemeService>();
         services.AddSingleton<ICommandPaletteService, CommandPaletteService>();
         services.AddSingleton<ICommandHistoryStore, JsonCommandHistoryStore>();
+        services.AddSingleton<IKeyboardShortcutRegistry, KeyboardShortcutRegistry>();
+        services.AddSingleton<IKeyboardShortcutService, KeyboardShortcutService>();
+        services.AddSingleton<IResponsiveLayoutService, ResponsiveLayoutService>();
+        services.AddSingleton<IRouteViewRegistry, RouteViewRegistry>();
+        services.AddSingleton<IWindowStateService, WindowStateService>();
+        services.AddSingleton<ICloseGuardService, CloseGuardService>();
+        services.AddSingleton<IPanelService, PanelService>();
         services.AddTransient<IImportWizardService, ImportWizardService>();
         services.AddSingleton<IMainWindowService, JsonMainWindowService>();
         services.AddSingleton<ISearchPresetService, SearchPresetService>();

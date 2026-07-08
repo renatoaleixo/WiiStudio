@@ -14,3 +14,4 @@ Documentos do App Shell, navegação, header, sidebar, workspace, painéis e ace
 - `F068-WindowManagement.md`
 - `F069-KeyboardShortcuts.md`
 - `F070-AccessibilityNavigation.md`
+- `APPLICATION_SHELL_REFERENCE.md`
