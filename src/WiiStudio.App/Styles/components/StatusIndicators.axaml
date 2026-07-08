@@ -1,0 +1,20 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Style Selector="Ellipse.statusDot">
+    <Setter Property="Width" Value="{StaticResource WiiBadgeDotSize}" />
+    <Setter Property="Height" Value="{StaticResource WiiBadgeDotSize}" />
+    <Setter Property="Fill" Value="{DynamicResource WiiBrushTextMuted}" />
+  </Style>
+
+  <Style Selector="Ellipse.statusDot.success">
+    <Setter Property="Fill" Value="{DynamicResource WiiBrushSuccess}" />
+  </Style>
+
+  <Style Selector="Ellipse.statusDot.warning">
+    <Setter Property="Fill" Value="{DynamicResource WiiBrushWarning}" />
+  </Style>
+
+  <Style Selector="Ellipse.statusDot.error">
+    <Setter Property="Fill" Value="{DynamicResource WiiBrushError}" />
+  </Style>
+</Styles>

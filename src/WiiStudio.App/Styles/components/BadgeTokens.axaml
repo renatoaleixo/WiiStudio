@@ -1,0 +1,8 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=System.Runtime">
+  <sys:Double x:Key="WiiBadgeMinHeight">22</sys:Double>
+  <sys:Double x:Key="WiiBadgeDotSize">8</sys:Double>
+  <Thickness x:Key="WiiBadgePadding">8,3</Thickness>
+  <Thickness x:Key="WiiChipPadding">10,4</Thickness>
+</ResourceDictionary>

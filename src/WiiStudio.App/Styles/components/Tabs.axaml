@@ -1,0 +1,32 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Style Selector="TabControl">
+    <Setter Property="Background" Value="{DynamicResource WiiBrushTransparent}" />
+    <Setter Property="FontFamily" Value="{StaticResource WiiFontFamily}" />
+    <Setter Property="FontSize" Value="{StaticResource WiiFontSizeBody}" />
+  </Style>
+
+  <Style Selector="TabItem">
+    <Setter Property="MinHeight" Value="{StaticResource WiiTabMinHeight}" />
+    <Setter Property="Padding" Value="{StaticResource WiiTabPadding}" />
+    <Setter Property="Foreground" Value="{DynamicResource WiiBrushTextSecondary}" />
+    <Setter Property="Background" Value="{DynamicResource WiiBrushTransparent}" />
+  </Style>
+
+  <Style Selector="TabItem:pointerover">
+    <Setter Property="Background" Value="{DynamicResource WiiBrushSurface}" />
+  </Style>
+
+  <Style Selector="TabItem:selected">
+    <Setter Property="Foreground" Value="{DynamicResource WiiBrushTextPrimary}" />
+    <Setter Property="Background" Value="{DynamicResource WiiBrushSurfaceRaised}" />
+  </Style>
+
+  <Style Selector="TabItem.error">
+    <Setter Property="Foreground" Value="{DynamicResource WiiBrushError}" />
+  </Style>
+
+  <Style Selector="TabItem.warning">
+    <Setter Property="Foreground" Value="{DynamicResource WiiBrushWarning}" />
+  </Style>
+</Styles>

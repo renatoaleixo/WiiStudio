@@ -1,0 +1,15 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Style Selector="TextBlock.inlineFeedback">
+    <Setter Property="FontSize" Value="{StaticResource WiiFontSizeCaption}" />
+    <Setter Property="Foreground" Value="{DynamicResource WiiBrushInfo}" />
+  </Style>
+
+  <Style Selector="TextBlock.inlineFeedback.success">
+    <Setter Property="Foreground" Value="{DynamicResource WiiBrushSuccess}" />
+  </Style>
+
+  <Style Selector="TextBlock.inlineFeedback.error">
+    <Setter Property="Foreground" Value="{DynamicResource WiiBrushError}" />
+  </Style>
+</Styles>

@@ -12,6 +12,7 @@
         <ResourceInclude Source="avares://WiiStudio.App/Styles/tokens/Grid.axaml" />
         <ResourceInclude Source="avares://WiiStudio.App/Styles/tokens/Breakpoints.axaml" />
         <ResourceInclude Source="avares://WiiStudio.App/Styles/tokens/Responsive.axaml" />
+        <ResourceInclude Source="avares://WiiStudio.App/Styles/tokens/ResponsiveBehaviors.axaml" />
         <ResourceInclude Source="avares://WiiStudio.App/Styles/tokens/Radius.axaml" />
         <ResourceInclude Source="avares://WiiStudio.App/Styles/tokens/Elevation.axaml" />
         <ResourceInclude Source="avares://WiiStudio.App/Styles/icons/IconTokens.axaml" />
@@ -23,6 +24,13 @@
         <ResourceInclude Source="avares://WiiStudio.App/Styles/components/CardTokens.axaml" />
         <ResourceInclude Source="avares://WiiStudio.App/Styles/components/NavigationTokens.axaml" />
         <ResourceInclude Source="avares://WiiStudio.App/Styles/components/ToolbarTokens.axaml" />
+        <ResourceInclude Source="avares://WiiStudio.App/Styles/components/TabTokens.axaml" />
+        <ResourceInclude Source="avares://WiiStudio.App/Styles/components/MenuTokens.axaml" />
+        <ResourceInclude Source="avares://WiiStudio.App/Styles/components/HelpTokens.axaml" />
+        <ResourceInclude Source="avares://WiiStudio.App/Styles/components/BadgeTokens.axaml" />
+        <ResourceInclude Source="avares://WiiStudio.App/Styles/components/ProgressTokens.axaml" />
+        <ResourceInclude Source="avares://WiiStudio.App/Styles/components/StateTokens.axaml" />
+        <ResourceInclude Source="avares://WiiStudio.App/Styles/components/FeedbackTokens.axaml" />
       </ResourceDictionary.MergedDictionaries>
     </ResourceDictionary>
   </Styles.Resources>
@@ -51,6 +59,32 @@
   <StyleInclude Source="avares://WiiStudio.App/Styles/components/Toolbars.axaml" />
   <StyleInclude Source="avares://WiiStudio.App/Styles/components/ToolbarButtons.axaml" />
   <StyleInclude Source="avares://WiiStudio.App/Styles/components/ToolbarOverflow.axaml" />
+  <StyleInclude Source="avares://WiiStudio.App/Styles/components/Tabs.axaml" />
+  <StyleInclude Source="avares://WiiStudio.App/Styles/components/HorizontalTabs.axaml" />
+  <StyleInclude Source="avares://WiiStudio.App/Styles/components/VerticalTabs.axaml" />
+  <StyleInclude Source="avares://WiiStudio.App/Styles/components/CompactTabs.axaml" />
+  <StyleInclude Source="avares://WiiStudio.App/Styles/components/Menus.axaml" />
+  <StyleInclude Source="avares://WiiStudio.App/Styles/components/ContextMenus.axaml" />
+  <StyleInclude Source="avares://WiiStudio.App/Styles/components/FlyoutMenus.axaml" />
+  <StyleInclude Source="avares://WiiStudio.App/Styles/components/MenuItems.axaml" />
+  <StyleInclude Source="avares://WiiStudio.App/Styles/components/Tooltips.axaml" />
+  <StyleInclude Source="avares://WiiStudio.App/Styles/components/HelpHints.axaml" />
+  <StyleInclude Source="avares://WiiStudio.App/Styles/components/InlineHelp.axaml" />
+  <StyleInclude Source="avares://WiiStudio.App/Styles/components/Badges.axaml" />
+  <StyleInclude Source="avares://WiiStudio.App/Styles/components/SeverityBadges.axaml" />
+  <StyleInclude Source="avares://WiiStudio.App/Styles/components/Chips.axaml" />
+  <StyleInclude Source="avares://WiiStudio.App/Styles/components/StatusIndicators.axaml" />
+  <StyleInclude Source="avares://WiiStudio.App/Styles/components/ProgressIndicators.axaml" />
+  <StyleInclude Source="avares://WiiStudio.App/Styles/components/Spinner.axaml" />
+  <StyleInclude Source="avares://WiiStudio.App/Styles/components/StepProgress.axaml" />
+  <StyleInclude Source="avares://WiiStudio.App/Styles/components/BatchProgress.axaml" />
+  <StyleInclude Source="avares://WiiStudio.App/Styles/components/EmptyStates.axaml" />
+  <StyleInclude Source="avares://WiiStudio.App/Styles/components/ErrorStates.axaml" />
+  <StyleInclude Source="avares://WiiStudio.App/Styles/components/LoadingStates.axaml" />
+  <StyleInclude Source="avares://WiiStudio.App/Styles/components/Toasts.axaml" />
+  <StyleInclude Source="avares://WiiStudio.App/Styles/components/Snackbars.axaml" />
+  <StyleInclude Source="avares://WiiStudio.App/Styles/components/Banners.axaml" />
+  <StyleInclude Source="avares://WiiStudio.App/Styles/components/InlineFeedback.axaml" />
   <StyleInclude Source="avares://WiiStudio.App/Styles/components/Lists.axaml" />
   <StyleInclude Source="avares://WiiStudio.App/Styles/icons/IconStyles.axaml" />
 </Styles>

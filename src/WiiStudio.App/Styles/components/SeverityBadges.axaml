@@ -1,0 +1,18 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Style Selector="Border.badge.info">
+    <Setter Property="BorderBrush" Value="{DynamicResource WiiBrushInfo}" />
+  </Style>
+
+  <Style Selector="Border.badge.success">
+    <Setter Property="BorderBrush" Value="{DynamicResource WiiBrushSuccess}" />
+  </Style>
+
+  <Style Selector="Border.badge.warning">
+    <Setter Property="BorderBrush" Value="{DynamicResource WiiBrushWarning}" />
+  </Style>
+
+  <Style Selector="Border.badge.error">
+    <Setter Property="BorderBrush" Value="{DynamicResource WiiBrushError}" />
+  </Style>
+</Styles>

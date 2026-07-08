@@ -1,0 +1,10 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Thickness x:Key="WiiCompactPagePadding">12</Thickness>
+  <Thickness x:Key="WiiStandardPagePadding">24</Thickness>
+  <Thickness x:Key="WiiWidePagePadding">32</Thickness>
+  <x:String x:Key="WiiCompactLayoutRule">Sidebar collapsed, toolbar overflow, single-column cards, hidden optional panels.</x:String>
+  <x:String x:Key="WiiStandardLayoutRule">Expanded sidebar, standard workspace, optional right panel.</x:String>
+  <x:String x:Key="WiiWideLayoutRule">Expanded sidebar, right panel visible, richer dashboard/grid density.</x:String>
+  <x:String x:Key="WiiUltraWideLayoutRule">Additional panels and side-by-side details may remain visible.</x:String>
+</ResourceDictionary>

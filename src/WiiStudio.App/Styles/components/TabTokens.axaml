@@ -1,0 +1,8 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=System.Runtime">
+  <sys:Double x:Key="WiiTabMinHeight">36</sys:Double>
+  <sys:Double x:Key="WiiCompactTabMinHeight">28</sys:Double>
+  <Thickness x:Key="WiiTabPadding">14,8</Thickness>
+  <Thickness x:Key="WiiCompactTabPadding">10,6</Thickness>
+</ResourceDictionary>

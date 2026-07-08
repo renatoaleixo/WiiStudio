@@ -1,0 +1,23 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Style Selector="Menu">
+    <Setter Property="Background" Value="{DynamicResource WiiBrushChrome}" />
+    <Setter Property="Foreground" Value="{DynamicResource WiiBrushTextPrimary}" />
+  </Style>
+
+  <Style Selector="MenuItem">
+    <Setter Property="MinHeight" Value="{StaticResource WiiMenuItemMinHeight}" />
+    <Setter Property="Padding" Value="{StaticResource WiiMenuItemPadding}" />
+    <Setter Property="Foreground" Value="{DynamicResource WiiBrushTextPrimary}" />
+    <Setter Property="FontFamily" Value="{StaticResource WiiFontFamily}" />
+    <Setter Property="FontSize" Value="{StaticResource WiiFontSizeBody}" />
+  </Style>
+
+  <Style Selector="MenuItem:pointerover">
+    <Setter Property="Background" Value="{DynamicResource WiiBrushSurface}" />
+  </Style>
+
+  <Style Selector="MenuItem.danger">
+    <Setter Property="Foreground" Value="{DynamicResource WiiBrushError}" />
+  </Style>
+</Styles>

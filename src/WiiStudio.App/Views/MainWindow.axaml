@@ -55,10 +55,10 @@
               <TextBlock Text="Carregar" />
             </StackPanel>
           </Button>
-          <Button Command="{Binding ResetDockLayoutCommand}" Classes="tertiary small">
+          <Button Command="{Binding ResetDockLayoutCommand}" Classes="tertiary small" ToolTip.Tip="Restaurar layout padrão">
             <TextBlock Text="Reset" />
           </Button>
-          <Button Command="{Binding OpenCommandPaletteCommand}" Classes="secondary small">
+          <Button Command="{Binding OpenCommandPaletteCommand}" Classes="secondary small" ToolTip.Tip="Abrir command palette">
             <TextBlock Text="Comandos" />
           </Button>
           <ComboBox ItemsSource="{Binding Themes}"
@@ -71,7 +71,7 @@
               </DataTemplate>
             </ComboBox.ItemTemplate>
           </ComboBox>
-          <Button Command="{Binding ApplySelectedThemeCommand}" Classes="secondary small">
+          <Button Command="{Binding ApplySelectedThemeCommand}" Classes="secondary small" ToolTip.Tip="Aplicar tema selecionado">
             <TextBlock Text="Tema" />
           </Button>
         </StackPanel>
@@ -333,11 +333,17 @@
                                FontWeight="SemiBold"
                                TextTrimming="CharacterEllipsis"
                                VerticalAlignment="Center" />
-                    <TextBlock Grid.Column="2" Text="{Binding Region}" Foreground="{DynamicResource WiiBrushTextSecondary}" VerticalAlignment="Center" />
-                    <TextBlock Grid.Column="3" Text="{Binding Format}" Foreground="{DynamicResource WiiBrushTextSecondary}" VerticalAlignment="Center" />
+                    <Border Grid.Column="2" Classes="badge" HorizontalAlignment="Left" VerticalAlignment="Center">
+                      <TextBlock Classes="badgeText" Text="{Binding Region}" />
+                    </Border>
+                    <Border Grid.Column="3" Classes="badge" HorizontalAlignment="Left" VerticalAlignment="Center">
+                      <TextBlock Classes="badgeText" Text="{Binding Format}" />
+                    </Border>
                     <TextBlock Grid.Column="4" Text="{Binding Size}" Foreground="{DynamicResource WiiBrushTextSecondary}" VerticalAlignment="Center" />
                     <TextBlock Grid.Column="5" Text="{Binding AddedAt}" Foreground="{DynamicResource WiiBrushTextMuted}" VerticalAlignment="Center" />
-                    <TextBlock Grid.Column="6" Text="{Binding Favorite}" Foreground="{DynamicResource WiiBrushSuccess}" VerticalAlignment="Center" />
+                    <Border Grid.Column="6" Classes="badge success" HorizontalAlignment="Left" VerticalAlignment="Center">
+                      <TextBlock Classes="badgeText" Text="{Binding Favorite}" />
+                    </Border>
                   </Grid>
                 </DataTemplate>
               </ListBox.ItemTemplate>
@@ -428,7 +434,8 @@
                 <TextBlock Text="Cancelar" />
               </Button>
 
-              <TextBlock Text="{Binding ImportSummary}"
+              <TextBlock Classes="inlineFeedback"
+                         Text="{Binding ImportSummary}"
                          Foreground="{DynamicResource WiiBrushTextSecondary}"
                          TextWrapping="Wrap" />
 
@@ -507,7 +514,8 @@
                 <TextBlock Text="Cancelar" />
               </Button>
 
-              <TextBlock Text="{Binding ConversionSummary}"
+              <TextBlock Classes="inlineFeedback"
+                         Text="{Binding ConversionSummary}"
                          Foreground="{DynamicResource WiiBrushTextSecondary}"
                          TextWrapping="Wrap" />
 

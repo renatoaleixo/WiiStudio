@@ -1,0 +1,6 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=System.Runtime">
+  <sys:Double x:Key="WiiStateIconSize">48</sys:Double>
+  <Thickness x:Key="WiiStatePadding">32</Thickness>
+</ResourceDictionary>
