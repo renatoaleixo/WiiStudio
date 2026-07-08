@@ -99,6 +99,8 @@ design system, application shell, plugin SDK, segurança, testes e documentaçã
 - `F058-EmptyErrorAndLoadingStates.md`
 - `F059-ToastsAndInlineFeedback.md`
 - `F060-ResponsiveBehaviors.md`
+- `DESIGN_SYSTEM_REFERENCE.md`
+- `DESIGN_SYSTEM_USAGE.md`
 
 ---
 
@@ -114,6 +116,7 @@ design system, application shell, plugin SDK, segurança, testes e documentaçã
 - `F068-WindowManagement.md`
 - `F069-KeyboardShortcuts.md`
 - `F070-AccessibilityNavigation.md`
+- `APPLICATION_SHELL_REFERENCE.md`
 
 ---
 
@@ -129,6 +132,7 @@ design system, application shell, plugin SDK, segurança, testes e documentaçã
 - `F078-PluginConversionProviders.md`
 - `F079-PluginDiagnostics.md`
 - `F080-PluginMarketplacePreparation.md`
+- `PLUGIN_SDK_REFERENCE.md`
 
 ---
 
@@ -144,6 +148,7 @@ design system, application shell, plugin SDK, segurança, testes e documentaçã
 - `F088-LogRedaction.md`
 - `F089-UpdateSecurity.md`
 - `F090-SecurityChecklist.md`
+- `SECURITY_REFERENCE.md`
 
 ---
 
@@ -159,6 +164,7 @@ design system, application shell, plugin SDK, segurança, testes e documentaçã
 - `F098-PerformanceTesting.md`
 - `F099-RegressionTesting.md`
 - `F100-QualityGates.md`
+- `TESTING_QUALITY_REFERENCE.md`
 
 ---
 
@@ -173,6 +179,7 @@ design system, application shell, plugin SDK, segurança, testes e documentaçã
 - `CONTRIBUTING.md`
 - `DEFINITION_OF_DONE.md`
 - `FOLDER_STRUCTURE.md`
+- `FINALIZATION_REFERENCE.md`
 - `MIGRATION_PLAN_TO_FINAL_FOLDERS.md`
 
 ---
