@@ -106,6 +106,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton(new CommandHistoryStoreOptions());
         services.AddSingleton(new PluginHostOptions());
         services.AddSingleton<IProcessRunner, ProcessRunner>();
+        services.AddSingleton<IProcessExecutor, SystemProcessExecutor>();
         services.AddSingleton<IExportFileSystem, PhysicalExportFileSystem>();
         services.AddSingleton<IFavoriteGameStore, JsonFavoriteGameStore>();
         services.AddSingleton<ISettingsService, JsonSettingsService>();

@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using Microsoft.Extensions.Logging;
 using WiiStudio.Infrastructure.Security;
 
@@ -9,15 +8,18 @@ public sealed class ProcessRunner : IProcessRunner
     private readonly ILogger<ProcessRunner> _logger;
     private readonly ISafePathService _safePathService;
     private readonly ILogRedactionService _logRedactionService;
+    private readonly IProcessExecutor _processExecutor;
 
     public ProcessRunner(
         ILogger<ProcessRunner> logger,
         ISafePathService? safePathService = null,
-        ILogRedactionService? logRedactionService = null)
+        ILogRedactionService? logRedactionService = null,
+        IProcessExecutor? processExecutor = null)
     {
         _logger = logger;
         _safePathService = safePathService ?? new SafePathService();
         _logRedactionService = logRedactionService ?? new LogRedactionService();
+        _processExecutor = processExecutor ?? new SystemProcessExecutor();
     }
 
     public async Task<ProcessResult> RunAsync(ProcessRequest request, CancellationToken cancellationToken)
@@ -25,36 +27,15 @@ public sealed class ProcessRunner : IProcessRunner
         ArgumentNullException.ThrowIfNull(request);
         ValidateRequest(request);
 
-        using var timeoutSource = new CancellationTokenSource(request.Timeout);
-        using var linkedSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutSource.Token);
-
-        var stopwatch = Stopwatch.StartNew();
-        using var process = CreateProcess(request);
-
         _logger.LogInformation("Starting process {ExecutablePath}", _logRedactionService.Redact(request.ExecutablePath));
 
-        process.Start();
-
-        var standardOutputTask = process.StandardOutput.ReadToEndAsync(linkedSource.Token);
-        var standardErrorTask = process.StandardError.ReadToEndAsync(linkedSource.Token);
-
-        try
-        {
-            await process.WaitForExitAsync(linkedSource.Token);
-        }
-        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
-        {
-            KillProcess(process);
-            throw new TimeoutException($"Process '{request.ExecutablePath}' exceeded timeout {request.Timeout}.");
-        }
-
-        stopwatch.Stop();
+        var rawResult = await _processExecutor.ExecuteAsync(request, cancellationToken);
 
         var result = new ProcessResult(
-            process.ExitCode,
-            _logRedactionService.Redact(await standardOutputTask),
-            _logRedactionService.Redact(await standardErrorTask),
-            stopwatch.Elapsed);
+            rawResult.ExitCode,
+            _logRedactionService.Redact(rawResult.StandardOutput),
+            _logRedactionService.Redact(rawResult.StandardError),
+            rawResult.Duration);
 
         _logger.LogInformation(
             "Process {ExecutablePath} finished with exit code {ExitCode} in {Duration}ms",
@@ -76,35 +57,6 @@ public sealed class ProcessRunner : IProcessRunner
         if (request.Arguments.Any(argument => argument.Contains('\0')))
         {
             throw new ArgumentException("Process arguments contain invalid characters.", nameof(request));
-        }
-    }
-
-    private static Process CreateProcess(ProcessRequest request)
-    {
-        var startInfo = new ProcessStartInfo
-        {
-            FileName = request.ExecutablePath,
-            RedirectStandardError = true,
-            RedirectStandardOutput = true,
-            UseShellExecute = false
-        };
-
-        foreach (var argument in request.Arguments)
-        {
-            startInfo.ArgumentList.Add(argument);
-        }
-
-        return new Process
-        {
-            StartInfo = startInfo
-        };
-    }
-
-    private static void KillProcess(Process process)
-    {
-        if (!process.HasExited)
-        {
-            process.Kill(entireProcessTree: true);
         }
     }
 }

@@ -14,3 +14,4 @@ Documentos de testes, regressão, performance e Quality Gates.
 - `F098-PerformanceTesting.md`
 - `F099-RegressionTesting.md`
 - `F100-QualityGates.md`
+- `TESTING_QUALITY_REFERENCE.md`
