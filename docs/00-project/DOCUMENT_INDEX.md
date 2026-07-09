@@ -168,6 +168,12 @@ design system, application shell, plugin SDK, segurança, testes e documentaçã
 
 ---
 
+# EP014 - External Tools
+
+- `F101-ExternalToolDependencyManager.md`
+
+---
+
 # Documentos Finais
 
 - `AI_CONTEXT.md`

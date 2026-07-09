@@ -33,6 +33,8 @@ Thumbs.db
 *.nupkg
 packages/
 .nuget/
+!tools/packages/
+!tools/packages/*.zip
 
 # Local environment
 .env
