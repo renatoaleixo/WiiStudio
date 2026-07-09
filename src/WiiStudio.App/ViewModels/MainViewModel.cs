@@ -26,7 +26,9 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly IDeviceManagerService _deviceManagerService;
     private readonly IDiagnosticsService _diagnosticsService;
     private readonly IDockService _dockService;
+    private readonly IExportGameService _exportGameService;
     private readonly IImportWizardService _importWizardService;
+    private readonly IKeyboardShortcutService _keyboardShortcutService;
     private readonly ILibraryViewService _libraryViewService;
     private readonly IMainWindowService _mainWindowService;
     private readonly IMetadataSynchronizationService _metadataSynchronizationService;
@@ -34,6 +36,7 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly IPluginLoaderService _pluginLoaderService;
     private readonly IPluginRegistry _pluginRegistry;
     private readonly RemoveGameUseCase _removeGameUseCase;
+    private readonly ISettingsService _settingsService;
     private readonly IStatusBarService _statusBarService;
     private readonly IThemeService _themeService;
     private IReadOnlySet<string> _selectedGameIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -179,6 +182,9 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private CommandPaletteItemViewModel? _selectedCommandPaletteItem;
 
+    [ObservableProperty]
+    private string _diagnosticsSummary = "Diagnóstico não executado.";
+
     public MainViewModel(
         ICommandPaletteService commandPaletteService,
         DetectUsbDrivesUseCase detectUsbDrivesUseCase,
@@ -188,7 +194,9 @@ public sealed partial class MainViewModel : ObservableObject
         IDeviceManagerService deviceManagerService,
         IDiagnosticsService diagnosticsService,
         IDockService dockService,
+        IExportGameService exportGameService,
         IImportWizardService importWizardService,
+        IKeyboardShortcutService keyboardShortcutService,
         ILibraryViewService libraryViewService,
         IMainWindowService mainWindowService,
         IMetadataSynchronizationService metadataSynchronizationService,
@@ -196,6 +204,7 @@ public sealed partial class MainViewModel : ObservableObject
         IPluginLoaderService pluginLoaderService,
         IPluginRegistry pluginRegistry,
         RemoveGameUseCase removeGameUseCase,
+        ISettingsService settingsService,
         IStatusBarService statusBarService,
         ShellCommandExecutor shellCommandExecutor,
         IThemeService themeService)
@@ -208,7 +217,9 @@ public sealed partial class MainViewModel : ObservableObject
         _deviceManagerService = deviceManagerService;
         _diagnosticsService = diagnosticsService;
         _dockService = dockService;
+        _exportGameService = exportGameService;
         _importWizardService = importWizardService;
+        _keyboardShortcutService = keyboardShortcutService;
         _libraryViewService = libraryViewService;
         _mainWindowService = mainWindowService;
         _metadataSynchronizationService = metadataSynchronizationService;
@@ -216,6 +227,7 @@ public sealed partial class MainViewModel : ObservableObject
         _pluginLoaderService = pluginLoaderService;
         _pluginRegistry = pluginRegistry;
         _removeGameUseCase = removeGameUseCase;
+        _settingsService = settingsService;
         _statusBarService = statusBarService;
         _themeService = themeService;
         shellCommandExecutor.SetHandler(HandleShellCommandAsync);
@@ -249,6 +261,8 @@ public sealed partial class MainViewModel : ObservableObject
     public ObservableCollection<ImportPreviewItemViewModel> ImportPreviewItems { get; } = new();
 
     public ObservableCollection<ConversionPreviewItemViewModel> ConversionPreviewItems { get; } = new();
+
+    public ObservableCollection<DiagnosticsCheckItemViewModel> DiagnosticsChecks { get; } = new();
 
     public IReadOnlyList<ImportWizardStep> ImportSteps { get; } =
     [
@@ -595,16 +609,67 @@ public sealed partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void ShowPendingFeature(string? featureName)
-    {
-        var displayName = string.IsNullOrWhiteSpace(featureName) ? "Recurso" : featureName;
-        StatusMessage = $"{displayName} ainda será conectado ao fluxo completo.";
-    }
-
-    [RelayCommand]
     private void ShowAbout()
     {
         StatusMessage = $"WiiStudio {StatusVersion} - ambiente de gerenciamento Wii.";
+    }
+
+    [RelayCommand]
+    private async Task ExportSelectedGamesAsync(CancellationToken cancellationToken)
+    {
+        var gameIds = GetSelectedGameIds();
+        if (gameIds.Count == 0)
+        {
+            StatusMessage = "Selecione ao menos um jogo para exportar.";
+            return;
+        }
+
+        var settings = await _settingsService.GetAsync(cancellationToken);
+        if (string.IsNullOrWhiteSpace(settings.ExportPath))
+        {
+            SelectedModule = Modules.FirstOrDefault(module => module.Id == ShellModuleId.Settings);
+            StatusMessage = "Configure uma pasta de exportação antes de exportar jogos.";
+            return;
+        }
+
+        IsBusy = true;
+        StatusMessage = "Exportando jogo(s) selecionado(s)...";
+
+        try
+        {
+            var result = await _exportGameService.ExportAsync(
+                new ExportRequest(gameIds, settings.ExportPath, FileFormat.Wbfs, ExportConflictResolution.Rename),
+                cancellationToken);
+            var exportedCount = result.Items.Count(item => item.Status == ExportStatus.Exported);
+            StatusMessage = result.HasFailures
+                ? $"Exportação concluída com falhas: {exportedCount}/{result.TotalGames} exportado(s)."
+                : $"{exportedCount} jogo(s) exportado(s) para {settings.ExportPath}.";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    [RelayCommand]
+    private void ShowDocumentation()
+    {
+        StatusMessage = "Documentação local: docs/99-final e docs/08-tools.";
+    }
+
+    [RelayCommand]
+    private void ShowKeyboardShortcuts()
+    {
+        var shortcuts = _keyboardShortcutService.GetActiveShortcuts(ShortcutScope.Global);
+        StatusMessage = shortcuts.Count == 0
+            ? "Nenhum atalho global registrado."
+            : string.Join(" | ", shortcuts.Select(shortcut => $"{shortcut.Gesture}: {shortcut.CommandId}"));
+    }
+
+    public async Task SetImportSourcePathsAsync(IReadOnlyList<string> sourcePaths, CancellationToken cancellationToken)
+    {
+        ImportSourcePathsText = string.Join(Environment.NewLine, sourcePaths);
+        await AnalyzeImportAsync(cancellationToken);
     }
 
     [RelayCommand]
@@ -617,11 +682,13 @@ public sealed partial class MainViewModel : ObservableObject
         try
         {
             var report = await _diagnosticsService.RunAsync(cancellationToken);
+            ApplyDiagnosticsReport(report);
             var unhealthyCount = report.Checks.Count(check => check.Status == DiagnosticsStatus.Unhealthy);
             var warningCount = report.Checks.Count(check => check.Status == DiagnosticsStatus.Warning);
-            StatusMessage = report.IsHealthy
+            DiagnosticsSummary = report.IsHealthy
                 ? $"Diagnóstico concluído: {report.Checks.Count} verificação(ões), nenhum erro crítico."
                 : $"Diagnóstico concluído: {unhealthyCount} erro(s), {warningCount} aviso(s).";
+            StatusMessage = DiagnosticsSummary;
             await RefreshStatusBarAsync(cancellationToken);
         }
         finally
@@ -867,11 +934,11 @@ public sealed partial class MainViewModel : ObservableObject
 
         ImportWizardState = preview.State;
         SelectedImportStep = preview.CanImport ? ImportWizardStep.SelectingTarget : ImportWizardStep.Validating;
-        CanExecuteImport = preview.CanImport && SelectedImportDrive is not null;
-        ImportSummary = preview.Items.Count == 0
-            ? "Informe ao menos um arquivo."
-            : $"{preview.Items.Count} arquivo(s) analisado(s).";
-        StatusMessage = preview.CanImport ? "Arquivos prontos para importação." : "Revise os arquivos informados.";
+        CanExecuteImport = preview.CanImport && IsImportDriveReady(SelectedImportDrive) && HasEnoughSpaceForImport(sourcePaths, SelectedImportDrive);
+        ImportSummary = CreateImportSummary(preview, sourcePaths, SelectedImportDrive);
+        StatusMessage = CanExecuteImport
+            ? "Arquivos e HD USB prontos para importação."
+            : ImportSummary;
     }
 
     [RelayCommand]
@@ -879,7 +946,7 @@ public sealed partial class MainViewModel : ObservableObject
     {
         if (!CanExecuteImport || SelectedImportDrive is null)
         {
-            StatusMessage = "Selecione arquivos válidos e um destino.";
+            StatusMessage = "Selecione arquivos válidos e um HD USB montado/escrevível.";
             return;
         }
 
@@ -1053,7 +1120,9 @@ public sealed partial class MainViewModel : ObservableObject
     {
         CanExecuteImport = value is not null
             && ImportPreviewItems.Count > 0
-            && ImportPreviewItems.All(item => item.Status != ImportWizardFileStatus.Error.ToString());
+            && ImportPreviewItems.All(item => item.Status != ImportWizardFileStatus.Error.ToString())
+            && IsImportDriveReady(value)
+            && HasEnoughSpaceForImport(ParseImportSourcePaths(), value);
     }
 
     partial void OnCommandPaletteQueryChanged(string? value)
@@ -1192,6 +1261,15 @@ public sealed partial class MainViewModel : ObservableObject
         SelectedCommandPaletteItem = CommandPaletteItems.FirstOrDefault();
     }
 
+    private void ApplyDiagnosticsReport(DiagnosticsReport report)
+    {
+        DiagnosticsChecks.Clear();
+        foreach (var check in report.Checks)
+        {
+            DiagnosticsChecks.Add(new DiagnosticsCheckItemViewModel(check));
+        }
+    }
+
     private IReadOnlyList<string> GetSelectedGameIds()
     {
         if (_selectedGameIds.Count > 0)
@@ -1200,6 +1278,60 @@ public sealed partial class MainViewModel : ObservableObject
         }
 
         return SelectedGame is null ? [] : [SelectedGame.Id];
+    }
+
+    private static bool IsImportDriveReady(UsbDrive? drive)
+    {
+        return drive is { IsMounted: true, IsWritable: true }
+            && (drive.FileSystem is UsbDriveFileSystem.Wbfs
+                or UsbDriveFileSystem.Fat32
+                or UsbDriveFileSystem.Ntfs
+                or UsbDriveFileSystem.ExFat);
+    }
+
+    private static bool HasEnoughSpaceForImport(IReadOnlyList<string> sourcePaths, UsbDrive? drive)
+    {
+        if (drive is null || sourcePaths.Count == 0)
+        {
+            return false;
+        }
+
+        var requiredBytes = sourcePaths
+            .Where(File.Exists)
+            .Select(path => new FileInfo(path).Length)
+            .Sum();
+
+        return requiredBytes <= drive.FreeSpace;
+    }
+
+    private static string CreateImportSummary(ImportPreview preview, IReadOnlyList<string> sourcePaths, UsbDrive? drive)
+    {
+        if (preview.Items.Count == 0)
+        {
+            return "Informe ao menos um arquivo.";
+        }
+
+        if (!preview.CanImport)
+        {
+            return "Revise os arquivos informados.";
+        }
+
+        if (drive is null)
+        {
+            return "Selecione o HD USB de destino.";
+        }
+
+        if (!IsImportDriveReady(drive))
+        {
+            return "O HD USB precisa estar montado, escrevível e em um formato compatível.";
+        }
+
+        if (!HasEnoughSpaceForImport(sourcePaths, drive))
+        {
+            return "Espaço livre insuficiente no HD USB selecionado.";
+        }
+
+        return $"{preview.Items.Count} arquivo(s) prontos para importar em {drive.Name}.";
     }
 
     private async Task ApplyThemeByIdAsync(string themeId, CancellationToken cancellationToken)

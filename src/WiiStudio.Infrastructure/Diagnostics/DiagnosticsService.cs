@@ -3,6 +3,7 @@ using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.Logging;
 using WiiStudio.Application.DTOs;
+using WiiStudio.Application.ExternalTools;
 using WiiStudio.Application.Interfaces;
 using WiiStudio.Infrastructure.AppUpdates;
 using WiiStudio.Infrastructure.Backups;
@@ -33,6 +34,7 @@ public sealed class DiagnosticsService : IDiagnosticsService
 
     private readonly IWitService _witService;
     private readonly IWiimmsToolLocator _toolLocator;
+    private readonly IExternalToolManager _externalToolManager;
     private readonly SettingsStoreOptions _settingsOptions;
     private readonly ProfileStoreOptions _profileOptions;
     private readonly FavoriteGameStoreOptions _favoriteOptions;
@@ -50,6 +52,7 @@ public sealed class DiagnosticsService : IDiagnosticsService
     public DiagnosticsService(
         IWitService witService,
         IWiimmsToolLocator toolLocator,
+        IExternalToolManager externalToolManager,
         SettingsStoreOptions settingsOptions,
         ProfileStoreOptions profileOptions,
         FavoriteGameStoreOptions favoriteOptions,
@@ -66,6 +69,7 @@ public sealed class DiagnosticsService : IDiagnosticsService
     {
         _witService = witService;
         _toolLocator = toolLocator;
+        _externalToolManager = externalToolManager;
         _settingsOptions = settingsOptions;
         _profileOptions = profileOptions;
         _favoriteOptions = favoriteOptions;
@@ -185,13 +189,57 @@ public sealed class DiagnosticsService : IDiagnosticsService
 
     private async Task<IReadOnlyList<DiagnosticsCheckResult>> CheckDependenciesAsync(CancellationToken cancellationToken)
     {
-        return
-        [
+        var checks = new List<DiagnosticsCheckResult>
+        {
             await CheckWitAsync(cancellationToken),
             await CheckWwtAsync(cancellationToken),
             await CheckExecutableAsync("git", "Git", cancellationToken),
-            new DiagnosticsCheckResult("sqlite", DiagnosticsStatus.Healthy, "SQLite support is available through local stores.", Category: "Dependencies")
-        ];
+            new("sqlite", DiagnosticsStatus.Healthy, "SQLite support is available through local stores.", Category: "Dependencies")
+        };
+
+        checks.AddRange(await CheckExternalToolsAsync(cancellationToken));
+
+        return checks;
+    }
+
+    private async Task<IReadOnlyList<DiagnosticsCheckResult>> CheckExternalToolsAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            var statuses = await _externalToolManager.CheckAllAsync(cancellationToken);
+            return statuses.Select(MapExternalToolStatus).ToArray();
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            return [new DiagnosticsCheckResult("external-tools", DiagnosticsStatus.Warning, exception.Message, Category: "Dependencies", Severity: DiagnosticsSeverity.Warning)];
+        }
+    }
+
+    private static DiagnosticsCheckResult MapExternalToolStatus(ExternalToolStatus status)
+    {
+        var isRequired = status.ToolId is "wiimms-wit" or "wiimms-wwt";
+        var healthy = status.State is ExternalToolState.Installed or ExternalToolState.Configured;
+        var statusValue = healthy
+            ? DiagnosticsStatus.Healthy
+            : isRequired
+                ? DiagnosticsStatus.Unhealthy
+                : DiagnosticsStatus.Warning;
+        var severity = statusValue == DiagnosticsStatus.Unhealthy
+            ? DiagnosticsSeverity.Error
+            : statusValue == DiagnosticsStatus.Warning
+                ? DiagnosticsSeverity.Warning
+                : DiagnosticsSeverity.Information;
+        var message = healthy
+            ? $"{status.DisplayName} is available."
+            : $"{status.DisplayName} is {status.State}.";
+
+        return new DiagnosticsCheckResult(
+            $"external-tool:{status.ToolId}",
+            statusValue,
+            message,
+            status.Version ?? status.ExecutablePath,
+            "Dependencies",
+            severity);
     }
 
     private async Task<IReadOnlyList<DiagnosticsCheckResult>> CheckStorageAsync(CancellationToken cancellationToken)

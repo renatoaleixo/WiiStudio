@@ -61,6 +61,25 @@ public sealed class ImportWizardService : IImportWizardService
                 "Formato não suportado.");
         }
 
+        if (!File.Exists(sourcePath))
+        {
+            return new ImportPreviewItem(
+                sourcePath,
+                format,
+                ImportWizardFileStatus.Error,
+                "Arquivo não encontrado.");
+        }
+
+        var fileInfo = new FileInfo(sourcePath);
+        if (fileInfo.Length == 0)
+        {
+            return new ImportPreviewItem(
+                sourcePath,
+                format,
+                ImportWizardFileStatus.Error,
+                "Arquivo vazio.");
+        }
+
         return new ImportPreviewItem(
             sourcePath,
             format,

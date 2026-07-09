@@ -19,7 +19,7 @@
       <Menu DockPanel.Dock="Top">
         <MenuItem Header="Arquivo">
           <MenuItem Header="Importar jogo..." Command="{Binding ExecuteShellCommandCommand}" CommandParameter="import.open" InputGesture="Ctrl+I" />
-          <MenuItem Header="Exportar selecionados..." Command="{Binding ShowPendingFeatureCommand}" CommandParameter="Exportação de selecionados" />
+          <MenuItem Header="Exportar selecionados..." Command="{Binding ExportSelectedGamesCommand}" />
           <Separator />
           <MenuItem Header="Configurações" Command="{Binding ExecuteShellCommandCommand}" CommandParameter="navigation.settings" InputGesture="Ctrl+," />
           <MenuItem Header="Sair" Command="{Binding ExitApplicationCommand}" InputGesture="Ctrl+Q" />
@@ -51,8 +51,8 @@
           <MenuItem Header="Recarregar plugins" Command="{Binding ReloadPluginsCommand}" />
         </MenuItem>
         <MenuItem Header="Ajuda">
-          <MenuItem Header="Documentação" Command="{Binding ShowPendingFeatureCommand}" CommandParameter="Documentação" />
-          <MenuItem Header="Atalhos de teclado" Command="{Binding ShowPendingFeatureCommand}" CommandParameter="Atalhos de teclado" />
+          <MenuItem Header="Documentação" Command="{Binding ShowDocumentationCommand}" />
+          <MenuItem Header="Atalhos de teclado" Command="{Binding ShowKeyboardShortcutsCommand}" />
           <MenuItem Header="Sobre o WiiStudio" Command="{Binding ShowAboutCommand}" />
         </MenuItem>
       </Menu>
@@ -399,7 +399,7 @@
       <Border Grid.Column="4"
               Classes="sidePanel"
               IsVisible="{Binding IsSidePanelVisible}">
-        <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,*" RowSpacing="18">
+        <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,*" RowSpacing="18">
           <StackPanel Spacing="4">
             <TextBlock Text="Tarefas" FontWeight="SemiBold" Foreground="{DynamicResource WiiBrushTextPrimary}" />
             <TextBlock Text="{Binding TaskSummary}" Foreground="{DynamicResource WiiBrushTextSecondary}" />
@@ -422,6 +422,53 @@
           </StackPanel>
 
           <Border Grid.Row="5" Background="{DynamicResource WiiBrushSurfaceAlt}" Padding="{StaticResource WiiInsetMd}">
+            <Grid RowDefinitions="Auto,Auto,*" RowSpacing="8">
+              <Grid ColumnDefinitions="*,Auto">
+                <TextBlock Text="Diagnóstico"
+                           FontWeight="SemiBold"
+                           Foreground="{DynamicResource WiiBrushTextPrimary}"
+                           VerticalAlignment="Center" />
+                <Button Grid.Column="1"
+                        Command="{Binding RunDiagnosticsCommand}"
+                        Classes="secondary small">
+                  <TextBlock Text="Executar" />
+                </Button>
+              </Grid>
+              <TextBlock Grid.Row="1"
+                         Text="{Binding DiagnosticsSummary}"
+                         Foreground="{DynamicResource WiiBrushTextSecondary}"
+                         TextWrapping="Wrap" />
+              <ListBox Grid.Row="2"
+                       ItemsSource="{Binding DiagnosticsChecks}"
+                       MaxHeight="120"
+                       Background="Transparent"
+                       BorderThickness="0">
+                <ListBox.ItemTemplate>
+                  <DataTemplate DataType="vm:DiagnosticsCheckItemViewModel">
+                    <Grid RowDefinitions="Auto,Auto" Margin="{StaticResource WiiListItemCompactMargin}">
+                      <Grid ColumnDefinitions="*,Auto">
+                        <TextBlock Text="{Binding Name}"
+                                   Foreground="{DynamicResource WiiBrushTextPrimary}"
+                                   FontWeight="SemiBold"
+                                   TextTrimming="CharacterEllipsis" />
+                        <TextBlock Grid.Column="1"
+                                   Text="{Binding Status}"
+                                   Foreground="{DynamicResource WiiBrushTextMuted}"
+                                   FontSize="{StaticResource WiiFontSizeMicro}" />
+                      </Grid>
+                      <TextBlock Grid.Row="1"
+                                 Text="{Binding Message}"
+                                 Foreground="{DynamicResource WiiBrushTextSecondary}"
+                                 FontSize="{StaticResource WiiFontSizeMicro}"
+                                 TextTrimming="CharacterEllipsis" />
+                    </Grid>
+                  </DataTemplate>
+                </ListBox.ItemTemplate>
+              </ListBox>
+            </Grid>
+          </Border>
+
+          <Border Grid.Row="6" Background="{DynamicResource WiiBrushSurfaceAlt}" Padding="{StaticResource WiiInsetMd}">
             <StackPanel Spacing="10">
               <Grid ColumnDefinitions="*,Auto">
                 <TextBlock Text="Importação"
@@ -439,11 +486,19 @@
                         SelectedItem="{Binding SelectedImportStep}"
                         Height="32" />
 
-              <TextBox Text="{Binding ImportSourcePathsText, Mode=TwoWay}"
-                       Watermark="/jogos/mario.iso"
-                       AcceptsReturn="True"
-                       TextWrapping="Wrap"
-                       MinHeight="70" />
+              <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                <TextBox Text="{Binding ImportSourcePathsText, Mode=TwoWay}"
+                         Watermark="/jogos/mario.iso"
+                         AcceptsReturn="True"
+                         TextWrapping="Wrap"
+                         MinHeight="70" />
+                <Button Grid.Column="1"
+                        Classes="secondary small"
+                        Click="OnPickImportFilesClicked"
+                        VerticalAlignment="Top">
+                  <TextBlock Text="Selecionar" />
+                </Button>
+              </Grid>
 
               <ComboBox ItemsSource="{Binding Drives}"
                         SelectedItem="{Binding SelectedImportDrive}"
@@ -503,7 +558,7 @@
             </StackPanel>
           </Border>
 
-          <Border Grid.Row="6" Background="{DynamicResource WiiBrushSurfaceAlt}" Padding="{StaticResource WiiInsetMd}">
+          <Border Grid.Row="7" Background="{DynamicResource WiiBrushSurfaceAlt}" Padding="{StaticResource WiiInsetMd}">
             <StackPanel Spacing="10">
               <Grid ColumnDefinitions="*,Auto">
                 <TextBlock Text="Conversão"
@@ -583,7 +638,7 @@
             </StackPanel>
           </Border>
 
-          <ListBox Grid.Row="7"
+          <ListBox Grid.Row="8"
                    ItemsSource="{Binding Devices}"
                    SelectedItem="{Binding SelectedDevice}"
                    Background="{DynamicResource WiiBrushSurfaceAlt}"
