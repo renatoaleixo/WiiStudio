@@ -97,6 +97,61 @@ public sealed class UsbDetectionServiceTests
             .Which.IsWritable.Should().BeTrue();
     }
 
+    [Fact]
+    public async Task LinuxUsbProvider_ShouldRetryRawWbfsProbeWithPkexecWhenInitialProbeIsPermissionDenied()
+    {
+        var processRunner = new FakeProcessRunner(
+            """
+            PATH="/dev/sdc1" TYPE="part" FSTYPE="" LABEL="" SIZE="250059350016" FSAVAIL="" MOUNTPOINT="" RO="0" MODEL=""
+            """,
+            """
+            !! wwt: ERROR #76 [CAN'T OPEN FILE]
+            !!      Can't open file: /dev/sdc1
+            !!      -> Permission denied [13]
+
+            type  wbfs d.usage    size  file (sizes in MiB)
+            -----------------------------------------------
+            -      --        0       0  /dev/sdc1
+            """,
+            """
+            type  wbfs d.usage    size  file (sizes in MiB)
+            -----------------------------------------------
+            BLOCK WBFS       0  238473  /dev/sdc1
+            Total: 12/500 discs, 28028 MiB ~ 27 GiB used, 210440 MiB ~ 206 GiB free.
+            """);
+        var provider = new LinuxUsbProvider(processRunner, new FakeWiimmsToolLocator("/usr/bin/wwt"));
+
+        var drives = await provider.DetectAsync(CancellationToken.None);
+
+        drives.Should().ContainSingle(item => item.DevicePath == "/dev/sdc1");
+        processRunner.Requests.Should().Contain(request => request.ExecutablePath.EndsWith("pkexec", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public async Task LinuxUsbProvider_ShouldKeepPermissionDeniedRawCandidateVisibleWhenElevatedProbeDoesNotConfirmWbfs()
+    {
+        var processRunner = new FakeProcessRunner(
+            """
+            PATH="/dev/sdc1" TYPE="part" FSTYPE="" LABEL="" SIZE="250059350016" FSAVAIL="" MOUNTPOINT="" RO="0" MODEL=""
+            """,
+            """
+            !! wwt: ERROR #76 [CAN'T OPEN FILE]
+            !!      Can't open file: /dev/sdc1
+            !!      -> Permission denied [13]
+
+            type  wbfs d.usage    size  file (sizes in MiB)
+            -----------------------------------------------
+            -      --        0       0  /dev/sdc1
+            """);
+        var provider = new LinuxUsbProvider(processRunner, new FakeWiimmsToolLocator("/usr/bin/wwt"));
+
+        var drives = await provider.DetectAsync(CancellationToken.None);
+
+        var drive = drives.Should().ContainSingle(item => item.DevicePath == "/dev/sdc1").Subject;
+        drive.FileSystem.Should().Be(UsbDriveFileSystem.Wbfs);
+        drive.IsWritable.Should().BeTrue();
+    }
+
     private sealed class FakeUsbProvider : IUsbProvider
     {
         private readonly IReadOnlyList<UsbDrive> _drives;
@@ -116,19 +171,26 @@ public sealed class UsbDetectionServiceTests
     {
         private readonly string lsblkOutput;
         private readonly string wwtOutput;
+        private readonly string? elevatedWwtOutput;
 
-        public FakeProcessRunner(string lsblkOutput, string wwtOutput)
+        public FakeProcessRunner(string lsblkOutput, string wwtOutput, string? elevatedWwtOutput = null)
         {
             this.lsblkOutput = lsblkOutput;
             this.wwtOutput = wwtOutput;
+            this.elevatedWwtOutput = elevatedWwtOutput;
         }
+
+        public List<ProcessRequest> Requests { get; } = [];
 
         public Task<ProcessResult> RunAsync(ProcessRequest request, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
+            Requests.Add(request);
             var output = request.ExecutablePath.EndsWith("lsblk", StringComparison.OrdinalIgnoreCase)
                 ? lsblkOutput
-                : wwtOutput;
+                : request.ExecutablePath.EndsWith("pkexec", StringComparison.OrdinalIgnoreCase) && elevatedWwtOutput is not null
+                    ? elevatedWwtOutput
+                    : wwtOutput;
 
             return Task.FromResult(new ProcessResult(0, output, string.Empty, TimeSpan.FromMilliseconds(1)));
         }

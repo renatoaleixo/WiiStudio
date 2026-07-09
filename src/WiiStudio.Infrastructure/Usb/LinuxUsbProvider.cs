@@ -129,9 +129,22 @@ public sealed class LinuxUsbProvider : IUsbProvider
                 new ProcessRequest(wwtPath, ["find", "--long", entry.Path], ProbeTimeout),
                 cancellationToken);
             var probeOutput = $"{wwt.StandardOutput}\n{wwt.StandardError}";
-            if (!probeOutput.Contains("BLOCK WBFS", StringComparison.OrdinalIgnoreCase)
+            if (HasPermissionDenied(probeOutput)
+                && !HasWbfsBlock(probeOutput)
+                && TryCreateElevatedProbeRequest(wwtPath, entry.Path, out var elevatedRequest))
+            {
+                var elevatedWwt = await processRunner.RunAsync(elevatedRequest, cancellationToken);
+                probeOutput = $"{elevatedWwt.StandardOutput}\n{elevatedWwt.StandardError}";
+            }
+
+            if (!HasWbfsBlock(probeOutput)
                 && !string.Equals(entry.FileSystem, "wbfs", StringComparison.OrdinalIgnoreCase))
             {
+                if (HasPermissionDenied(probeOutput) && probeOutput.Contains(entry.Path, StringComparison.OrdinalIgnoreCase))
+                {
+                    drives.Add(MapRawWbfsPartition(entry, probeOutput));
+                }
+
                 continue;
             }
 
@@ -148,8 +161,35 @@ public sealed class LinuxUsbProvider : IUsbProvider
             && !mountedPaths.Contains(entry.Path)
             && string.IsNullOrWhiteSpace(entry.MountPoint)
             && entry.ReadOnly != "1"
+            && entry.SizeBytes >= 64L * 1024L * 1024L
             && (string.IsNullOrWhiteSpace(entry.FileSystem)
                 || string.Equals(entry.FileSystem, "wbfs", StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static bool HasWbfsBlock(string output)
+    {
+        return output.Contains("BLOCK WBFS", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool HasPermissionDenied(string output)
+    {
+        return output.Contains("Permission denied", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool TryCreateElevatedProbeRequest(string wwtPath, string partitionPath, out ProcessRequest request)
+    {
+        request = default!;
+        var pkexecPath = FindExecutable("pkexec");
+        if (pkexecPath is null)
+        {
+            return false;
+        }
+
+        request = new ProcessRequest(
+            pkexecPath,
+            [wwtPath, "find", "--long", partitionPath],
+            ProbeTimeout);
+        return true;
     }
 
     private static UsbDrive MapRawWbfsPartition(LsblkEntry entry, string wwtOutput)
