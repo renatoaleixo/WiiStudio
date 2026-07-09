@@ -755,11 +755,16 @@ public sealed partial class MainViewModel : ObservableObject
         try
         {
             var result = await _metadataSynchronizationService.SynchronizeAsync(
-                new MetadataSyncRequest(gameIds, ForceRefresh: true),
+                new MetadataSyncRequest(gameIds, ForceRefresh: false),
                 cancellationToken);
-            StatusMessage = result.HasFailures
-                ? $"Metadados processados com pendências: {result.UpdatedCount} atualizado(s), {result.Items.Count} item(ns)."
-                : $"Metadados sincronizados: {result.UpdatedCount} atualizado(s).";
+            var cachedCount = result.Items.Count(item => item.Status == MetadataSyncStatus.Cached);
+            var missingCount = result.Items.Count(item => item.Status == MetadataSyncStatus.Missing);
+            var unavailableCount = result.Items.Count(item => item.Status == MetadataSyncStatus.ProviderUnavailable);
+            var failedCount = result.Items.Count(item => item.Status == MetadataSyncStatus.Failed);
+
+            StatusMessage = unavailableCount > 0
+                ? $"Provider de metadados indisponível: {cachedCount} em cache, {missingCount} ausente(s), {failedCount} falha(s)."
+                : $"Metadados processados: {result.UpdatedCount} atualizado(s), {cachedCount} em cache, {missingCount} ausente(s), {failedCount} falha(s).";
         }
         finally
         {
