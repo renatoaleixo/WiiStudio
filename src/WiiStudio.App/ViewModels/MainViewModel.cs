@@ -309,6 +309,26 @@ public sealed partial class MainViewModel : ObservableObject
 
     public string SelectedModuleDescription => SelectedModule?.Description ?? "Resumo do ambiente e atividades recentes.";
 
+    public bool IsDashboardModuleSelected => IsSelectedModule(ShellModuleId.Dashboard);
+
+    public bool IsLibraryModuleSelected => IsSelectedModule(ShellModuleId.Library);
+
+    public bool IsDevicesModuleSelected => IsSelectedModule(ShellModuleId.Devices);
+
+    public bool IsConversionModuleSelected => IsSelectedModule(ShellModuleId.Conversion);
+
+    public bool IsAssetsModuleSelected => IsSelectedModule(ShellModuleId.Assets);
+
+    public bool IsTasksModuleSelected => IsSelectedModule(ShellModuleId.Tasks);
+
+    public bool IsNotificationsModuleSelected => IsSelectedModule(ShellModuleId.Notifications);
+
+    public bool IsSettingsModuleSelected => IsSelectedModule(ShellModuleId.Settings);
+
+    public bool IsDiagnosticsModuleSelected => IsSelectedModule(ShellModuleId.Diagnostics);
+
+    public bool IsLogsModuleSelected => IsSelectedModule(ShellModuleId.Logs);
+
     public string LibrarySummary => LibraryTotalCount == 1 ? "1 jogo" : $"{LibraryTotalCount} jogos";
 
     public string SelectionSummary => SelectedGameCount == 1 ? "1 selecionado" : $"{SelectedGameCount} selecionados";
@@ -1174,19 +1194,82 @@ public sealed partial class MainViewModel : ObservableObject
     {
         OnPropertyChanged(nameof(SelectedModuleTitle));
         OnPropertyChanged(nameof(SelectedModuleDescription));
+        OnPropertyChanged(nameof(IsDashboardModuleSelected));
+        OnPropertyChanged(nameof(IsLibraryModuleSelected));
+        OnPropertyChanged(nameof(IsDevicesModuleSelected));
+        OnPropertyChanged(nameof(IsConversionModuleSelected));
+        OnPropertyChanged(nameof(IsAssetsModuleSelected));
+        OnPropertyChanged(nameof(IsTasksModuleSelected));
+        OnPropertyChanged(nameof(IsNotificationsModuleSelected));
+        OnPropertyChanged(nameof(IsSettingsModuleSelected));
+        OnPropertyChanged(nameof(IsDiagnosticsModuleSelected));
+        OnPropertyChanged(nameof(IsLogsModuleSelected));
 
         if (value is null)
         {
             return;
         }
 
-        _ = PersistSelectedModuleAsync(value.Id);
+        _ = ActivateSelectedModuleAsync(value.Id);
+    }
+
+    private async Task ActivateSelectedModuleAsync(ShellModuleId moduleId)
+    {
+        try
+        {
+            await PersistSelectedModuleAsync(moduleId);
+            switch (moduleId)
+            {
+                case ShellModuleId.Dashboard:
+                    await RefreshDashboardAsync(CancellationToken.None);
+                    break;
+                case ShellModuleId.Library:
+                    await RefreshLibraryAsync(CancellationToken.None);
+                    break;
+                case ShellModuleId.Devices:
+                    await RefreshDevicesAsync(CancellationToken.None);
+                    break;
+                case ShellModuleId.Diagnostics:
+                    await RunDiagnosticsAsync(CancellationToken.None);
+                    break;
+                case ShellModuleId.Settings:
+                    await RefreshDockLayoutsAsync(CancellationToken.None);
+                    await RefreshThemesAsync(CancellationToken.None);
+                    break;
+                case ShellModuleId.Assets:
+                    StatusMessage = "Selecione jogos na biblioteca para baixar capas ou sincronizar metadados.";
+                    break;
+                case ShellModuleId.Tasks:
+                    await RefreshStatusBarAsync(CancellationToken.None);
+                    StatusMessage = TaskSummary;
+                    break;
+                case ShellModuleId.Notifications:
+                    await RefreshStatusBarAsync(CancellationToken.None);
+                    StatusMessage = NotificationSummary;
+                    break;
+                case ShellModuleId.Logs:
+                    StatusMessage = "Logs recentes aparecem na barra de status e no console da aplicação.";
+                    break;
+                case ShellModuleId.Conversion:
+                    StatusMessage = "Fluxo de conversão pronto.";
+                    break;
+            }
+        }
+        catch (Exception exception)
+        {
+            StatusMessage = $"Falha ao atualizar módulo: {exception.Message}";
+        }
     }
 
     private async Task PersistSelectedModuleAsync(ShellModuleId moduleId)
     {
         await _mainWindowService.SelectModuleAsync(moduleId, CancellationToken.None);
         await _mainWindowService.SaveLayoutAsync(CancellationToken.None);
+    }
+
+    private bool IsSelectedModule(ShellModuleId moduleId)
+    {
+        return SelectedModule?.Id == moduleId;
     }
 
     private async Task ChangeLibraryViewModeAsync(LibraryViewMode mode)
