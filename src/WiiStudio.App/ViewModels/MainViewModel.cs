@@ -46,6 +46,7 @@ public sealed partial class MainViewModel : ObservableObject
     private Guid? _activeLibraryDriveId;
     private CancellationTokenSource? _coverBatchCancellation;
     private bool _isApplyingDeviceSnapshot;
+    private bool _isApplyingLibraryViewMode;
     private IReadOnlySet<string> _selectedGameIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
     [ObservableProperty]
@@ -68,6 +69,9 @@ public sealed partial class MainViewModel : ObservableObject
 
     [ObservableProperty]
     private LibraryViewMode _selectedLibraryViewMode = LibraryViewMode.Detailed;
+
+    [ObservableProperty]
+    private LibraryViewModeOptionViewModel? _selectedLibraryViewModeOption;
 
     [ObservableProperty]
     private LibraryViewState _libraryState = LibraryViewState.Loading;
@@ -263,6 +267,8 @@ public sealed partial class MainViewModel : ObservableObject
         {
             Modules.Add(module);
         }
+
+        SelectLibraryViewModeOption(SelectedLibraryViewMode);
     }
 
     public ObservableCollection<ShellModule> Modules { get; } = new();
@@ -321,12 +327,12 @@ public sealed partial class MainViewModel : ObservableObject
         FileFormat.Wbfs
     ];
 
-    public IReadOnlyList<LibraryViewMode> LibraryViewModes { get; } =
+    public IReadOnlyList<LibraryViewModeOptionViewModel> LibraryViewModes { get; } =
     [
-        LibraryViewMode.Grid,
-        LibraryViewMode.List,
-        LibraryViewMode.Compact,
-        LibraryViewMode.Detailed
+        new(LibraryViewMode.Grid, "Grade"),
+        new(LibraryViewMode.List, "Lista"),
+        new(LibraryViewMode.Compact, "Compacta"),
+        new(LibraryViewMode.Detailed, "Detalhada")
     ];
 
     public string SelectedModuleTitle => SelectedModule?.Title ?? "Dashboard";
@@ -354,6 +360,16 @@ public sealed partial class MainViewModel : ObservableObject
     public bool IsLogsModuleSelected => IsSelectedModule(ShellModuleId.Logs);
 
     public string LibrarySummary => LibraryTotalCount == 1 ? "1 jogo" : $"{LibraryTotalCount} jogos";
+
+    public bool IsLibraryGridViewSelected => SelectedLibraryViewMode == LibraryViewMode.Grid;
+
+    public bool IsLibraryListViewSelected => SelectedLibraryViewMode == LibraryViewMode.List;
+
+    public bool IsLibraryCompactViewSelected => SelectedLibraryViewMode == LibraryViewMode.Compact;
+
+    public bool IsLibraryDetailedViewSelected => SelectedLibraryViewMode == LibraryViewMode.Detailed;
+
+    public bool IsLibraryTableViewSelected => SelectedLibraryViewMode != LibraryViewMode.Grid;
 
     public int DashboardGamesWithCovers => Games.Count(game => game.HasCover);
 
@@ -1293,7 +1309,28 @@ public sealed partial class MainViewModel : ObservableObject
 
     partial void OnSelectedLibraryViewModeChanged(LibraryViewMode value)
     {
+        OnPropertyChanged(nameof(IsLibraryGridViewSelected));
+        OnPropertyChanged(nameof(IsLibraryListViewSelected));
+        OnPropertyChanged(nameof(IsLibraryCompactViewSelected));
+        OnPropertyChanged(nameof(IsLibraryDetailedViewSelected));
+        OnPropertyChanged(nameof(IsLibraryTableViewSelected));
+        SelectLibraryViewModeOption(value);
+        if (_isApplyingLibraryViewMode)
+        {
+            return;
+        }
+
         _ = ChangeLibraryViewModeAsync(value);
+    }
+
+    partial void OnSelectedLibraryViewModeOptionChanged(LibraryViewModeOptionViewModel? value)
+    {
+        if (value is null || value.Mode == SelectedLibraryViewMode)
+        {
+            return;
+        }
+
+        SelectedLibraryViewMode = value.Mode;
     }
 
     partial void OnSelectedGameChanged(LibraryGameItem? value)
@@ -1438,7 +1475,16 @@ public sealed partial class MainViewModel : ObservableObject
     {
         LibraryState = snapshot.State;
         LibraryTotalCount = snapshot.TotalCount;
-        SelectedLibraryViewMode = snapshot.ViewMode;
+        _isApplyingLibraryViewMode = true;
+        try
+        {
+            SelectedLibraryViewMode = snapshot.ViewMode;
+            SelectLibraryViewModeOption(snapshot.ViewMode);
+        }
+        finally
+        {
+            _isApplyingLibraryViewMode = false;
+        }
         _selectedGameIds = snapshot.SelectedGameIds;
         SelectedGameCount = snapshot.SelectedGameIds.Count;
 
@@ -1457,6 +1503,15 @@ public sealed partial class MainViewModel : ObservableObject
         OnPropertyChanged(nameof(LibrarySummary));
         OnPropertyChanged(nameof(SelectionSummary));
         OnDashboardIndicatorsChanged();
+    }
+
+    private void SelectLibraryViewModeOption(LibraryViewMode mode)
+    {
+        var option = LibraryViewModes.FirstOrDefault(item => item.Mode == mode);
+        if (!ReferenceEquals(SelectedLibraryViewModeOption, option))
+        {
+            SelectedLibraryViewModeOption = option;
+        }
     }
 
     private async Task RefreshSelectedAssetGalleryAsync(CancellationToken cancellationToken)
