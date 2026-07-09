@@ -293,6 +293,8 @@ public sealed partial class MainViewModel : ObservableObject
 
     public ObservableCollection<CoverAssetViewModel> CoverAssets { get; } = new();
 
+    public ObservableCollection<LibraryGameItem> AssetSelectedGames { get; } = new();
+
     public ObservableCollection<ImportPreviewItemViewModel> ImportPreviewItems { get; } = new();
 
     public ObservableCollection<ConversionPreviewItemViewModel> ConversionPreviewItems { get; } = new();
@@ -398,6 +400,20 @@ public sealed partial class MainViewModel : ObservableObject
         : SelectedGameCount == 1
             ? "1 jogo selecionado"
             : $"{SelectedGameCount} jogos selecionados";
+
+    public string AssetSelectionSummary => SelectedGameCount == 0
+        ? "Selecione jogos na Biblioteca para acompanhar capas, assets e metadados."
+        : $"{SelectionSummary}: {AssetSelectedGames.Count(game => game.HasCover)} com capa, {AssetSelectedGames.Count(game => game.HasMetadata)} com metadados.";
+
+    public string AssetGallerySummary => SelectedGame is null
+        ? "Nenhum jogo selecionado para pré-visualização."
+        : $"{SelectedGame.Title} - {CoverAssets.Count(asset => asset.HasImage)}/{CoverAssets.Count} asset(s) em cache.";
+
+    public string AssetMetadataSummary => SelectedGame is null
+        ? "Selecione um jogo para ver os metadados sincronizados."
+        : SelectedGame.HasMetadata
+            ? $"{SelectedGame.MetadataSummary} - {SelectedGame.Genres}"
+            : "Metadados ainda não sincronizados para este jogo.";
 
     public string TaskSummary => "0 tarefas ativas";
 
@@ -723,6 +739,7 @@ public sealed partial class MainViewModel : ObservableObject
         SelectedGame = null;
         CoverAssets.Clear();
         SelectedCoverAsset = null;
+        RefreshAssetSelectedGames();
         StatusMessage = "Seleção limpa.";
     }
 
@@ -1500,6 +1517,7 @@ public sealed partial class MainViewModel : ObservableObject
         }
 
         ApplySelectionState();
+        RefreshAssetSelectedGames();
         OnPropertyChanged(nameof(LibrarySummary));
         OnPropertyChanged(nameof(SelectionSummary));
         OnDashboardIndicatorsChanged();
@@ -1530,6 +1548,8 @@ public sealed partial class MainViewModel : ObservableObject
             CoverAssets.Add(asset);
             SelectedCoverAsset ??= asset.HasImage ? asset : null;
         }
+
+        OnAssetPanelChanged();
     }
 
     private void ApplySelectionState()
@@ -1538,6 +1558,24 @@ public sealed partial class MainViewModel : ObservableObject
         {
             game.IsSelected = _selectedGameIds.Contains(game.Id);
         }
+    }
+
+    private void RefreshAssetSelectedGames()
+    {
+        AssetSelectedGames.Clear();
+        foreach (var game in Games.Where(game => _selectedGameIds.Contains(game.Id)))
+        {
+            AssetSelectedGames.Add(game);
+        }
+
+        OnAssetPanelChanged();
+    }
+
+    private void OnAssetPanelChanged()
+    {
+        OnPropertyChanged(nameof(AssetSelectionSummary));
+        OnPropertyChanged(nameof(AssetGallerySummary));
+        OnPropertyChanged(nameof(AssetMetadataSummary));
     }
 
     private static IReadOnlyList<(CoverAssetKind Kind, string Title)> GetGalleryAssets()
