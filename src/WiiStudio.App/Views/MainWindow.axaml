@@ -38,17 +38,17 @@
         </MenuItem>
         <MenuItem Header="Biblioteca">
           <MenuItem Header="Atualizar biblioteca" Command="{Binding RefreshLibraryCommand}" InputGesture="Ctrl+R" />
-          <MenuItem Header="Sincronizar metadados" Command="{Binding ShowPendingFeatureCommand}" CommandParameter="Sincronização de metadados" />
-          <MenuItem Header="Baixar capas" Command="{Binding ShowPendingFeatureCommand}" CommandParameter="Download de capas" />
-          <MenuItem Header="Remover selecionados" Command="{Binding ShowPendingFeatureCommand}" CommandParameter="Remoção de jogos" Classes="danger" InputGesture="Delete" />
+          <MenuItem Header="Sincronizar metadados" Command="{Binding SynchronizeSelectedMetadataCommand}" />
+          <MenuItem Header="Baixar capas" Command="{Binding DownloadSelectedCoversCommand}" />
+          <MenuItem Header="Remover selecionados" Command="{Binding RemoveSelectedGamesCommand}" Classes="danger" InputGesture="Delete" />
         </MenuItem>
         <MenuItem Header="Ferramentas">
-          <MenuItem Header="Executar diagnóstico" Command="{Binding ExecuteShellCommandCommand}" CommandParameter="navigation.diagnostics" InputGesture="Ctrl+Shift+D" />
+          <MenuItem Header="Executar diagnóstico" Command="{Binding RunDiagnosticsCommand}" InputGesture="Ctrl+Shift+D" />
           <MenuItem Header="Abrir Command Palette" Command="{Binding OpenCommandPaletteCommand}" InputGesture="Ctrl+Shift+P" />
         </MenuItem>
         <MenuItem Header="Plugins">
-          <MenuItem Header="Gerenciar plugins" Command="{Binding ShowPendingFeatureCommand}" CommandParameter="Gerenciamento de plugins" />
-          <MenuItem Header="Recarregar plugins" Command="{Binding ShowPendingFeatureCommand}" CommandParameter="Recarga de plugins" />
+          <MenuItem Header="Gerenciar plugins" Command="{Binding ManagePluginsCommand}" />
+          <MenuItem Header="Recarregar plugins" Command="{Binding ReloadPluginsCommand}" />
         </MenuItem>
         <MenuItem Header="Ajuda">
           <MenuItem Header="Documentação" Command="{Binding ShowPendingFeatureCommand}" CommandParameter="Documentação" />

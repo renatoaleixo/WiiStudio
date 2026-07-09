@@ -4,11 +4,14 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Styling;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using WiiStudio.Application.Commands;
 using WiiStudio.Application.DTOs;
 using WiiStudio.Application.Interfaces;
 using WiiStudio.Application.UseCases;
 using WiiStudio.Domain.Entities;
 using WiiStudio.Domain.Enums;
+using WiiStudio.Plugin.Abstractions;
+using WiiStudio.Plugin.Hosting;
 using AvaloniaApp = Avalonia.Application;
 
 namespace WiiStudio.App.ViewModels;
@@ -18,14 +21,22 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly ICommandPaletteService _commandPaletteService;
     private readonly DetectUsbDrivesUseCase _detectUsbDrivesUseCase;
     private readonly IConversionWizardService _conversionWizardService;
+    private readonly ICoverDownloadService _coverDownloadService;
     private readonly IDashboardService _dashboardService;
     private readonly IDeviceManagerService _deviceManagerService;
+    private readonly IDiagnosticsService _diagnosticsService;
     private readonly IDockService _dockService;
     private readonly IImportWizardService _importWizardService;
     private readonly ILibraryViewService _libraryViewService;
     private readonly IMainWindowService _mainWindowService;
+    private readonly IMetadataSynchronizationService _metadataSynchronizationService;
+    private readonly IPluginDiscoveryService _pluginDiscoveryService;
+    private readonly IPluginLoaderService _pluginLoaderService;
+    private readonly IPluginRegistry _pluginRegistry;
+    private readonly RemoveGameUseCase _removeGameUseCase;
     private readonly IStatusBarService _statusBarService;
     private readonly IThemeService _themeService;
+    private IReadOnlySet<string> _selectedGameIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
     [ObservableProperty]
     private string _statusMessage = "Pronto";
@@ -172,12 +183,19 @@ public sealed partial class MainViewModel : ObservableObject
         ICommandPaletteService commandPaletteService,
         DetectUsbDrivesUseCase detectUsbDrivesUseCase,
         IConversionWizardService conversionWizardService,
+        ICoverDownloadService coverDownloadService,
         IDashboardService dashboardService,
         IDeviceManagerService deviceManagerService,
+        IDiagnosticsService diagnosticsService,
         IDockService dockService,
         IImportWizardService importWizardService,
         ILibraryViewService libraryViewService,
         IMainWindowService mainWindowService,
+        IMetadataSynchronizationService metadataSynchronizationService,
+        IPluginDiscoveryService pluginDiscoveryService,
+        IPluginLoaderService pluginLoaderService,
+        IPluginRegistry pluginRegistry,
+        RemoveGameUseCase removeGameUseCase,
         IStatusBarService statusBarService,
         ShellCommandExecutor shellCommandExecutor,
         IThemeService themeService)
@@ -185,12 +203,19 @@ public sealed partial class MainViewModel : ObservableObject
         _commandPaletteService = commandPaletteService;
         _detectUsbDrivesUseCase = detectUsbDrivesUseCase;
         _conversionWizardService = conversionWizardService;
+        _coverDownloadService = coverDownloadService;
         _dashboardService = dashboardService;
         _deviceManagerService = deviceManagerService;
+        _diagnosticsService = diagnosticsService;
         _dockService = dockService;
         _importWizardService = importWizardService;
         _libraryViewService = libraryViewService;
         _mainWindowService = mainWindowService;
+        _metadataSynchronizationService = metadataSynchronizationService;
+        _pluginDiscoveryService = pluginDiscoveryService;
+        _pluginLoaderService = pluginLoaderService;
+        _pluginRegistry = pluginRegistry;
+        _removeGameUseCase = removeGameUseCase;
         _statusBarService = statusBarService;
         _themeService = themeService;
         shellCommandExecutor.SetHandler(HandleShellCommandAsync);
@@ -583,6 +608,165 @@ public sealed partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private async Task RunDiagnosticsAsync(CancellationToken cancellationToken)
+    {
+        IsBusy = true;
+        SelectedModule = Modules.FirstOrDefault(module => module.Id == ShellModuleId.Diagnostics);
+        StatusMessage = "Executando diagnóstico...";
+
+        try
+        {
+            var report = await _diagnosticsService.RunAsync(cancellationToken);
+            var unhealthyCount = report.Checks.Count(check => check.Status == DiagnosticsStatus.Unhealthy);
+            var warningCount = report.Checks.Count(check => check.Status == DiagnosticsStatus.Warning);
+            StatusMessage = report.IsHealthy
+                ? $"Diagnóstico concluído: {report.Checks.Count} verificação(ões), nenhum erro crítico."
+                : $"Diagnóstico concluído: {unhealthyCount} erro(s), {warningCount} aviso(s).";
+            await RefreshStatusBarAsync(cancellationToken);
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task SynchronizeSelectedMetadataAsync(CancellationToken cancellationToken)
+    {
+        var gameIds = GetSelectedGameIds();
+        if (gameIds.Count == 0)
+        {
+            StatusMessage = "Selecione ao menos um jogo para sincronizar metadados.";
+            return;
+        }
+
+        IsBusy = true;
+        StatusMessage = "Sincronizando metadados...";
+
+        try
+        {
+            var result = await _metadataSynchronizationService.SynchronizeAsync(
+                new MetadataSyncRequest(gameIds, ForceRefresh: true),
+                cancellationToken);
+            StatusMessage = result.HasFailures
+                ? $"Metadados processados com pendências: {result.UpdatedCount} atualizado(s), {result.Items.Count} item(ns)."
+                : $"Metadados sincronizados: {result.UpdatedCount} atualizado(s).";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task DownloadSelectedCoversAsync(CancellationToken cancellationToken)
+    {
+        var gameIds = GetSelectedGameIds();
+        if (gameIds.Count == 0)
+        {
+            StatusMessage = "Selecione ao menos um jogo para baixar capas.";
+            return;
+        }
+
+        IsBusy = true;
+        StatusMessage = "Baixando capas...";
+
+        try
+        {
+            var result = await _coverDownloadService.DownloadAsync(
+                new CoverDownloadRequest(gameIds, ForceRefresh: false),
+                cancellationToken);
+            var downloadedCount = result.Items.Count(item => item.Source == CoverAssetSource.Provider);
+            var cachedCount = result.Items.Count(item => item.Source == CoverAssetSource.Cache);
+            var missingCount = result.Items.Count(item => item.Source == CoverAssetSource.Missing);
+            StatusMessage = $"Capas processadas: {downloadedCount} baixada(s), {cachedCount} em cache, {missingCount} ausente(s).";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task RemoveSelectedGamesAsync(CancellationToken cancellationToken)
+    {
+        var gameIds = GetSelectedGameIds();
+        if (gameIds.Count == 0)
+        {
+            StatusMessage = "Selecione ao menos um jogo para remover.";
+            return;
+        }
+
+        if (SelectedDevice is null || !Guid.TryParse(SelectedDevice.DeviceId, out var driveId))
+        {
+            StatusMessage = "Selecione o dispositivo de origem antes de remover jogos.";
+            return;
+        }
+
+        IsBusy = true;
+        StatusMessage = "Removendo jogo(s) selecionado(s)...";
+
+        try
+        {
+            foreach (var gameId in gameIds)
+            {
+                await _removeGameUseCase.ExecuteAsync(new RemoveGameCommand(gameId, driveId, Confirmed: true), cancellationToken);
+            }
+
+            StatusMessage = $"{gameIds.Count} jogo(s) removido(s).";
+            await RefreshLibraryAsync(cancellationToken);
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task ManagePluginsAsync(CancellationToken cancellationToken)
+    {
+        SelectedModule = Modules.FirstOrDefault(module => module.Id == ShellModuleId.Settings);
+        var descriptors = await _pluginDiscoveryService.DiscoverAsync(cancellationToken);
+        StatusMessage = descriptors.Count == 0
+            ? "Nenhum plugin instalado encontrado."
+            : $"{descriptors.Count} plugin(s) encontrado(s).";
+    }
+
+    [RelayCommand]
+    private async Task ReloadPluginsAsync(CancellationToken cancellationToken)
+    {
+        IsBusy = true;
+        StatusMessage = "Recarregando plugins...";
+
+        try
+        {
+            foreach (var runningPlugin in _pluginRegistry.RunningPlugins.ToArray())
+            {
+                await _pluginLoaderService.UnloadAsync(runningPlugin.Id, cancellationToken);
+            }
+
+            var descriptors = await _pluginDiscoveryService.DiscoverAsync(cancellationToken);
+            var loadable = descriptors
+                .Where(descriptor => descriptor.State == PluginDiscoveryState.ReadyForLoad)
+                .ToArray();
+            var results = new List<PluginLoadResult>();
+
+            foreach (var descriptor in loadable)
+            {
+                results.Add(await _pluginLoaderService.LoadAsync(descriptor, cancellationToken));
+            }
+
+            var loadedCount = results.Count(result => result.Success);
+            var failedCount = results.Count - loadedCount;
+            StatusMessage = $"Plugins recarregados: {loadedCount} carregado(s), {failedCount} falha(s), {descriptors.Count} descoberto(s).";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    [RelayCommand]
     private Task ClearLibrarySearchAsync(CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(LibrarySearchText))
@@ -926,6 +1110,7 @@ public sealed partial class MainViewModel : ObservableObject
         LibraryState = snapshot.State;
         LibraryTotalCount = snapshot.TotalCount;
         SelectedLibraryViewMode = snapshot.ViewMode;
+        _selectedGameIds = snapshot.SelectedGameIds;
         SelectedGameCount = snapshot.SelectedGameIds.Count;
 
         if (refreshGames)
@@ -1005,6 +1190,16 @@ public sealed partial class MainViewModel : ObservableObject
         }
 
         SelectedCommandPaletteItem = CommandPaletteItems.FirstOrDefault();
+    }
+
+    private IReadOnlyList<string> GetSelectedGameIds()
+    {
+        if (_selectedGameIds.Count > 0)
+        {
+            return _selectedGameIds.ToArray();
+        }
+
+        return SelectedGame is null ? [] : [SelectedGame.Id];
     }
 
     private async Task ApplyThemeByIdAsync(string themeId, CancellationToken cancellationToken)
