@@ -7,14 +7,17 @@ namespace WiiStudio.App.ViewModels;
 
 public sealed class LibraryGameItem
 {
-    public LibraryGameItem(GameDto game, string? coverPath = null)
+    public LibraryGameItem(GameDto game, string? coverPath = null, GameMetadataDto? metadata = null)
     {
         Game = game;
+        Metadata = metadata;
         CoverPath = coverPath;
         CoverImage = LoadCover(coverPath);
     }
 
     public GameDto Game { get; }
+
+    public GameMetadataDto? Metadata { get; }
 
     public string? CoverPath { get; }
 
@@ -24,7 +27,22 @@ public sealed class LibraryGameItem
 
     public string Id => Game.Id;
 
-    public string Title => Game.Title;
+    public string Title => string.IsNullOrWhiteSpace(Metadata?.Title) ? Game.Title : Metadata.Title;
+
+    public string MetadataSummary
+    {
+        get
+        {
+            var parts = new[]
+            {
+                Metadata?.Year?.ToString(CultureInfo.CurrentCulture),
+                Metadata?.Developer,
+                Metadata?.Publisher
+            }.Where(part => !string.IsNullOrWhiteSpace(part));
+
+            return string.Join(" - ", parts);
+        }
+    }
 
     public string Region => Game.Region.ToString();
 

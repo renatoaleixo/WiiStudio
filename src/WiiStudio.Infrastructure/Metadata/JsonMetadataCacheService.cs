@@ -95,8 +95,16 @@ public sealed class JsonMetadataCacheService : IMetadataCacheService
             return new Dictionary<string, MetadataCacheEntry>(StringComparer.OrdinalIgnoreCase);
         }
 
-        await using var stream = File.OpenRead(_options.FilePath);
-        var entries = await JsonSerializer.DeserializeAsync<MetadataCacheEntry[]>(stream, JsonOptions, cancellationToken);
+        MetadataCacheEntry[]? entries;
+        try
+        {
+            await using var stream = File.OpenRead(_options.FilePath);
+            entries = await JsonSerializer.DeserializeAsync<MetadataCacheEntry[]>(stream, JsonOptions, cancellationToken);
+        }
+        catch (JsonException)
+        {
+            return new Dictionary<string, MetadataCacheEntry>(StringComparer.OrdinalIgnoreCase);
+        }
 
         return (entries ?? [])
             .Where(entry => GameIdValidation.IsValid(entry.Metadata.GameId))

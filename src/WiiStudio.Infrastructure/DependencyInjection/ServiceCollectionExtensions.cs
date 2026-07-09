@@ -96,6 +96,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton(new CoverCacheOptions());
         services.AddSingleton(new GameTdbCoverProviderOptions());
         services.AddSingleton(new MetadataCacheOptions());
+        services.AddSingleton(new GameTdbMetadataProviderOptions());
         services.AddSingleton(new GameTdbUpdateStateStoreOptions());
         services.AddSingleton(new SettingsStoreOptions());
         services.AddSingleton(new ProfileStoreOptions());
@@ -133,7 +134,10 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<HttpClient>();
         services.AddSingleton<ICoverProvider, GameTdbCoverProvider>();
         services.AddSingleton<IMetadataCacheService, JsonMetadataCacheService>();
-        services.AddSingleton<IGameMetadataProvider, NullGameMetadataProvider>();
+        services.AddSingleton<IGameTdbDatabaseService, GameTdbDatabaseService>();
+        services.AddSingleton<IGameTdbXmlParser, GameTdbXmlParser>();
+        services.AddSingleton<IGameTdbMetadataMapper, GameTdbMetadataMapper>();
+        services.AddSingleton<IGameMetadataProvider, GameTdbMetadataProvider>();
         services.AddSingleton<IGameTdbUpdateSource, NullGameTdbUpdateSource>();
         services.AddSingleton<IGameTdbUpdateStateStore, JsonGameTdbUpdateStateStore>();
         services.AddSingleton<IWiimmsToolLocator, WiimmsToolLocator>();

@@ -39,6 +39,7 @@ public sealed class DiagnosticsService : IDiagnosticsService
     private readonly ProfileStoreOptions _profileOptions;
     private readonly FavoriteGameStoreOptions _favoriteOptions;
     private readonly MetadataCacheOptions _metadataOptions;
+    private readonly GameTdbMetadataProviderOptions _gameTdbMetadataOptions;
     private readonly NotificationStoreOptions _notificationOptions;
     private readonly TaskManagerOptions _taskOptions;
     private readonly GameTdbUpdateStateStoreOptions _gameTdbOptions;
@@ -58,6 +59,7 @@ public sealed class DiagnosticsService : IDiagnosticsService
         ProfileStoreOptions profileOptions,
         FavoriteGameStoreOptions favoriteOptions,
         MetadataCacheOptions metadataOptions,
+        GameTdbMetadataProviderOptions gameTdbMetadataOptions,
         NotificationStoreOptions notificationOptions,
         TaskManagerOptions taskOptions,
         GameTdbUpdateStateStoreOptions gameTdbOptions,
@@ -76,6 +78,7 @@ public sealed class DiagnosticsService : IDiagnosticsService
         _profileOptions = profileOptions;
         _favoriteOptions = favoriteOptions;
         _metadataOptions = metadataOptions;
+        _gameTdbMetadataOptions = gameTdbMetadataOptions;
         _notificationOptions = notificationOptions;
         _taskOptions = taskOptions;
         _gameTdbOptions = gameTdbOptions;
@@ -198,6 +201,7 @@ public sealed class DiagnosticsService : IDiagnosticsService
             await CheckWwtAsync(cancellationToken),
             await CheckExecutableAsync("git", "Git", cancellationToken),
             CheckCoverProvider(),
+            CheckMetadataProvider(),
             new("sqlite", DiagnosticsStatus.Healthy, "SQLite support is available through local stores.", Category: "Dependencies")
         };
 
@@ -220,6 +224,22 @@ public sealed class DiagnosticsService : IDiagnosticsService
             : "Cover Provider: GameTDB is configured but automatic cover download is disabled.";
 
         return new DiagnosticsCheckResult("cover-provider", status, message, "GameTDB", "Dependencies", severity);
+    }
+
+    private DiagnosticsCheckResult CheckMetadataProvider()
+    {
+        var databasePath = Path.Combine(_gameTdbMetadataOptions.DatabaseDirectory, "wiitdb.xml");
+        var hasLocalDatabase = File.Exists(databasePath);
+        var status = _gameTdbMetadataOptions.AllowAutomaticMetadataDownload || hasLocalDatabase
+            ? DiagnosticsStatus.Healthy
+            : DiagnosticsStatus.Warning;
+        var severity = status == DiagnosticsStatus.Healthy
+            ? DiagnosticsSeverity.Information
+            : DiagnosticsSeverity.Warning;
+        var fallbackLanguages = string.Join(", ", _gameTdbMetadataOptions.FallbackLanguages);
+        var message = $"Metadata Provider: GameTDB; Base URL: {_gameTdbMetadataOptions.DatabaseUrl}; Preferred language: {_gameTdbMetadataOptions.PreferredLanguage}; Fallback languages: {fallbackLanguages}; Local database: {databasePath}; Provider available: {(_gameTdbMetadataOptions.AllowAutomaticMetadataDownload || hasLocalDatabase).ToString().ToLowerInvariant()}.";
+
+        return new DiagnosticsCheckResult("metadata-provider", status, message, "GameTDB", "Dependencies", severity);
     }
 
     private async Task<IReadOnlyList<DiagnosticsCheckResult>> CheckExternalToolsAsync(CancellationToken cancellationToken)

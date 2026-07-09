@@ -101,6 +101,26 @@ public sealed class JsonMetadataCacheServiceTests
         }
     }
 
+    [Fact]
+    public async Task GetAsync_ShouldReturnNullWhenCacheIsCorrupted()
+    {
+        var path = CreateTemporaryPath();
+        try
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+            await File.WriteAllTextAsync(path, "{ invalid json", CancellationToken.None);
+            var cache = new JsonMetadataCacheService(new MetadataCacheOptions { FilePath = path });
+
+            var metadata = await cache.GetAsync("RMCP01", CancellationToken.None);
+
+            metadata.Should().BeNull();
+        }
+        finally
+        {
+            DeleteTemporaryDirectory(path);
+        }
+    }
+
     private static string CreateTemporaryPath()
     {
         return Path.Combine(Path.GetTempPath(), $"wiistudio-metadata-{Guid.NewGuid():N}", "games.json");

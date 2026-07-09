@@ -48,6 +48,10 @@ public sealed class DiagnosticsServiceTests
             check.Status == DiagnosticsStatus.Healthy &&
             check.Message.Contains("GameTDB") &&
             check.Message.Contains("https://art.gametdb.com/wii"));
+        report.Checks.Should().Contain(check =>
+            check.Name == "metadata-provider" &&
+            check.Status == DiagnosticsStatus.Healthy &&
+            check.Message.Contains("https://www.gametdb.com/wiitdb.zip"));
         report.Checks.Should().Contain(check => check.Name == "external-tool:nkit" && check.Status == DiagnosticsStatus.Warning);
     }
 
@@ -301,6 +305,7 @@ public sealed class DiagnosticsServiceTests
                 new ProfileStoreOptions { RootDirectory = Path.Combine(RootDirectory, "profiles") },
                 new FavoriteGameStoreOptions { FilePath = Path.Combine(RootDirectory, "favorites.json") },
                 new MetadataCacheOptions { FilePath = Path.Combine(RootDirectory, "metadata", "games.json") },
+                new GameTdbMetadataProviderOptions { DatabaseDirectory = Path.Combine(RootDirectory, "metadata", "gametdb") },
                 new NotificationStoreOptions { FilePath = Path.Combine(RootDirectory, "notifications", "history.json") },
                 new TaskManagerOptions { FilePath = Path.Combine(RootDirectory, "tasks", "tasks.json") },
                 new GameTdbUpdateStateStoreOptions { FilePath = Path.Combine(RootDirectory, "metadata", "gametdb-state.json") },

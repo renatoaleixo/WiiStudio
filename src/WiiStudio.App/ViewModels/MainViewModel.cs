@@ -33,6 +33,7 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly IGameLibraryService _gameLibraryService;
     private readonly ILibraryViewService _libraryViewService;
     private readonly IMainWindowService _mainWindowService;
+    private readonly IMetadataCacheService _metadataCacheService;
     private readonly IMetadataSynchronizationService _metadataSynchronizationService;
     private readonly IPluginDiscoveryService _pluginDiscoveryService;
     private readonly IPluginLoaderService _pluginLoaderService;
@@ -205,6 +206,7 @@ public sealed partial class MainViewModel : ObservableObject
         IGameLibraryService gameLibraryService,
         ILibraryViewService libraryViewService,
         IMainWindowService mainWindowService,
+        IMetadataCacheService metadataCacheService,
         IMetadataSynchronizationService metadataSynchronizationService,
         IPluginDiscoveryService pluginDiscoveryService,
         IPluginLoaderService pluginLoaderService,
@@ -230,6 +232,7 @@ public sealed partial class MainViewModel : ObservableObject
         _gameLibraryService = gameLibraryService;
         _libraryViewService = libraryViewService;
         _mainWindowService = mainWindowService;
+        _metadataCacheService = metadataCacheService;
         _metadataSynchronizationService = metadataSynchronizationService;
         _pluginDiscoveryService = pluginDiscoveryService;
         _pluginLoaderService = pluginLoaderService;
@@ -762,9 +765,11 @@ public sealed partial class MainViewModel : ObservableObject
             var unavailableCount = result.Items.Count(item => item.Status == MetadataSyncStatus.ProviderUnavailable);
             var failedCount = result.Items.Count(item => item.Status == MetadataSyncStatus.Failed);
 
-            StatusMessage = unavailableCount > 0
+            var metadataStatus = unavailableCount > 0
                 ? $"Provider de metadados indisponível: {cachedCount} em cache, {missingCount} ausente(s), {failedCount} falha(s)."
                 : $"Metadados processados: {result.UpdatedCount} atualizado(s), {cachedCount} em cache, {missingCount} ausente(s), {failedCount} falha(s).";
+            await RefreshLibraryAsync(cancellationToken);
+            StatusMessage = metadataStatus;
         }
         finally
         {
@@ -1311,7 +1316,8 @@ public sealed partial class MainViewModel : ObservableObject
             foreach (var game in snapshot.Games)
             {
                 var coverPath = await _coverCache.GetAsync(game.Id, CoverAssetKind.FrontCover, cancellationToken);
-                Games.Add(new LibraryGameItem(game, coverPath));
+                var metadata = await _metadataCacheService.GetAsync(game.Id, cancellationToken);
+                Games.Add(new LibraryGameItem(game, coverPath, metadata));
             }
         }
 
