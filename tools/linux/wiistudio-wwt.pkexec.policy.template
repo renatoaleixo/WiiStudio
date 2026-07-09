@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE policyconfig PUBLIC
+ "-//freedesktop//DTD PolicyKit Policy Configuration 1.0//EN"
+ "http://www.freedesktop.org/standards/PolicyKit/1/policyconfig.dtd">
+<policyconfig>
+  <vendor>WiiStudio</vendor>
+  <vendor_url>https://github.com/renatoaleixo/WiiStudio</vendor_url>
+
+  <action id="com.wiistudio.wwt.manage">
+    <description>Manage Wii WBFS devices with Wiimms WWT</description>
+    <description xml:lang="pt_BR">Gerenciar dispositivos Wii WBFS com Wiimms WWT</description>
+    <message>Authentication is required to let WiiStudio access WBFS devices through WWT.</message>
+    <message xml:lang="pt_BR">A autenticação é necessária para permitir que o WiiStudio acesse dispositivos WBFS pelo WWT.</message>
+    <defaults>
+      <allow_any>no</allow_any>
+      <allow_inactive>auth_admin</allow_inactive>
+      <allow_active>auth_admin_keep</allow_active>
+    </defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">__WWT_PATH__</annotate>
+    <annotate key="org.freedesktop.policykit.exec.allow_gui">false</annotate>
+  </action>
+</policyconfig>

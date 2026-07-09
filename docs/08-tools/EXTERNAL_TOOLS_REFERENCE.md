@@ -49,6 +49,39 @@ A instalação local exige confirmação do usuário e validação de checksum.
 4. `tools/`;
 5. pasta da aplicação.
 
+### Linux: cache de autorização Polkit para WBFS raw
+
+O WiiStudio acessa partições WBFS raw por meio do `wwt`. Quando o acesso direto
+ao dispositivo retorna `Permission denied`, a aplicação usa `pkexec` para pedir
+autorização do sistema.
+
+Por segurança, o WiiStudio **não armazena senha**. Para evitar que o usuário
+digite a senha a cada processo, existe um helper Linux que instala uma action
+Polkit própria para o executável `wwt`, usando `auth_admin_keep`.
+
+Instalação uma vez:
+
+```bash
+tools/linux/install-wiistudio-polkit-policy.sh
+```
+
+Se o `wwt` não estiver no `PATH`:
+
+```bash
+tools/linux/install-wiistudio-polkit-policy.sh /caminho/para/wwt
+```
+
+O script cria:
+
+```text
+/usr/share/polkit-1/actions/com.wiistudio.wwt.policy
+```
+
+Depois disso, as chamadas `pkexec /caminho/para/wwt ...` usadas pelo WiiStudio
+podem reutilizar a autorização enquanto o Polkit mantiver o cache ativo. A
+duração exata é controlada pela distribuição Linux e pelo agente Polkit da
+sessão gráfica.
+
 ## Segurança
 
 - Nenhuma instalação silenciosa.
