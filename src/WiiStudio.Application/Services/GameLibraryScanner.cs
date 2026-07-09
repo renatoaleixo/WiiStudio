@@ -8,10 +8,12 @@ namespace WiiStudio.Application.Services;
 public sealed class GameLibraryScanner : IGameLibraryScanner
 {
     private readonly IWitService _witService;
+    private readonly IWwtService _wwtService;
 
-    public GameLibraryScanner(IWitService witService)
+    public GameLibraryScanner(IWitService witService, IWwtService wwtService)
     {
         _witService = witService;
+        _wwtService = wwtService;
     }
 
     public async Task<LibraryScanResult> ScanAsync(UsbDrive drive, CancellationToken cancellationToken)
@@ -19,7 +21,9 @@ public sealed class GameLibraryScanner : IGameLibraryScanner
         ArgumentNullException.ThrowIfNull(drive);
         cancellationToken.ThrowIfCancellationRequested();
 
-        var games = await _witService.ListGamesAsync(drive, cancellationToken);
+        var games = drive.IsWbfs
+            ? await _wwtService.ListGamesAsync(drive, cancellationToken)
+            : await _witService.ListGamesAsync(drive, cancellationToken);
         cancellationToken.ThrowIfCancellationRequested();
 
         var duplicateGameIds = games

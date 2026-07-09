@@ -18,7 +18,7 @@ public sealed class GameLibraryScannerTests
             CreateGame("RMCP01", "Mario Kart Wii"),
             CreateGame("RSBP01", "Super Smash Bros. Brawl")
         ]);
-        var scanner = new GameLibraryScanner(witService);
+        var scanner = new GameLibraryScanner(witService, new FakeWwtService([]));
 
         var result = await scanner.ScanAsync(drive, CancellationToken.None);
 
@@ -36,7 +36,7 @@ public sealed class GameLibraryScannerTests
             CreateGame("RMCP01", "Mario Kart Wii"),
             CreateGame("rmcp01", "Mario Kart Wii Duplicate")
         ]);
-        var scanner = new GameLibraryScanner(witService);
+        var scanner = new GameLibraryScanner(witService, new FakeWwtService([]));
 
         var result = await scanner.ScanAsync(drive, CancellationToken.None);
 
@@ -50,13 +50,28 @@ public sealed class GameLibraryScannerTests
     {
         var drive = CreateDrive();
         var witService = new FakeWitService([]);
-        var scanner = new GameLibraryScanner(witService);
+        var scanner = new GameLibraryScanner(witService, new FakeWwtService([]));
         using var cancellationTokenSource = new CancellationTokenSource();
         await cancellationTokenSource.CancelAsync();
 
         var act = () => scanner.ScanAsync(drive, cancellationTokenSource.Token);
 
         await act.Should().ThrowAsync<OperationCanceledException>();
+    }
+
+    [Fact]
+    public async Task ScanAsync_ShouldUseWwtForWbfsDrive()
+    {
+        var drive = CreateWbfsDrive();
+        var witService = new FakeWitService([]);
+        var wwtService = new FakeWwtService([CreateGame("RMCP01", "Mario Kart Wii")]);
+        var scanner = new GameLibraryScanner(witService, wwtService);
+
+        var result = await scanner.ScanAsync(drive, CancellationToken.None);
+
+        result.Games.Should().ContainSingle().Which.Id.Should().Be("RMCP01");
+        wwtService.ListCallCount.Should().Be(1);
+        witService.ListCallCount.Should().Be(0);
     }
 
     [Fact]
@@ -74,7 +89,12 @@ public sealed class GameLibraryScannerTests
 
     private static UsbDrive CreateDrive()
     {
-        return new UsbDrive("Wii HD", "/media/wii", UsbDriveFileSystem.Wbfs, 1000, 500);
+        return new UsbDrive("Wii HD", "/media/wii", UsbDriveFileSystem.Fat32, 1000, 500);
+    }
+
+    private static UsbDrive CreateWbfsDrive()
+    {
+        return new UsbDrive(Guid.NewGuid(), "/dev/sdc1", "/dev/sdc1", "WBFS /dev/sdc1", UsbDriveFileSystem.Wbfs, 1000, 500, 500, true, true);
     }
 
     private static Game CreateGame(string gameId, string title)
@@ -101,9 +121,12 @@ public sealed class GameLibraryScannerTests
         public Task<IReadOnlyList<Game>> ListGamesAsync(UsbDrive drive, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
+            ListCallCount++;
 
             return Task.FromResult(_games);
         }
+
+        public int ListCallCount { get; private set; }
 
         public Task VerifyAsync(string sourcePath, CancellationToken cancellationToken)
         {
@@ -113,6 +136,40 @@ public sealed class GameLibraryScannerTests
         }
 
         public Task CopyAsync(string sourcePath, string destinationPath, FileFormat targetFormat, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            return Task.CompletedTask;
+        }
+    }
+
+    private sealed class FakeWwtService : IWwtService
+    {
+        private readonly IReadOnlyList<Game> _games;
+
+        public FakeWwtService(IReadOnlyList<Game> games)
+        {
+            _games = games;
+        }
+
+        public int ListCallCount { get; private set; }
+
+        public Task<IReadOnlyList<Game>> ListGamesAsync(UsbDrive drive, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            ListCallCount++;
+
+            return Task.FromResult(_games);
+        }
+
+        public Task AddGameAsync(UsbDrive drive, string sourcePath, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            return Task.CompletedTask;
+        }
+
+        public Task RemoveGameAsync(UsbDrive drive, string gameId, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
 

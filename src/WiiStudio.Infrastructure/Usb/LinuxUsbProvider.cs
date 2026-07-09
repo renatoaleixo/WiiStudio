@@ -173,7 +173,7 @@ public sealed class LinuxUsbProvider : IUsbProvider
             usedSpace,
             freeSpace,
             isMounted: true,
-            isWritable: entry.ReadOnly != "1" && !wwtOutput.Contains("Permission denied", StringComparison.OrdinalIgnoreCase));
+            isWritable: entry.ReadOnly != "1");
     }
 
     private static long ParseWwtSizeBytes(string output)

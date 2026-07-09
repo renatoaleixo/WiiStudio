@@ -29,6 +29,7 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly IExportGameService _exportGameService;
     private readonly IImportWizardService _importWizardService;
     private readonly IKeyboardShortcutService _keyboardShortcutService;
+    private readonly IGameLibraryService _gameLibraryService;
     private readonly ILibraryViewService _libraryViewService;
     private readonly IMainWindowService _mainWindowService;
     private readonly IMetadataSynchronizationService _metadataSynchronizationService;
@@ -39,6 +40,8 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly ISettingsService _settingsService;
     private readonly IStatusBarService _statusBarService;
     private readonly IThemeService _themeService;
+    private Guid? _activeLibraryDriveId;
+    private bool _isApplyingDeviceSnapshot;
     private IReadOnlySet<string> _selectedGameIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
     [ObservableProperty]
@@ -197,6 +200,7 @@ public sealed partial class MainViewModel : ObservableObject
         IExportGameService exportGameService,
         IImportWizardService importWizardService,
         IKeyboardShortcutService keyboardShortcutService,
+        IGameLibraryService gameLibraryService,
         ILibraryViewService libraryViewService,
         IMainWindowService mainWindowService,
         IMetadataSynchronizationService metadataSynchronizationService,
@@ -220,6 +224,7 @@ public sealed partial class MainViewModel : ObservableObject
         _exportGameService = exportGameService;
         _importWizardService = importWizardService;
         _keyboardShortcutService = keyboardShortcutService;
+        _gameLibraryService = gameLibraryService;
         _libraryViewService = libraryViewService;
         _mainWindowService = mainWindowService;
         _metadataSynchronizationService = metadataSynchronizationService;
@@ -346,7 +351,7 @@ public sealed partial class MainViewModel : ObservableObject
         try
         {
             var snapshot = await _libraryViewService.RefreshAsync(
-                new SearchRequest(SearchText: LibrarySearchText),
+                new SearchRequest(UsbDriveId: _activeLibraryDriveId, SearchText: LibrarySearchText),
                 cancellationToken);
 
             ApplyLibrarySnapshot(snapshot);
@@ -354,6 +359,14 @@ public sealed partial class MainViewModel : ObservableObject
                 ? "Biblioteca vazia."
                 : $"{snapshot.TotalCount} jogo(s) carregado(s).";
             await RefreshStatusBarAsync(cancellationToken);
+        }
+        catch (Exception exception)
+        {
+            LibraryState = LibraryViewState.Error;
+            LibraryTotalCount = 0;
+            Games.Clear();
+            StatusMessage = $"Falha ao carregar biblioteca: {exception.Message}";
+            OnPropertyChanged(nameof(LibrarySummary));
         }
         finally
         {
@@ -853,19 +866,15 @@ public sealed partial class MainViewModel : ObservableObject
 
         try
         {
-            Drives.Clear();
-            var drives = await _detectUsbDrivesUseCase.ExecuteAsync(cancellationToken);
+            var drives = await RefreshDriveListAsync(cancellationToken);
+            SelectedImportDrive = Drives.FirstOrDefault(IsImportDriveReady) ?? Drives.FirstOrDefault();
+            await LoadDriveLibraryAsync(SelectedImportDrive, cancellationToken);
 
-            foreach (var drive in drives)
+            if (drives.Count == 0)
             {
-                Drives.Add(drive);
+                StatusMessage = "Nenhum dispositivo encontrado.";
             }
 
-            SelectedImportDrive ??= Drives.FirstOrDefault();
-
-            StatusMessage = drives.Count == 0
-                ? "Nenhum dispositivo encontrado."
-                : $"{drives.Count} dispositivo(s) encontrado(s).";
             OnPropertyChanged(nameof(DeviceSummary));
             await RefreshStatusBarAsync(cancellationToken);
         }
@@ -886,9 +895,14 @@ public sealed partial class MainViewModel : ObservableObject
         {
             var snapshot = await _deviceManagerService.RefreshAsync(cancellationToken);
             ApplyDeviceSnapshot(snapshot);
-            StatusMessage = snapshot.Devices.Count == 0
-                ? "Nenhum dispositivo encontrado."
-                : $"{snapshot.Devices.Count} dispositivo(s) atualizado(s).";
+            await RefreshDriveListAsync(cancellationToken);
+            SelectImportDriveForSelectedDevice();
+            await LoadDriveLibraryAsync(SelectedImportDrive, cancellationToken);
+            if (snapshot.Devices.Count == 0)
+            {
+                StatusMessage = "Nenhum dispositivo encontrado.";
+            }
+
             await RefreshStatusBarAsync(cancellationToken);
         }
         finally
@@ -1140,6 +1154,14 @@ public sealed partial class MainViewModel : ObservableObject
         DeviceManagerSummary = value is null
             ? DeviceSummary
             : $"{value.Name} · {value.FileSystem} · {value.FreeSpace} livre";
+
+        if (_isApplyingDeviceSnapshot)
+        {
+            return;
+        }
+
+        SelectImportDriveForSelectedDevice();
+        _ = LoadDriveLibraryAsync(SelectedImportDrive, CancellationToken.None);
     }
 
     partial void OnSelectedModuleChanged(ShellModule? value)
@@ -1380,10 +1402,88 @@ public sealed partial class MainViewModel : ObservableObject
             Devices.Add(new DeviceInfoViewModel(device));
         }
 
-        SelectedDevice = Devices.FirstOrDefault();
+        _isApplyingDeviceSnapshot = true;
+        try
+        {
+            SelectedDevice = Devices.FirstOrDefault();
+        }
+        finally
+        {
+            _isApplyingDeviceSnapshot = false;
+        }
+
         DeviceManagerSummary = Devices.Count == 0
             ? "Nenhum dispositivo"
             : $"{Devices.Count} dispositivo(s)";
+    }
+
+    private async Task<IReadOnlyList<UsbDrive>> RefreshDriveListAsync(CancellationToken cancellationToken)
+    {
+        var selectedDriveId = SelectedImportDrive?.Id;
+        var drives = await _detectUsbDrivesUseCase.ExecuteAsync(cancellationToken);
+        Drives.Clear();
+
+        foreach (var drive in drives)
+        {
+            Drives.Add(drive);
+        }
+
+        SelectedImportDrive = selectedDriveId is null
+            ? Drives.FirstOrDefault(IsImportDriveReady) ?? Drives.FirstOrDefault()
+            : Drives.FirstOrDefault(drive => drive.Id == selectedDriveId.Value)
+                ?? Drives.FirstOrDefault(IsImportDriveReady)
+                ?? Drives.FirstOrDefault();
+
+        OnPropertyChanged(nameof(DeviceSummary));
+        return drives;
+    }
+
+    private void SelectImportDriveForSelectedDevice()
+    {
+        if (SelectedDevice is null || !Guid.TryParse(SelectedDevice.DeviceId, out var deviceId))
+        {
+            return;
+        }
+
+        SelectedImportDrive = Drives.FirstOrDefault(drive => drive.Id == deviceId) ?? SelectedImportDrive;
+    }
+
+    private async Task LoadDriveLibraryAsync(UsbDrive? drive, CancellationToken cancellationToken)
+    {
+        if (drive is null)
+        {
+            _activeLibraryDriveId = null;
+            await RefreshLibraryAsync(cancellationToken);
+            return;
+        }
+
+        _activeLibraryDriveId = drive.Id;
+        LibraryState = LibraryViewState.Refreshing;
+        StatusMessage = $"Lendo jogos de {drive.Name}...";
+
+        try
+        {
+            await _gameLibraryService.RefreshAsync(drive.Id, cancellationToken);
+            await RefreshLibraryAsync(cancellationToken);
+        }
+        catch (Exception exception)
+        {
+            LibraryState = LibraryViewState.Error;
+            LibraryTotalCount = 0;
+            Games.Clear();
+            StatusMessage = CreateLibraryLoadFailureMessage(drive, exception);
+            OnPropertyChanged(nameof(LibrarySummary));
+        }
+    }
+
+    private static string CreateLibraryLoadFailureMessage(UsbDrive drive, Exception exception)
+    {
+        if (drive.MountPoint.StartsWith("/dev/", StringComparison.OrdinalIgnoreCase))
+        {
+            return $"HD WBFS detectado em {drive.MountPoint}, mas o WiiStudio precisa de permissão para ler os jogos. Autorize o prompt do sistema ou execute com acesso ao dispositivo.";
+        }
+
+        return $"Falha ao ler jogos de {drive.Name}: {exception.Message}";
     }
 
     private void ReplaceDevice(DeviceInfo device)

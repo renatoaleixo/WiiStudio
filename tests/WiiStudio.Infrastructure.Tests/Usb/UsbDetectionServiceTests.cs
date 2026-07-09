@@ -75,7 +75,7 @@ public sealed class UsbDetectionServiceTests
     }
 
     [Fact]
-    public async Task LinuxUsbProvider_ShouldMarkRawWbfsPartitionReadOnlyWhenWwtReportsPermissionDenied()
+    public async Task LinuxUsbProvider_ShouldKeepRawWbfsPartitionWritableWhenWwtReportsPermissionDenied()
     {
         var processRunner = new FakeProcessRunner(
             """
@@ -94,7 +94,7 @@ public sealed class UsbDetectionServiceTests
         var drives = await provider.DetectAsync(CancellationToken.None);
 
         drives.Should().ContainSingle(item => item.DevicePath == "/dev/sdc1")
-            .Which.IsWritable.Should().BeFalse();
+            .Which.IsWritable.Should().BeTrue();
     }
 
     private sealed class FakeUsbProvider : IUsbProvider

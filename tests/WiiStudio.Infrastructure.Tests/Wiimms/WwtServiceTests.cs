@@ -10,6 +10,41 @@ namespace WiiStudio.Infrastructure.Tests.Wiimms;
 public sealed class WwtServiceTests
 {
     [Fact]
+    public async Task ListGamesAsync_ShouldRunWwtListAndParseRawWbfsOutput()
+    {
+        const string output = """
+            ID6     12/500 discs (27 GiB)
+            ------------------------------------------------------------------------
+            SFWE69  2010 FIFA World Cup South Africa
+            SEME4Q  Disney Epic Mickey
+            R43E69  EA Sports Active: Personal Trainer
+            SJOE41  Just Dance 2014
+            SJNE41  Just Dance 2016
+            RMCP01  Mario Kart Wii
+            RMKE01  Mario Sports Mix
+            RNEEDA  Naruto Shippuden: Clash of Ninja Revolution 3
+            PPNE01  New Super Mario Bros. Wii 2: The Next Levels
+            STKE08  Tatsunoko vs. Capcom: Ultimate All-Stars
+            RSPE01  Wii Sports
+            RZTE01  Wii Sports Resort
+            ------------------------------------------------------------------------
+            Total: 12/500 discs, 28028 MiB ~ 27 GiB used, 210440 MiB ~ 206 GiB free.
+            """;
+        var processRunner = new FakeProcessRunner(new ProcessResult(0, output, string.Empty, TimeSpan.FromMilliseconds(10)));
+        var service = new WwtService(processRunner, new FakeWiimmsToolLocator("/opt/wiimms/wwt"), NullLogger<WwtService>.Instance);
+
+        var games = await service.ListGamesAsync(CreateRawDrive(), CancellationToken.None);
+
+        processRunner.LastRequest.Should().NotBeNull();
+        processRunner.LastRequest!.ExecutablePath.Should().Be("/opt/wiimms/wwt");
+        processRunner.LastRequest.Arguments.Should().Equal("list", "--part", "/dev/sdc1");
+        games.Should().HaveCount(12);
+        games.Should().Contain(game => game.GameId.Value == "RMCP01" && game.Title == "Mario Kart Wii");
+        games.Should().Contain(game => game.GameId.Value == "RZTE01" && game.Title == "Wii Sports Resort");
+        games.All(game => game.Format == FileFormat.Wbfs).Should().BeTrue();
+    }
+
+    [Fact]
     public async Task AddGameAsync_ShouldRunWwtAddWithStructuredArguments()
     {
         var processRunner = new FakeProcessRunner(new ProcessResult(0, string.Empty, string.Empty, TimeSpan.FromMilliseconds(10)));
@@ -75,6 +110,11 @@ public sealed class WwtServiceTests
     private static UsbDrive CreateDrive()
     {
         return new UsbDrive("Wii HD", "/media/wii", UsbDriveFileSystem.Wbfs, 1000, 500);
+    }
+
+    private static UsbDrive CreateRawDrive()
+    {
+        return new UsbDrive(Guid.NewGuid(), "/dev/sdc1", "/dev/sdc1", "WBFS /dev/sdc1", UsbDriveFileSystem.Wbfs, 1000, 500, 500, true, true);
     }
 
     private sealed class FakeProcessRunner : IProcessRunner

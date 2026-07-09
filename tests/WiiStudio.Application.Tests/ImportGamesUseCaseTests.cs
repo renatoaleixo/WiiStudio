@@ -103,6 +103,13 @@ public sealed class ImportGamesUseCaseTests
     {
         public List<(UsbDrive Drive, string SourcePath)> AddedGames { get; } = [];
 
+        public Task<IReadOnlyList<Game>> ListGamesAsync(UsbDrive drive, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            return Task.FromResult<IReadOnlyList<Game>>([]);
+        }
+
         public Task AddGameAsync(UsbDrive drive, string sourcePath, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
