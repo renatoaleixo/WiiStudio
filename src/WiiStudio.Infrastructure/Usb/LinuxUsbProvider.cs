@@ -129,13 +129,6 @@ public sealed class LinuxUsbProvider : IUsbProvider
                 new ProcessRequest(wwtPath, ["find", "--long", entry.Path], ProbeTimeout),
                 cancellationToken);
             var probeOutput = $"{wwt.StandardOutput}\n{wwt.StandardError}";
-            if (HasPermissionDenied(probeOutput)
-                && !HasWbfsBlock(probeOutput)
-                && TryCreateElevatedProbeRequest(wwtPath, entry.Path, out var elevatedRequest))
-            {
-                var elevatedWwt = await processRunner.RunAsync(elevatedRequest, cancellationToken);
-                probeOutput = $"{elevatedWwt.StandardOutput}\n{elevatedWwt.StandardError}";
-            }
 
             if (!HasWbfsBlock(probeOutput)
                 && !string.Equals(entry.FileSystem, "wbfs", StringComparison.OrdinalIgnoreCase))
@@ -174,22 +167,6 @@ public sealed class LinuxUsbProvider : IUsbProvider
     private static bool HasPermissionDenied(string output)
     {
         return output.Contains("Permission denied", StringComparison.OrdinalIgnoreCase);
-    }
-
-    private static bool TryCreateElevatedProbeRequest(string wwtPath, string partitionPath, out ProcessRequest request)
-    {
-        request = default!;
-        var pkexecPath = FindExecutable("pkexec");
-        if (pkexecPath is null)
-        {
-            return false;
-        }
-
-        request = new ProcessRequest(
-            pkexecPath,
-            [wwtPath, "find", "--long", partitionPath],
-            ProbeTimeout);
-        return true;
     }
 
     private static UsbDrive MapRawWbfsPartition(LsblkEntry entry, string wwtOutput)

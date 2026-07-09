@@ -107,6 +107,19 @@ public sealed class WwtServiceTests
         exception.Which.StandardError.Should().Be("disc not found");
     }
 
+    [Fact]
+    public async Task ListGamesAsync_ShouldWrapPkexecTimeoutAsWiimmsCommandException()
+    {
+        var processRunner = new TimeoutAfterPermissionDeniedProcessRunner();
+        var service = new WwtService(processRunner, new FakeWiimmsToolLocator("/opt/wiimms/wwt"), NullLogger<WwtService>.Instance);
+
+        var act = () => service.ListGamesAsync(CreateRawDrive(), CancellationToken.None);
+
+        var exception = await act.Should().ThrowAsync<WiimmsCommandException>();
+        exception.Which.ExitCode.Should().Be(124);
+        exception.Which.StandardError.Should().Contain("exceeded timeout");
+    }
+
     private static UsbDrive CreateDrive()
     {
         return new UsbDrive("Wii HD", "/media/wii", UsbDriveFileSystem.Wbfs, 1000, 500);
@@ -134,6 +147,27 @@ public sealed class WwtServiceTests
             LastRequest = request;
 
             return Task.FromResult(_result);
+        }
+    }
+
+    private sealed class TimeoutAfterPermissionDeniedProcessRunner : IProcessRunner
+    {
+        private int callCount;
+
+        public Task<ProcessResult> RunAsync(ProcessRequest request, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            callCount++;
+            if (callCount == 1)
+            {
+                return Task.FromResult(new ProcessResult(
+                    48,
+                    string.Empty,
+                    "Can't open file: /dev/sdc1\n-> Permission denied [13]",
+                    TimeSpan.FromMilliseconds(10)));
+            }
+
+            throw new TimeoutException($"Process '{request.ExecutablePath}' exceeded timeout {request.Timeout}.");
         }
     }
 

@@ -35,7 +35,7 @@ public sealed class WwtService : IWwtService
                 "--part",
                 drive.MountPoint
             ],
-            TimeSpan.FromMinutes(2));
+            TimeSpan.FromMinutes(5));
 
         var result = await RunWithElevationFallbackAsync(request, "wwt list", cancellationToken);
         var games = ParseListOutput(result.StandardOutput, drive);
@@ -99,11 +99,11 @@ public sealed class WwtService : IWwtService
         string operationName,
         CancellationToken cancellationToken)
     {
-        var result = await _processRunner.RunAsync(request, cancellationToken);
+        var result = await RunProcessOrTimeoutResultAsync(request, cancellationToken);
         if (!result.IsSuccess && HasPermissionDenied(result) && TryCreatePkexecRequest(request, out var elevatedRequest))
         {
             _logger.LogInformation("Retrying {OperationName} through pkexec because raw device access was denied.", operationName);
-            result = await _processRunner.RunAsync(elevatedRequest, cancellationToken);
+            result = await RunProcessOrTimeoutResultAsync(elevatedRequest, cancellationToken);
         }
 
         if (!result.IsSuccess)
@@ -115,6 +115,18 @@ public sealed class WwtService : IWwtService
         }
 
         return result;
+    }
+
+    private async Task<ProcessResult> RunProcessOrTimeoutResultAsync(ProcessRequest request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await _processRunner.RunAsync(request, cancellationToken);
+        }
+        catch (TimeoutException exception)
+        {
+            return new ProcessResult(124, string.Empty, exception.Message, request.Timeout);
+        }
     }
 
     private static bool HasPermissionDenied(ProcessResult result)
