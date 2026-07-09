@@ -685,6 +685,12 @@ public sealed partial class MainViewModel : ObservableObject
         await AnalyzeImportAsync(cancellationToken);
     }
 
+    public async Task SetConversionSourcePathsAsync(IReadOnlyList<string> sourcePaths, CancellationToken cancellationToken)
+    {
+        ConversionSourcePathsText = string.Join(Environment.NewLine, sourcePaths);
+        await AnalyzeConversionAsync(cancellationToken);
+    }
+
     [RelayCommand]
     private async Task RunDiagnosticsAsync(CancellationToken cancellationToken)
     {

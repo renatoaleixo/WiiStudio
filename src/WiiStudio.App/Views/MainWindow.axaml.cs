@@ -28,9 +28,34 @@ public sealed partial class MainWindow : Window
             return;
         }
 
+        var paths = await PickGameFilesAsync("Selecionar jogos Wii");
+
+        if (paths.Length > 0)
+        {
+            await viewModel.SetImportSourcePathsAsync(paths, CancellationToken.None);
+        }
+    }
+
+    private async void OnPickConversionFilesClicked(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is not MainViewModel viewModel || StorageProvider is null)
+        {
+            return;
+        }
+
+        var paths = await PickGameFilesAsync("Selecionar jogos para conversão");
+
+        if (paths.Length > 0)
+        {
+            await viewModel.SetConversionSourcePathsAsync(paths, CancellationToken.None);
+        }
+    }
+
+    private async Task<string[]> PickGameFilesAsync(string title)
+    {
         var files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
         {
-            Title = "Selecionar jogos Wii",
+            Title = title,
             AllowMultiple = true,
             FileTypeFilter =
             [
@@ -42,15 +67,10 @@ public sealed partial class MainWindow : Window
             ]
         });
 
-        var paths = files
+        return files
             .Select(file => file.TryGetLocalPath())
             .Where(path => !string.IsNullOrWhiteSpace(path))
             .Select(path => path!)
             .ToArray();
-
-        if (paths.Length > 0)
-        {
-            await viewModel.SetImportSourcePathsAsync(paths, CancellationToken.None);
-        }
     }
 }

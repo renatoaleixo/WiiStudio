@@ -584,11 +584,20 @@
                         SelectedItem="{Binding SelectedConversionStep}"
                         Height="32" />
 
-              <TextBox Text="{Binding ConversionSourcePathsText, Mode=TwoWay}"
-                       Watermark="/jogos/mario.iso"
-                       AcceptsReturn="True"
-                       TextWrapping="Wrap"
-                       MinHeight="58" />
+              <Grid ColumnDefinitions="*,92" ColumnSpacing="8">
+                <TextBox Text="{Binding ConversionSourcePathsText, Mode=TwoWay}"
+                         Watermark="/jogos/mario.iso"
+                         AcceptsReturn="True"
+                         TextWrapping="Wrap"
+                         MinHeight="58" />
+                <Button Grid.Column="1"
+                        Classes="secondary small"
+                        Click="OnPickConversionFilesClicked"
+                        VerticalAlignment="Top"
+                        HorizontalAlignment="Stretch">
+                  <TextBlock Text="Selecionar" TextTrimming="CharacterEllipsis" />
+                </Button>
+              </Grid>
 
               <TextBox Text="{Binding ConversionDestinationDirectory, Mode=TwoWay}"
                        Watermark="/jogos/convertidos"
