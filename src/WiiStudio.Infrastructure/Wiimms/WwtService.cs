@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using WiiStudio.Application.DTOs;
 using WiiStudio.Application.Interfaces;
 using WiiStudio.Domain.Entities;
 using WiiStudio.Domain.Enums;
@@ -14,12 +15,18 @@ public sealed class WwtService : IWwtService
     private readonly IProcessRunner _processRunner;
     private readonly IWiimmsToolLocator _toolLocator;
     private readonly ILogger<WwtService> _logger;
+    private readonly IPrivilegedAccessService? _privilegedAccessService;
 
-    public WwtService(IProcessRunner processRunner, IWiimmsToolLocator toolLocator, ILogger<WwtService> logger)
+    public WwtService(
+        IProcessRunner processRunner,
+        IWiimmsToolLocator toolLocator,
+        ILogger<WwtService> logger,
+        IPrivilegedAccessService? privilegedAccessService = null)
     {
         _processRunner = processRunner;
         _toolLocator = toolLocator;
         _logger = logger;
+        _privilegedAccessService = privilegedAccessService;
     }
 
     public async Task<IReadOnlyList<Game>> ListGamesAsync(UsbDrive drive, CancellationToken cancellationToken)
@@ -100,10 +107,13 @@ public sealed class WwtService : IWwtService
         CancellationToken cancellationToken)
     {
         var result = await RunProcessOrTimeoutResultAsync(request, cancellationToken);
-        if (!result.IsSuccess && HasPermissionDenied(result) && TryCreatePkexecRequest(request, out var elevatedRequest))
+        if (!result.IsSuccess && HasPermissionDenied(result))
         {
-            _logger.LogInformation("Retrying {OperationName} through pkexec because raw device access was denied.", operationName);
-            result = await RunProcessOrTimeoutResultAsync(elevatedRequest, cancellationToken);
+            var privilegedResult = await RunPrivilegedFallbackAsync(request, operationName, cancellationToken);
+            if (privilegedResult is not null)
+            {
+                result = privilegedResult;
+            }
         }
 
         if (!result.IsSuccess)
@@ -115,6 +125,40 @@ public sealed class WwtService : IWwtService
         }
 
         return result;
+    }
+
+    private async Task<ProcessResult?> RunPrivilegedFallbackAsync(
+        ProcessRequest request,
+        string operationName,
+        CancellationToken cancellationToken)
+    {
+        if (_privilegedAccessService is not null)
+        {
+            var operation = MapOperation(operationName);
+            var devicePath = ExtractDevicePath(request.Arguments);
+            _logger.LogInformation(
+                "Retrying {OperationName} through privileged access service because raw device access was denied.",
+                operationName);
+            var result = await _privilegedAccessService.RunKnownToolAsync(
+                new PrivilegedToolRequest(
+                    "wwt",
+                    request.ExecutablePath,
+                    request.Arguments,
+                    request.Timeout,
+                    operation,
+                    DevicePath: devicePath),
+                cancellationToken);
+
+            return new ProcessResult(result.ExitCode, result.StandardOutput, result.StandardError, result.Duration);
+        }
+
+        if (!TryCreatePkexecRequest(request, out var elevatedRequest))
+        {
+            return null;
+        }
+
+        _logger.LogInformation("Retrying {OperationName} through pkexec because raw device access was denied.", operationName);
+        return await RunProcessOrTimeoutResultAsync(elevatedRequest, cancellationToken);
     }
 
     private async Task<ProcessResult> RunProcessOrTimeoutResultAsync(ProcessRequest request, CancellationToken cancellationToken)
@@ -133,6 +177,30 @@ public sealed class WwtService : IWwtService
     {
         return result.StandardError.Contains("Permission denied", StringComparison.OrdinalIgnoreCase)
             || result.StandardOutput.Contains("Permission denied", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static PrivilegedDeviceOperation MapOperation(string operationName)
+    {
+        return operationName switch
+        {
+            "wwt list" => PrivilegedDeviceOperation.ListWbfsGames,
+            "wwt add" => PrivilegedDeviceOperation.AddWbfsGame,
+            "wwt remove" => PrivilegedDeviceOperation.RemoveWbfsGame,
+            _ => PrivilegedDeviceOperation.InspectDevice
+        };
+    }
+
+    private static string? ExtractDevicePath(IReadOnlyList<string> arguments)
+    {
+        for (var index = 0; index < arguments.Count - 1; index++)
+        {
+            if (string.Equals(arguments[index], "--part", StringComparison.OrdinalIgnoreCase))
+            {
+                return arguments[index + 1];
+            }
+        }
+
+        return arguments.FirstOrDefault(argument => argument.StartsWith("/dev/", StringComparison.OrdinalIgnoreCase));
     }
 
     private static bool TryCreatePkexecRequest(ProcessRequest request, out ProcessRequest elevatedRequest)

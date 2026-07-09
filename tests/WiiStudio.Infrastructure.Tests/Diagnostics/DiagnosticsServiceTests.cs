@@ -105,6 +105,7 @@ public sealed class DiagnosticsServiceTests
         report.Checks.Should().Contain(check => check.Category == "Storage" && check.Name == "settings");
         report.Checks.Should().Contain(check => check.Category == "Configuration" && check.Name == "diagnostics-enabled");
         report.Checks.Should().Contain(check => check.Category == "Devices" && check.Name == "usb-drives" && check.Message.Contains("1 compatible"));
+        report.Checks.Should().Contain(check => check.Category == "Privileged Device Access" && check.Name == "privileged-device-access");
     }
 
     [Fact]
@@ -278,6 +279,27 @@ public sealed class DiagnosticsServiceTests
         }
     }
 
+    private sealed class FakeDevicePermissionService : IDevicePermissionService
+    {
+        public Task<DevicePermissionStatus> CheckAsync(DevicePermissionRequest request, CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return Task.FromResult(new DevicePermissionStatus(
+                OSPlatformKind.Linux,
+                PrivilegedAccessState.AuthorizationRequired,
+                CanRetry: true,
+                RequiresUserAction: true,
+                "Autorização administrativa pode ser necessária.",
+                "Autorize o prompt do sistema quando solicitado.",
+                "test"));
+        }
+
+        public Task<DevicePermissionStatus> RequestAuthorizationAsync(DevicePermissionRequest request, CancellationToken cancellationToken = default)
+        {
+            return CheckAsync(request, cancellationToken);
+        }
+    }
+
     private sealed class TemporaryDiagnosticsFixture : IDisposable
     {
         private TemporaryDiagnosticsFixture(string rootDirectory)
@@ -315,6 +337,7 @@ public sealed class DiagnosticsServiceTests
                 new LoggingCenterOptions { FilePath = Path.Combine(RootDirectory, "logs", "wiistudio.jsonl") },
                 new BackupServiceOptions { RestorePointDirectory = Path.Combine(RootDirectory, "restore-points") },
                 new FakeUsbDriveService(usbDrives),
+                new FakeDevicePermissionService(),
                 NullLogger<DiagnosticsService>.Instance);
         }
 

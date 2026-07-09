@@ -785,7 +785,7 @@
               <Border Classes="contentBlock">
                 <Grid RowDefinitions="Auto,*" RowSpacing="10">
                   <TextBlock Text="Jogos selecionados" FontSize="{StaticResource WiiFontSizeSubtitle}" FontWeight="SemiBold" Foreground="{DynamicResource WiiBrushTextPrimary}" />
-                  <ListBox Grid.Row="1" ItemsSource="{Binding AssetSelectedGames}" Background="Transparent" BorderThickness="0" ScrollViewer.VerticalScrollBarVisibility="Auto">
+                  <ListBox Grid.Row="1" ItemsSource="{Binding AssetSelectedGames}" SelectedItem="{Binding SelectedAssetGame}" Background="Transparent" BorderThickness="0" ScrollViewer.VerticalScrollBarVisibility="Auto">
                     <ListBox.ItemTemplate>
                       <DataTemplate DataType="vm:LibraryGameItem">
                         <Grid ColumnDefinitions="44,*,Auto" ColumnSpacing="10" Margin="{StaticResource WiiListItemCompactMargin}" MinHeight="58">

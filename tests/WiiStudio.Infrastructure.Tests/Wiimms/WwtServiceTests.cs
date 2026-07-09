@@ -1,5 +1,7 @@
 using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
+using WiiStudio.Application.DTOs;
+using WiiStudio.Application.Interfaces;
 using WiiStudio.Domain.Entities;
 using WiiStudio.Domain.Enums;
 using WiiStudio.Infrastructure.Processes;
@@ -120,6 +122,44 @@ public sealed class WwtServiceTests
         exception.Which.StandardError.Should().Contain("exceeded timeout");
     }
 
+    [Fact]
+    public async Task ListGamesAsync_ShouldUsePrivilegedAccessServiceWhenRawDevicePermissionIsDenied()
+    {
+        const string output = "RMCP01  Mario Kart Wii";
+        var processRunner = new FakeProcessRunner(new ProcessResult(
+            48,
+            string.Empty,
+            "Can't open file: /dev/sdc1\n-> Permission denied [13]",
+            TimeSpan.FromMilliseconds(10)));
+        var privilegedAccessService = new FakePrivilegedAccessService(new PrivilegedProcessResult(
+            0,
+            output,
+            string.Empty,
+            TimeSpan.FromMilliseconds(20),
+            new PrivilegedAccessStatus(
+                OSPlatformKind.Linux,
+                PrivilegedAccessState.Authorized,
+                CanRetry: false,
+                RequiresUserAction: false,
+                "ok",
+                "ok",
+                "ok")));
+        var service = new WwtService(
+            processRunner,
+            new FakeWiimmsToolLocator("/opt/wiimms/wwt"),
+            NullLogger<WwtService>.Instance,
+            privilegedAccessService);
+
+        var games = await service.ListGamesAsync(CreateRawDrive(), CancellationToken.None);
+
+        games.Should().ContainSingle(game => game.GameId.Value == "RMCP01");
+        privilegedAccessService.LastRequest.Should().NotBeNull();
+        privilegedAccessService.LastRequest!.ToolId.Should().Be("wwt");
+        privilegedAccessService.LastRequest.Operation.Should().Be(PrivilegedDeviceOperation.ListWbfsGames);
+        privilegedAccessService.LastRequest.DevicePath.Should().Be("/dev/sdc1");
+        privilegedAccessService.LastRequest.Arguments.Should().Equal("list", "--part", "/dev/sdc1");
+    }
+
     private static UsbDrive CreateDrive()
     {
         return new UsbDrive("Wii HD", "/media/wii", UsbDriveFileSystem.Wbfs, 1000, 500);
@@ -168,6 +208,35 @@ public sealed class WwtServiceTests
             }
 
             throw new TimeoutException($"Process '{request.ExecutablePath}' exceeded timeout {request.Timeout}.");
+        }
+    }
+
+    private sealed class FakePrivilegedAccessService : IPrivilegedAccessService
+    {
+        private readonly PrivilegedProcessResult _result;
+
+        public FakePrivilegedAccessService(PrivilegedProcessResult result)
+        {
+            _result = result;
+        }
+
+        public PrivilegedToolRequest? LastRequest { get; private set; }
+
+        public Task<PrivilegedAccessStatus> CheckStatusAsync(
+            PrivilegedAccessRequest request,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return Task.FromResult(_result.AccessStatus);
+        }
+
+        public Task<PrivilegedProcessResult> RunKnownToolAsync(
+            PrivilegedToolRequest request,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            LastRequest = request;
+            return Task.FromResult(_result);
         }
     }
 

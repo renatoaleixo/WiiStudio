@@ -49,6 +49,7 @@ public sealed class DiagnosticsService : IDiagnosticsService
     private readonly LoggingCenterOptions _loggingOptions;
     private readonly BackupServiceOptions _backupOptions;
     private readonly IUsbDriveService _usbDriveService;
+    private readonly IDevicePermissionService _devicePermissionService;
     private readonly ILogger<DiagnosticsService> _logger;
 
     public DiagnosticsService(
@@ -69,6 +70,7 @@ public sealed class DiagnosticsService : IDiagnosticsService
         LoggingCenterOptions loggingOptions,
         BackupServiceOptions backupOptions,
         IUsbDriveService usbDriveService,
+        IDevicePermissionService devicePermissionService,
         ILogger<DiagnosticsService> logger)
     {
         _witService = witService;
@@ -88,6 +90,7 @@ public sealed class DiagnosticsService : IDiagnosticsService
         _loggingOptions = loggingOptions;
         _backupOptions = backupOptions;
         _usbDriveService = usbDriveService;
+        _devicePermissionService = devicePermissionService;
         _logger = logger;
     }
 
@@ -323,14 +326,72 @@ public sealed class DiagnosticsService : IDiagnosticsService
 
     private async Task<IReadOnlyList<DiagnosticsCheckResult>> CheckDevicesAsync(CancellationToken cancellationToken)
     {
+        var checks = new List<DiagnosticsCheckResult>();
         try
         {
             var drives = await _usbDriveService.DetectAsync(cancellationToken);
-            return [new DiagnosticsCheckResult("usb-drives", DiagnosticsStatus.Healthy, $"{drives.Count} compatible USB drive(s) detected.", Category: "Devices")];
+            checks.Add(new DiagnosticsCheckResult("usb-drives", DiagnosticsStatus.Healthy, $"{drives.Count} compatible USB drive(s) detected.", Category: "Devices"));
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
-            return [new DiagnosticsCheckResult("usb-drives", DiagnosticsStatus.Warning, exception.Message, Category: "Devices", Severity: DiagnosticsSeverity.Warning)];
+            checks.Add(new DiagnosticsCheckResult("usb-drives", DiagnosticsStatus.Warning, exception.Message, Category: "Devices", Severity: DiagnosticsSeverity.Warning));
+        }
+
+        checks.Add(await CheckPrivilegedDeviceAccessAsync(cancellationToken));
+        return checks;
+    }
+
+    private async Task<DiagnosticsCheckResult> CheckPrivilegedDeviceAccessAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            var wwtPath = await _toolLocator.FindWwtAsync(cancellationToken);
+            var status = await _devicePermissionService.CheckAsync(
+                new DevicePermissionRequest(
+                    "wwt",
+                    wwtPath,
+                    DevicePath: null,
+                    PrivilegedDeviceOperation.ListWbfsGames),
+                cancellationToken);
+            var diagnosticStatus = status.State switch
+            {
+                PrivilegedAccessState.Authorized or PrivilegedAccessState.NotRequired => DiagnosticsStatus.Healthy,
+                PrivilegedAccessState.Failed => DiagnosticsStatus.Unhealthy,
+                _ => DiagnosticsStatus.Warning
+            };
+            var severity = diagnosticStatus switch
+            {
+                DiagnosticsStatus.Healthy => DiagnosticsSeverity.Information,
+                DiagnosticsStatus.Unhealthy => DiagnosticsSeverity.Error,
+                _ => DiagnosticsSeverity.Warning
+            };
+            var message = $"{status.Platform}: {status.MessageKey ?? status.State.ToString()}. {status.RecommendedActionKey ?? string.Empty}".Trim();
+
+            return new DiagnosticsCheckResult(
+                "privileged-device-access",
+                diagnosticStatus,
+                message,
+                status.State.ToString(),
+                "Privileged Device Access",
+                severity);
+        }
+        catch (WiimmsNotInstalledException exception)
+        {
+            return new DiagnosticsCheckResult(
+                "privileged-device-access",
+                DiagnosticsStatus.Warning,
+                $"wwt não está disponível para validar acesso privilegiado: {exception.Message}",
+                Category: "Privileged Device Access",
+                Severity: DiagnosticsSeverity.Warning);
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            return new DiagnosticsCheckResult(
+                "privileged-device-access",
+                DiagnosticsStatus.Warning,
+                exception.Message,
+                Category: "Privileged Device Access",
+                Severity: DiagnosticsSeverity.Warning);
         }
     }
 

@@ -208,6 +208,9 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private CoverAssetViewModel? _selectedCoverAsset;
 
+    [ObservableProperty]
+    private LibraryGameItem? _selectedAssetGame;
+
     public MainViewModel(
         ICommandPaletteService commandPaletteService,
         IBatchCoverDownloadService batchCoverDownloadService,
@@ -405,15 +408,17 @@ public sealed partial class MainViewModel : ObservableObject
         ? "Selecione jogos na Biblioteca para acompanhar capas, assets e metadados."
         : $"{SelectionSummary}: {AssetSelectedGames.Count(game => game.HasCover)} com capa, {AssetSelectedGames.Count(game => game.HasMetadata)} com metadados.";
 
-    public string AssetGallerySummary => SelectedGame is null
+    public string AssetGallerySummary => AssetPreviewGame is null
         ? "Nenhum jogo selecionado para pré-visualização."
-        : $"{SelectedGame.Title} - {CoverAssets.Count(asset => asset.HasImage)}/{CoverAssets.Count} asset(s) em cache.";
+        : $"{AssetPreviewGame.Title} - {CoverAssets.Count(asset => asset.HasImage)}/{CoverAssets.Count} asset(s) em cache.";
 
-    public string AssetMetadataSummary => SelectedGame is null
+    public string AssetMetadataSummary => AssetPreviewGame is null
         ? "Selecione um jogo para ver os metadados sincronizados."
-        : SelectedGame.HasMetadata
-            ? $"{SelectedGame.MetadataSummary} - {SelectedGame.Genres}"
+        : AssetPreviewGame.HasMetadata
+            ? $"{AssetPreviewGame.MetadataSummary} - {AssetPreviewGame.Genres}"
             : "Metadados ainda não sincronizados para este jogo.";
+
+    private LibraryGameItem? AssetPreviewGame => SelectedAssetGame ?? SelectedGame;
 
     public string TaskSummary => "0 tarefas ativas";
 
@@ -1352,6 +1357,25 @@ public sealed partial class MainViewModel : ObservableObject
 
     partial void OnSelectedGameChanged(LibraryGameItem? value)
     {
+        if (value is not null && _selectedGameIds.Contains(value.Id))
+        {
+            SelectedAssetGame = value;
+            return;
+        }
+
+        if (SelectedAssetGame is null)
+        {
+            _ = RefreshSelectedAssetGalleryAsync(CancellationToken.None);
+        }
+    }
+
+    partial void OnSelectedAssetGameChanged(LibraryGameItem? value)
+    {
+        if (value is not null && !ReferenceEquals(SelectedGame, value))
+        {
+            SelectedGame = value;
+        }
+
         _ = RefreshSelectedAssetGalleryAsync(CancellationToken.None);
     }
 
@@ -1536,14 +1560,16 @@ public sealed partial class MainViewModel : ObservableObject
     {
         CoverAssets.Clear();
         SelectedCoverAsset = null;
-        if (SelectedGame is null)
+        var previewGame = AssetPreviewGame;
+        if (previewGame is null)
         {
+            OnAssetPanelChanged();
             return;
         }
 
         foreach (var (kind, title) in GetGalleryAssets())
         {
-            var path = await _coverCache.GetAsync(SelectedGame.Id, kind, cancellationToken);
+            var path = await _coverCache.GetAsync(previewGame.Id, kind, cancellationToken);
             var asset = new CoverAssetViewModel(kind, title, path);
             CoverAssets.Add(asset);
             SelectedCoverAsset ??= asset.HasImage ? asset : null;
@@ -1562,12 +1588,18 @@ public sealed partial class MainViewModel : ObservableObject
 
     private void RefreshAssetSelectedGames()
     {
+        var previousAssetGameId = SelectedAssetGame?.Id;
         AssetSelectedGames.Clear();
         foreach (var game in Games.Where(game => _selectedGameIds.Contains(game.Id)))
         {
             AssetSelectedGames.Add(game);
         }
 
+        SelectedAssetGame = AssetSelectedGames.FirstOrDefault(game => string.Equals(game.Id, previousAssetGameId, StringComparison.OrdinalIgnoreCase))
+            ?? AssetSelectedGames.FirstOrDefault(game => string.Equals(game.Id, SelectedGame?.Id, StringComparison.OrdinalIgnoreCase))
+            ?? AssetSelectedGames.FirstOrDefault();
+
+        _ = RefreshSelectedAssetGalleryAsync(CancellationToken.None);
         OnAssetPanelChanged();
     }
 
