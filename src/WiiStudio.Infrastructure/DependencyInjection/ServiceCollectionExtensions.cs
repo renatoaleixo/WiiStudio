@@ -94,6 +94,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton(new ExternalToolOptions());
         services.AddSingleton(new FavoriteGameStoreOptions());
         services.AddSingleton(new CoverCacheOptions());
+        services.AddSingleton(new GameTdbCoverProviderOptions());
         services.AddSingleton(new MetadataCacheOptions());
         services.AddSingleton(new GameTdbUpdateStateStoreOptions());
         services.AddSingleton(new SettingsStoreOptions());
@@ -127,7 +128,10 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IApplicationUpdateInstaller, NullApplicationUpdateInstaller>();
         services.AddSingleton<IApplicationUpdateStateStore, JsonApplicationUpdateStateStore>();
         services.AddSingleton<ICoverCache, FileSystemCoverCache>();
-        services.AddSingleton<ICoverProvider, NullCoverProvider>();
+        services.AddSingleton<IGameTdbCoverUrlBuilder, GameTdbCoverUrlBuilder>();
+        services.AddSingleton<IImageValidator, ImageValidator>();
+        services.AddSingleton<HttpClient>();
+        services.AddSingleton<ICoverProvider, GameTdbCoverProvider>();
         services.AddSingleton<IMetadataCacheService, JsonMetadataCacheService>();
         services.AddSingleton<IGameMetadataProvider, NullGameMetadataProvider>();
         services.AddSingleton<IGameTdbUpdateSource, NullGameTdbUpdateSource>();

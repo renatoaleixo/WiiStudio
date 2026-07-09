@@ -42,6 +42,7 @@ public sealed class DiagnosticsService : IDiagnosticsService
     private readonly NotificationStoreOptions _notificationOptions;
     private readonly TaskManagerOptions _taskOptions;
     private readonly GameTdbUpdateStateStoreOptions _gameTdbOptions;
+    private readonly GameTdbCoverProviderOptions _gameTdbCoverOptions;
     private readonly ApplicationUpdateStateStoreOptions _appUpdateOptions;
     private readonly CoverCacheOptions _coverOptions;
     private readonly LoggingCenterOptions _loggingOptions;
@@ -60,6 +61,7 @@ public sealed class DiagnosticsService : IDiagnosticsService
         NotificationStoreOptions notificationOptions,
         TaskManagerOptions taskOptions,
         GameTdbUpdateStateStoreOptions gameTdbOptions,
+        GameTdbCoverProviderOptions gameTdbCoverOptions,
         ApplicationUpdateStateStoreOptions appUpdateOptions,
         CoverCacheOptions coverOptions,
         LoggingCenterOptions loggingOptions,
@@ -77,6 +79,7 @@ public sealed class DiagnosticsService : IDiagnosticsService
         _notificationOptions = notificationOptions;
         _taskOptions = taskOptions;
         _gameTdbOptions = gameTdbOptions;
+        _gameTdbCoverOptions = gameTdbCoverOptions;
         _appUpdateOptions = appUpdateOptions;
         _coverOptions = coverOptions;
         _loggingOptions = loggingOptions;
@@ -194,12 +197,29 @@ public sealed class DiagnosticsService : IDiagnosticsService
             await CheckWitAsync(cancellationToken),
             await CheckWwtAsync(cancellationToken),
             await CheckExecutableAsync("git", "Git", cancellationToken),
+            CheckCoverProvider(),
             new("sqlite", DiagnosticsStatus.Healthy, "SQLite support is available through local stores.", Category: "Dependencies")
         };
 
         checks.AddRange(await CheckExternalToolsAsync(cancellationToken));
 
         return checks;
+    }
+
+    private DiagnosticsCheckResult CheckCoverProvider()
+    {
+        var status = _gameTdbCoverOptions.AllowAutomaticCoverDownload
+            ? DiagnosticsStatus.Healthy
+            : DiagnosticsStatus.Warning;
+        var severity = status == DiagnosticsStatus.Healthy
+            ? DiagnosticsSeverity.Information
+            : DiagnosticsSeverity.Warning;
+        var fallbackLanguages = string.Join(", ", _gameTdbCoverOptions.FallbackLanguages);
+        var message = _gameTdbCoverOptions.AllowAutomaticCoverDownload
+            ? $"Cover Provider: GameTDB; Base URL: {_gameTdbCoverOptions.BaseUrl}; Preferred language: {_gameTdbCoverOptions.PreferredLanguage}; Fallback languages: {fallbackLanguages}."
+            : "Cover Provider: GameTDB is configured but automatic cover download is disabled.";
+
+        return new DiagnosticsCheckResult("cover-provider", status, message, "GameTDB", "Dependencies", severity);
     }
 
     private async Task<IReadOnlyList<DiagnosticsCheckResult>> CheckExternalToolsAsync(CancellationToken cancellationToken)

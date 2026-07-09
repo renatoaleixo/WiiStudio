@@ -43,6 +43,11 @@ public sealed class DiagnosticsServiceTests
             check.Version == "3.5" &&
             check.Category == "Dependencies");
         report.Checks.Should().Contain(check => check.Name == "wwt" && check.Status == DiagnosticsStatus.Healthy);
+        report.Checks.Should().Contain(check =>
+            check.Name == "cover-provider" &&
+            check.Status == DiagnosticsStatus.Healthy &&
+            check.Message.Contains("GameTDB") &&
+            check.Message.Contains("https://art.gametdb.com/wii"));
         report.Checks.Should().Contain(check => check.Name == "external-tool:nkit" && check.Status == DiagnosticsStatus.Warning);
     }
 
@@ -299,6 +304,7 @@ public sealed class DiagnosticsServiceTests
                 new NotificationStoreOptions { FilePath = Path.Combine(RootDirectory, "notifications", "history.json") },
                 new TaskManagerOptions { FilePath = Path.Combine(RootDirectory, "tasks", "tasks.json") },
                 new GameTdbUpdateStateStoreOptions { FilePath = Path.Combine(RootDirectory, "metadata", "gametdb-state.json") },
+                new GameTdbCoverProviderOptions(),
                 new ApplicationUpdateStateStoreOptions { FilePath = Path.Combine(RootDirectory, "updates", "app-update-state.json") },
                 new CoverCacheOptions { RootDirectory = Path.Combine(RootDirectory, "assets") },
                 new LoggingCenterOptions { FilePath = Path.Combine(RootDirectory, "logs", "wiistudio.jsonl") },

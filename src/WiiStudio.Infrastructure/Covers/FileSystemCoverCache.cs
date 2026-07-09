@@ -5,6 +5,7 @@ namespace WiiStudio.Infrastructure.Covers;
 
 public sealed class FileSystemCoverCache : ICoverCache
 {
+    private static readonly string[] SupportedExtensions = [".png", ".jpg", ".jpeg", ".webp", ".bin"];
     private readonly CoverCacheOptions _options;
 
     public FileSystemCoverCache(CoverCacheOptions options)
@@ -16,7 +17,7 @@ public sealed class FileSystemCoverCache : ICoverCache
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        var path = GetAssetPath(gameId, kind);
+        var path = FindAssetPath(gameId, kind);
 
         return Task.FromResult<string?>(File.Exists(path) ? path : null);
     }
@@ -25,7 +26,7 @@ public sealed class FileSystemCoverCache : ICoverCache
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        var path = GetAssetPath(gameId, kind);
+        var path = FindAssetPath(gameId, kind);
         if (!File.Exists(path))
         {
             return Task.FromResult<Stream?>(null);
@@ -41,15 +42,30 @@ public sealed class FileSystemCoverCache : ICoverCache
         ArgumentNullException.ThrowIfNull(content);
         cancellationToken.ThrowIfCancellationRequested();
 
-        var path = GetAssetPath(gameId, kind);
+        var path = GetAssetPath(gameId, kind, ".png");
         var directory = Path.GetDirectoryName(path);
         if (!string.IsNullOrWhiteSpace(directory))
         {
             Directory.CreateDirectory(directory);
         }
 
-        await using var stream = File.Create(path);
-        await content.CopyToAsync(stream, cancellationToken);
+        var tempPath = $"{path}.{Guid.NewGuid():N}.tmp";
+        try
+        {
+            await using (var stream = File.Create(tempPath))
+            {
+                await content.CopyToAsync(stream, cancellationToken);
+            }
+
+            File.Move(tempPath, path, overwrite: true);
+        }
+        finally
+        {
+            if (File.Exists(tempPath))
+            {
+                File.Delete(tempPath);
+            }
+        }
 
         return path;
     }
@@ -58,7 +74,7 @@ public sealed class FileSystemCoverCache : ICoverCache
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        var path = GetAssetPath(gameId, kind);
+        var path = FindAssetPath(gameId, kind);
         if (!File.Exists(path))
         {
             return Task.FromResult(false);
@@ -99,7 +115,8 @@ public sealed class FileSystemCoverCache : ICoverCache
                 continue;
             }
 
-            foreach (var path in Directory.EnumerateFiles(directory, "*.bin", SearchOption.TopDirectoryOnly))
+            foreach (var path in Directory.EnumerateFiles(directory, "*.*", SearchOption.TopDirectoryOnly)
+                .Where(path => SupportedExtensions.Contains(Path.GetExtension(path), StringComparer.OrdinalIgnoreCase)))
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
@@ -119,9 +136,29 @@ public sealed class FileSystemCoverCache : ICoverCache
         return Task.FromResult(new AssetStatistics(totalAssets, sizeInBytes, countByKind, lastModifiedAt));
     }
 
-    private string GetAssetPath(string gameId, CoverAssetKind kind)
+    private string FindAssetPath(string gameId, CoverAssetKind kind)
     {
-        return Path.Combine(_options.RootDirectory, GetFolderName(kind), $"{gameId.ToUpperInvariant()}.bin");
+        foreach (var extension in SupportedExtensions)
+        {
+            var path = GetAssetPath(gameId, kind, extension);
+            if (File.Exists(path))
+            {
+                return path;
+            }
+        }
+
+        return GetAssetPath(gameId, kind, ".png");
+    }
+
+    private string GetAssetPath(string gameId, CoverAssetKind kind, string extension)
+    {
+        var safeGameId = gameId.ToUpperInvariant();
+        if (safeGameId.Length != 6 || safeGameId.Any(character => !char.IsAsciiLetterOrDigit(character)))
+        {
+            throw new ArgumentException("Game ID must contain exactly six letters or numbers.", nameof(gameId));
+        }
+
+        return Path.Combine(_options.RootDirectory, GetFolderName(kind), $"{safeGameId}{extension}");
     }
 
     private static string GetFolderName(CoverAssetKind kind)

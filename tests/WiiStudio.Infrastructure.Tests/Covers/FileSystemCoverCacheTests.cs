@@ -29,6 +29,7 @@ public sealed class FileSystemCoverCacheTests
         var cachedPath = await cache.GetAsync("RMCP01", CoverAssetKind.FrontCover, CancellationToken.None);
 
         cachedPath.Should().Be(savedPath);
+        savedPath.Should().EndWith(Path.Combine("covers", "RMCP01.png"));
         File.Exists(savedPath).Should().BeTrue();
     }
 
@@ -57,6 +58,21 @@ public sealed class FileSystemCoverCacheTests
         var stream = await cache.OpenReadAsync("RMCP01", CoverAssetKind.FrontCover, CancellationToken.None);
 
         stream.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task GetAsync_ShouldReturnLegacyBinAssetAsFallback()
+    {
+        using var fixture = TemporaryCoverCacheFixture.Create();
+        var directory = Path.Combine(fixture.RootDirectory, "covers");
+        Directory.CreateDirectory(directory);
+        var legacyPath = Path.Combine(directory, "RMCP01.bin");
+        await File.WriteAllTextAsync(legacyPath, "legacy-cover", CancellationToken.None);
+        var cache = fixture.CreateCache();
+
+        var cachedPath = await cache.GetAsync("RMCP01", CoverAssetKind.FrontCover, CancellationToken.None);
+
+        cachedPath.Should().Be(legacyPath);
     }
 
     [Fact]
@@ -94,6 +110,7 @@ public sealed class FileSystemCoverCacheTests
         await cache.RebuildIndexAsync(CancellationToken.None);
 
         Directory.Exists(Path.Combine(fixture.RootDirectory, "covers")).Should().BeTrue();
+        Directory.Exists(Path.Combine(fixture.RootDirectory, "covers-back")).Should().BeTrue();
         Directory.Exists(Path.Combine(fixture.RootDirectory, "discs")).Should().BeTrue();
         Directory.Exists(Path.Combine(fixture.RootDirectory, "banners")).Should().BeTrue();
         Directory.Exists(Path.Combine(fixture.RootDirectory, "thumbnails")).Should().BeTrue();
