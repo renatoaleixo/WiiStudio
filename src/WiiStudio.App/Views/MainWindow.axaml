@@ -273,6 +273,78 @@
                 </Button>
               </Grid>
             </Border>
+
+            <Grid Grid.Row="2" ColumnDefinitions="2*,*" ColumnSpacing="14" Margin="{StaticResource WiiSectionTopMargin}">
+              <Border Classes="contentBlock">
+                <Grid RowDefinitions="Auto,Auto" RowSpacing="12">
+                  <Grid ColumnDefinitions="*,Auto">
+                    <StackPanel>
+                      <TextBlock Text="Saúde da Biblioteca" FontSize="{StaticResource WiiFontSizeSubtitle}" FontWeight="SemiBold" Foreground="{DynamicResource WiiBrushTextPrimary}" />
+                      <TextBlock Text="{Binding DashboardLibraryHealthSummary}" Foreground="{DynamicResource WiiBrushTextSecondary}" TextWrapping="Wrap" />
+                    </StackPanel>
+                    <Border Grid.Column="1" Classes="chip" VerticalAlignment="Top">
+                      <TextBlock Text="{Binding DashboardUpdatedAt}" Foreground="{DynamicResource WiiBrushTextMuted}" />
+                    </Border>
+                  </Grid>
+
+                  <Grid Grid.Row="1" ColumnDefinitions="*,*,*" ColumnSpacing="12">
+                    <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="8">
+                      <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+                        <PathIcon Classes="small" Data="{StaticResource WiiIcon.Library}" Foreground="{DynamicResource WiiBrushSuccess}" VerticalAlignment="Center" />
+                        <TextBlock Grid.Column="1" Text="Capas" Foreground="{DynamicResource WiiBrushTextPrimary}" FontWeight="SemiBold" />
+                      </Grid>
+                      <ProgressBar Grid.Row="1" Minimum="0" Maximum="100" Value="{Binding DashboardCoverProgress}" Foreground="{DynamicResource WiiBrushSuccess}" />
+                      <TextBlock Grid.Row="2" Text="{Binding DashboardCoverSummary}" Foreground="{DynamicResource WiiBrushTextSecondary}" FontSize="{StaticResource WiiFontSizeMicro}" TextTrimming="CharacterEllipsis" />
+                    </Grid>
+
+                    <Grid Grid.Column="1" RowDefinitions="Auto,Auto,Auto" RowSpacing="8">
+                      <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+                        <PathIcon Classes="small" Data="{StaticResource WiiIcon.Success}" Foreground="{DynamicResource WiiBrushAccent}" VerticalAlignment="Center" />
+                        <TextBlock Grid.Column="1" Text="Metadados" Foreground="{DynamicResource WiiBrushTextPrimary}" FontWeight="SemiBold" />
+                      </Grid>
+                      <ProgressBar Grid.Row="1" Minimum="0" Maximum="100" Value="{Binding DashboardMetadataProgress}" Foreground="{DynamicResource WiiBrushAccent}" />
+                      <TextBlock Grid.Row="2" Text="{Binding DashboardMetadataSummary}" Foreground="{DynamicResource WiiBrushTextSecondary}" FontSize="{StaticResource WiiFontSizeMicro}" TextTrimming="CharacterEllipsis" />
+                    </Grid>
+
+                    <Grid Grid.Column="2" RowDefinitions="Auto,Auto,Auto" RowSpacing="8">
+                      <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+                        <PathIcon Classes="small" Data="{StaticResource WiiIcon.Favorite}" Foreground="{DynamicResource WiiBrushWarning}" VerticalAlignment="Center" />
+                        <TextBlock Grid.Column="1" Text="Favoritos" Foreground="{DynamicResource WiiBrushTextPrimary}" FontWeight="SemiBold" />
+                      </Grid>
+                      <ProgressBar Grid.Row="1" Minimum="0" Maximum="100" Value="{Binding DashboardFavoriteProgress}" Foreground="{DynamicResource WiiBrushWarning}" />
+                      <TextBlock Grid.Row="2" Text="{Binding DashboardFavoriteSummary}" Foreground="{DynamicResource WiiBrushTextSecondary}" FontSize="{StaticResource WiiFontSizeMicro}" TextTrimming="CharacterEllipsis" />
+                    </Grid>
+                  </Grid>
+                </Grid>
+              </Border>
+
+              <Border Grid.Column="1" Classes="contentBlock">
+                <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="10">
+                  <TextBlock Text="Sistema" FontSize="{StaticResource WiiFontSizeSubtitle}" FontWeight="SemiBold" Foreground="{DynamicResource WiiBrushTextPrimary}" />
+                  <Grid Grid.Row="1" ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                    <PathIcon Classes="small" Data="{StaticResource WiiIcon.Device}" Foreground="{DynamicResource WiiBrushAccent}" VerticalAlignment="Center" />
+                    <StackPanel Grid.Column="1">
+                      <TextBlock Text="{Binding StatusActiveDevice}" Foreground="{DynamicResource WiiBrushTextPrimary}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                      <TextBlock Text="{Binding StatusFileSystem}" Foreground="{DynamicResource WiiBrushTextMuted}" FontSize="{StaticResource WiiFontSizeMicro}" />
+                    </StackPanel>
+                  </Grid>
+                  <Grid Grid.Row="2" ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                    <PathIcon Classes="small" Data="{StaticResource WiiIcon.Save}" Foreground="{DynamicResource WiiBrushSuccess}" VerticalAlignment="Center" />
+                    <StackPanel Grid.Column="1">
+                      <TextBlock Text="{Binding StatusFreeSpace}" Foreground="{DynamicResource WiiBrushTextPrimary}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                      <TextBlock Text="Espaço livre informado pelo sistema" Foreground="{DynamicResource WiiBrushTextMuted}" FontSize="{StaticResource WiiFontSizeMicro}" />
+                    </StackPanel>
+                  </Grid>
+                  <Grid Grid.Row="3" ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                    <PathIcon Classes="small" Data="{StaticResource WiiIcon.Settings}" Foreground="{DynamicResource WiiBrushWarning}" VerticalAlignment="Center" />
+                    <StackPanel Grid.Column="1">
+                      <TextBlock Text="{Binding StatusTasks}" Foreground="{DynamicResource WiiBrushTextPrimary}" FontWeight="SemiBold" />
+                      <TextBlock Text="{Binding StatusNotifications}" Foreground="{DynamicResource WiiBrushTextMuted}" FontSize="{StaticResource WiiFontSizeMicro}" />
+                    </StackPanel>
+                  </Grid>
+                </Grid>
+              </Border>
+            </Grid>
           </Grid>
 
           <Grid IsVisible="{Binding IsLibraryModuleSelected}" RowDefinitions="Auto,Auto,*">

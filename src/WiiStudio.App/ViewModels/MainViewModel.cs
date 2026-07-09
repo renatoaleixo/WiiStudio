@@ -355,6 +355,28 @@ public sealed partial class MainViewModel : ObservableObject
 
     public string LibrarySummary => LibraryTotalCount == 1 ? "1 jogo" : $"{LibraryTotalCount} jogos";
 
+    public int DashboardGamesWithCovers => Games.Count(game => game.HasCover);
+
+    public int DashboardGamesWithMetadata => Games.Count(game => game.HasMetadata);
+
+    public int DashboardFavoriteGames => Games.Count(game => game.IsFavorite);
+
+    public double DashboardCoverProgress => CalculateDashboardProgress(DashboardGamesWithCovers);
+
+    public double DashboardMetadataProgress => CalculateDashboardProgress(DashboardGamesWithMetadata);
+
+    public double DashboardFavoriteProgress => CalculateDashboardProgress(DashboardFavoriteGames);
+
+    public string DashboardCoverSummary => FormatDashboardCoverage(DashboardGamesWithCovers, "com capa");
+
+    public string DashboardMetadataSummary => FormatDashboardCoverage(DashboardGamesWithMetadata, "com metadados");
+
+    public string DashboardFavoriteSummary => FormatDashboardCoverage(DashboardFavoriteGames, "favorito(s)");
+
+    public string DashboardLibraryHealthSummary => LibraryTotalCount == 0
+        ? "Carregue um HD ou atualize a biblioteca para montar o panorama."
+        : $"{DashboardGamesWithCovers}/{LibraryTotalCount} capas, {DashboardGamesWithMetadata}/{LibraryTotalCount} metadados";
+
     public string SelectionSummary => SelectedGameCount == 0
         ? "Nenhum jogo selecionado"
         : SelectedGameCount == 1
@@ -1434,6 +1456,7 @@ public sealed partial class MainViewModel : ObservableObject
         ApplySelectionState();
         OnPropertyChanged(nameof(LibrarySummary));
         OnPropertyChanged(nameof(SelectionSummary));
+        OnDashboardIndicatorsChanged();
     }
 
     private async Task RefreshSelectedAssetGalleryAsync(CancellationToken cancellationToken)
@@ -1495,6 +1518,7 @@ public sealed partial class MainViewModel : ObservableObject
         }
 
         DashboardUpdatedAt = data.LoadedAt.ToLocalTime().ToString("dd/MM HH:mm");
+        OnDashboardIndicatorsChanged();
     }
 
     private void ApplyStatusBar(StatusBarInfo info)
@@ -1509,6 +1533,31 @@ public sealed partial class MainViewModel : ObservableObject
             : $"{info.PendingNotifications} notificações";
         StatusMemory = info.MemoryUsage;
         StatusVersion = info.Version;
+        OnPropertyChanged(nameof(DeviceSummary));
+    }
+
+    private void OnDashboardIndicatorsChanged()
+    {
+        OnPropertyChanged(nameof(DashboardGamesWithCovers));
+        OnPropertyChanged(nameof(DashboardGamesWithMetadata));
+        OnPropertyChanged(nameof(DashboardFavoriteGames));
+        OnPropertyChanged(nameof(DashboardCoverProgress));
+        OnPropertyChanged(nameof(DashboardMetadataProgress));
+        OnPropertyChanged(nameof(DashboardFavoriteProgress));
+        OnPropertyChanged(nameof(DashboardCoverSummary));
+        OnPropertyChanged(nameof(DashboardMetadataSummary));
+        OnPropertyChanged(nameof(DashboardFavoriteSummary));
+        OnPropertyChanged(nameof(DashboardLibraryHealthSummary));
+    }
+
+    private double CalculateDashboardProgress(int count)
+    {
+        return LibraryTotalCount == 0 ? 0 : count * 100.0 / LibraryTotalCount;
+    }
+
+    private string FormatDashboardCoverage(int count, string label)
+    {
+        return LibraryTotalCount == 0 ? $"0 {label}" : $"{count}/{LibraryTotalCount} {label}";
     }
 
     private async Task SearchCommandPaletteAsync(string? query, CancellationToken cancellationToken)
