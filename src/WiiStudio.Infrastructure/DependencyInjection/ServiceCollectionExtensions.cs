@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using FluentValidation;
 using WiiStudio.Application.Commands;
+using WiiStudio.Application.ExternalTools;
 using WiiStudio.Application.Interfaces;
 using WiiStudio.Application.Services;
 using WiiStudio.Application.UseCases;
@@ -10,6 +11,7 @@ using WiiStudio.Infrastructure.Backups;
 using WiiStudio.Infrastructure.Commands;
 using WiiStudio.Infrastructure.Covers;
 using WiiStudio.Infrastructure.Diagnostics;
+using WiiStudio.Infrastructure.ExternalTools;
 using WiiStudio.Infrastructure.Export;
 using WiiStudio.Infrastructure.Favorites;
 using WiiStudio.Infrastructure.GameTdb;
@@ -89,6 +91,7 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddWiiStudioInfrastructure(this IServiceCollection services)
     {
         services.AddSingleton(new WiimmsToolOptions());
+        services.AddSingleton(new ExternalToolOptions());
         services.AddSingleton(new FavoriteGameStoreOptions());
         services.AddSingleton(new CoverCacheOptions());
         services.AddSingleton(new MetadataCacheOptions());
@@ -107,6 +110,13 @@ public static class ServiceCollectionExtensions
         services.AddSingleton(new PluginHostOptions());
         services.AddSingleton<IProcessRunner, ProcessRunner>();
         services.AddSingleton<IProcessExecutor, SystemProcessExecutor>();
+        services.AddSingleton<IExternalToolDefinitionProvider, ExternalToolDefinitionProvider>();
+        services.AddSingleton<IExternalToolLocator, ExternalToolLocator>();
+        services.AddSingleton<IExternalToolDownloader, ExternalToolDownloader>();
+        services.AddSingleton<IChecksumValidator, ChecksumValidator>();
+        services.AddSingleton<IArchiveExtractor, ZipArchiveExtractor>();
+        services.AddSingleton<IExternalToolInstaller, ExternalToolInstaller>();
+        services.AddSingleton<IExternalToolManager, ExternalToolManager>();
         services.AddSingleton<IExportFileSystem, PhysicalExportFileSystem>();
         services.AddSingleton<IFavoriteGameStore, JsonFavoriteGameStore>();
         services.AddSingleton<ISettingsService, JsonSettingsService>();
@@ -128,6 +138,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IUsbDriveService, UsbDriveService>();
         services.AddSingleton<IWitService, WitService>();
         services.AddSingleton<IWwtService, WwtService>();
+        services.AddSingleton<INKitService, NKitService>();
         services.AddSingleton<IDiagnosticsService, DiagnosticsService>();
         services.AddSingleton<ISafePathService, SafePathService>();
         services.AddSingleton<IFileSystemPermissionService, FileSystemPermissionService>();

@@ -5,6 +5,7 @@ Documentos para gerenciamento de dependências externas do WiiStudio.
 # Documentos
 
 - `F101-ExternalToolDependencyManager.md`
+- `EXTERNAL_TOOLS_REFERENCE.md`
 
 # Pacotes Locais
 

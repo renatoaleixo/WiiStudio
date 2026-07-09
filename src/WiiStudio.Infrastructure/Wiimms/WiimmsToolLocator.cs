@@ -27,6 +27,7 @@ public sealed class WiimmsToolLocator : IWiimmsToolLocator
     {
         return FindConfiguredPath(configuredPath)
             ?? FindInPath(toolName)
+            ?? FindInDirectory(_options.WiimmsDirectory, toolName)
             ?? FindInDirectory(_options.ToolsDirectory, toolName)
             ?? FindInDirectory(_options.ApplicationDirectory, toolName)
             ?? throw new WiimmsNotInstalledException(toolName);
