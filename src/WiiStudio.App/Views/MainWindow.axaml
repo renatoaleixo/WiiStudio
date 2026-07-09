@@ -5,6 +5,7 @@
         xmlns:vm="clr-namespace:WiiStudio.App.ViewModels"
         x:Class="WiiStudio.App.Views.MainWindow"
         Title="WiiStudio"
+        Icon="/Assets/wiistudio.ico"
         Width="1280"
         Height="780"
         MinWidth="980"

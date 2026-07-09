@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="WiiStudio icon">
+  <defs>
+    <linearGradient id="bg" x1="38" y1="30" x2="218" y2="226" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#1E293B"/>
+      <stop offset="0.48" stop-color="#0F766E"/>
+      <stop offset="1" stop-color="#2563EB"/>
+    </linearGradient>
+    <linearGradient id="disc" x1="70" y1="50" x2="190" y2="200" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#F8FAFC"/>
+      <stop offset="0.55" stop-color="#CBD5E1"/>
+      <stop offset="1" stop-color="#64748B"/>
+    </linearGradient>
+    <linearGradient id="shine" x1="80" y1="66" x2="166" y2="155" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.95"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="shadow" x="-25%" y="-25%" width="150%" height="150%" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="12" stdDeviation="12" flood-color="#020617" flood-opacity="0.38"/>
+    </filter>
+  </defs>
+
+  <rect width="256" height="256" rx="56" fill="url(#bg)"/>
+  <path d="M57 207C86 165 123 134 207 103" fill="none" stroke="#67E8F9" stroke-width="10" stroke-linecap="round" opacity="0.35"/>
+  <path d="M49 176C86 137 124 116 198 93" fill="none" stroke="#22D3EE" stroke-width="6" stroke-linecap="round" opacity="0.85"/>
+
+  <circle cx="121" cy="118" r="73" fill="url(#disc)" filter="url(#shadow)"/>
+  <circle cx="121" cy="118" r="54" fill="none" stroke="#E2E8F0" stroke-width="7" opacity="0.85"/>
+  <circle cx="121" cy="118" r="21" fill="#0F172A" opacity="0.92"/>
+  <circle cx="121" cy="118" r="10" fill="#38BDF8"/>
+  <path d="M76 78C91 62 119 55 144 65C121 66 100 78 87 97C81 92 78 86 76 78Z" fill="url(#shine)"/>
+
+  <path d="M72 156L91 192L111 151L131 192L155 144" fill="none" stroke="#F8FAFC" stroke-width="17" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M72 156L91 192L111 151L131 192L155 144" fill="none" stroke="#0EA5E9" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <path d="M169 156H205C216 156 225 165 225 176V189C225 200 216 209 205 209H169C158 209 149 200 149 189V176C149 165 158 156 169 156Z" fill="#0F172A" opacity="0.95"/>
+  <path d="M172 171H204M172 184H196" stroke="#5EEAD4" stroke-width="8" stroke-linecap="round"/>
+  <path d="M161 182H141" stroke="#5EEAD4" stroke-width="8" stroke-linecap="round"/>
+</svg>
