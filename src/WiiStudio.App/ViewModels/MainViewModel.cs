@@ -19,6 +19,7 @@ namespace WiiStudio.App.ViewModels;
 public sealed partial class MainViewModel : ObservableObject
 {
     private readonly ICommandPaletteService _commandPaletteService;
+    private readonly IBatchCoverDownloadService _batchCoverDownloadService;
     private readonly DetectUsbDrivesUseCase _detectUsbDrivesUseCase;
     private readonly IConversionWizardService _conversionWizardService;
     private readonly ICoverCache _coverCache;
@@ -43,6 +44,7 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly IStatusBarService _statusBarService;
     private readonly IThemeService _themeService;
     private Guid? _activeLibraryDriveId;
+    private CancellationTokenSource? _coverBatchCancellation;
     private bool _isApplyingDeviceSnapshot;
     private IReadOnlySet<string> _selectedGameIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
@@ -190,8 +192,21 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private string _diagnosticsSummary = "Diagnóstico não executado.";
 
+    [ObservableProperty]
+    private string _coverBatchStatus = "Nenhum download em andamento.";
+
+    [ObservableProperty]
+    private bool _isCoverBatchRunning;
+
+    [ObservableProperty]
+    private bool _isCoverLightboxOpen;
+
+    [ObservableProperty]
+    private CoverAssetViewModel? _selectedCoverAsset;
+
     public MainViewModel(
         ICommandPaletteService commandPaletteService,
+        IBatchCoverDownloadService batchCoverDownloadService,
         DetectUsbDrivesUseCase detectUsbDrivesUseCase,
         IConversionWizardService conversionWizardService,
         ICoverCache coverCache,
@@ -218,6 +233,7 @@ public sealed partial class MainViewModel : ObservableObject
         IThemeService themeService)
     {
         _commandPaletteService = commandPaletteService;
+        _batchCoverDownloadService = batchCoverDownloadService;
         _detectUsbDrivesUseCase = detectUsbDrivesUseCase;
         _conversionWizardService = conversionWizardService;
         _coverCache = coverCache;
@@ -268,6 +284,8 @@ public sealed partial class MainViewModel : ObservableObject
     public ObservableCollection<CommandPaletteItemViewModel> CommandPaletteItems { get; } = new();
 
     public ObservableCollection<LibraryGameItem> Games { get; } = new();
+
+    public ObservableCollection<CoverAssetViewModel> CoverAssets { get; } = new();
 
     public ObservableCollection<ImportPreviewItemViewModel> ImportPreviewItems { get; } = new();
 
@@ -337,7 +355,11 @@ public sealed partial class MainViewModel : ObservableObject
 
     public string LibrarySummary => LibraryTotalCount == 1 ? "1 jogo" : $"{LibraryTotalCount} jogos";
 
-    public string SelectionSummary => SelectedGameCount == 1 ? "1 selecionado" : $"{SelectedGameCount} selecionados";
+    public string SelectionSummary => SelectedGameCount == 0
+        ? "Nenhum jogo selecionado"
+        : SelectedGameCount == 1
+            ? "1 jogo selecionado"
+            : $"{SelectedGameCount} jogos selecionados";
 
     public string TaskSummary => "0 tarefas ativas";
 
@@ -363,6 +385,20 @@ public sealed partial class MainViewModel : ObservableObject
         await RefreshDockLayoutsAsync(cancellationToken);
         await RefreshThemesAsync(cancellationToken);
         await RefreshStatusBarAsync(cancellationToken);
+    }
+
+    public async Task SetSelectedLibraryItemsAsync(IReadOnlyList<LibraryGameItem> selectedItems, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(selectedItems);
+
+        var selectedIds = selectedItems
+            .Select(item => item.Id)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+        var snapshot = await _libraryViewService.SelectGamesAsync(selectedIds, cancellationToken);
+        await ApplyLibrarySnapshotAsync(snapshot, cancellationToken, refreshGames: false);
+        SelectedGame = selectedItems.LastOrDefault();
+        await RefreshSelectedAssetGalleryAsync(cancellationToken);
     }
 
     [RelayCommand]
@@ -636,7 +672,38 @@ public sealed partial class MainViewModel : ObservableObject
 
         var snapshot = await _libraryViewService.SelectGamesAsync(Games.Select(game => game.Id).ToArray(), cancellationToken);
         await ApplyLibrarySnapshotAsync(snapshot, cancellationToken, refreshGames: false);
+        SelectedGame = Games.LastOrDefault();
+        await RefreshSelectedAssetGalleryAsync(cancellationToken);
         StatusMessage = $"{snapshot.SelectedGameIds.Count} jogo(s) selecionado(s).";
+    }
+
+    [RelayCommand]
+    private async Task ClearGameSelectionAsync(CancellationToken cancellationToken)
+    {
+        var snapshot = await _libraryViewService.SelectGamesAsync([], cancellationToken);
+        await ApplyLibrarySnapshotAsync(snapshot, cancellationToken, refreshGames: false);
+        SelectedGame = null;
+        CoverAssets.Clear();
+        SelectedCoverAsset = null;
+        StatusMessage = "Seleção limpa.";
+    }
+
+    [RelayCommand]
+    private async Task ToggleGameSelectionAsync(LibraryGameItem? game, CancellationToken cancellationToken)
+    {
+        if (game is null)
+        {
+            return;
+        }
+
+        var selectedIds = Games
+            .Where(item => item.IsSelected)
+            .Select(item => item.Id)
+            .ToArray();
+        var snapshot = await _libraryViewService.SelectGamesAsync(selectedIds, cancellationToken);
+        await ApplyLibrarySnapshotAsync(snapshot, cancellationToken, refreshGames: false);
+        SelectedGame = game;
+        await RefreshSelectedAssetGalleryAsync(cancellationToken);
     }
 
     [RelayCommand]
@@ -788,23 +855,65 @@ public sealed partial class MainViewModel : ObservableObject
         }
 
         IsBusy = true;
+        IsCoverBatchRunning = true;
+        CoverBatchStatus = $"Baixando capas 0/{gameIds.Count}";
         StatusMessage = "Baixando capas...";
+        _coverBatchCancellation?.Dispose();
+        _coverBatchCancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
 
         try
         {
-            var result = await _coverDownloadService.DownloadAsync(
-                new CoverDownloadRequest(gameIds, ForceRefresh: false),
-                cancellationToken);
-            var downloadedCount = result.Items.Count(item => item.Source == CoverAssetSource.Provider);
-            var cachedCount = result.Items.Count(item => item.Source == CoverAssetSource.Cache);
-            var missingCount = result.Items.Count(item => item.Source == CoverAssetSource.Missing);
+            var progress = new Progress<CoverBatchProgress>(item =>
+            {
+                var current = string.IsNullOrWhiteSpace(item.CurrentGameId) ? "-" : item.CurrentGameId;
+                CoverBatchStatus = $"Baixando capas {item.ProcessedGames}/{item.TotalGames} - atual: {current}";
+                StatusMessage = CoverBatchStatus;
+            });
+            var summary = await _batchCoverDownloadService.DownloadAsync(
+                gameIds,
+                [],
+                forceRefresh: false,
+                progress,
+                _coverBatchCancellation.Token);
             await RefreshLibraryAsync(cancellationToken);
-            StatusMessage = $"Capas processadas: {downloadedCount} baixada(s), {cachedCount} em cache, {missingCount} ausente(s).";
+            await RefreshSelectedAssetGalleryAsync(cancellationToken);
+            CoverBatchStatus = summary.Cancelled
+                ? $"Download cancelado: {summary.ProcessedGames}/{summary.Requested} jogo(s), {summary.Downloaded} baixada(s)."
+                : $"Download concluído: {summary.Downloaded} baixada(s), {summary.FromCache} em cache, {summary.Missing} ausente(s), {summary.Failed} falha(s).";
+            StatusMessage = CoverBatchStatus;
         }
         finally
         {
+            IsCoverBatchRunning = false;
             IsBusy = false;
         }
+    }
+
+    [RelayCommand]
+    private void CancelBatchOperation()
+    {
+        _coverBatchCancellation?.Cancel();
+        CoverBatchStatus = "Cancelamento solicitado.";
+        StatusMessage = CoverBatchStatus;
+    }
+
+    [RelayCommand]
+    private void OpenCoverLightbox(CoverAssetViewModel? asset)
+    {
+        if (asset is not { HasImage: true })
+        {
+            StatusMessage = "Asset indisponível para ampliação.";
+            return;
+        }
+
+        SelectedCoverAsset = asset;
+        IsCoverLightboxOpen = true;
+    }
+
+    [RelayCommand]
+    private void CloseCoverLightbox()
+    {
+        IsCoverLightboxOpen = false;
     }
 
     [RelayCommand]
@@ -1167,7 +1276,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     partial void OnSelectedGameChanged(LibraryGameItem? value)
     {
-        _ = SelectVisibleGamesAsync(value);
+        _ = RefreshSelectedAssetGalleryAsync(CancellationToken.None);
     }
 
     partial void OnSelectedImportDriveChanged(UsbDrive? value)
@@ -1297,6 +1406,7 @@ public sealed partial class MainViewModel : ObservableObject
         IReadOnlyList<string> selectedIds = game is null ? [] : [game.Id];
         var snapshot = await _libraryViewService.SelectGamesAsync(selectedIds, CancellationToken.None);
         await ApplyLibrarySnapshotAsync(snapshot, CancellationToken.None, refreshGames: false);
+        await RefreshSelectedAssetGalleryAsync(CancellationToken.None);
     }
 
     private async Task ApplyLibrarySnapshotAsync(
@@ -1321,8 +1431,47 @@ public sealed partial class MainViewModel : ObservableObject
             }
         }
 
+        ApplySelectionState();
         OnPropertyChanged(nameof(LibrarySummary));
         OnPropertyChanged(nameof(SelectionSummary));
+    }
+
+    private async Task RefreshSelectedAssetGalleryAsync(CancellationToken cancellationToken)
+    {
+        CoverAssets.Clear();
+        SelectedCoverAsset = null;
+        if (SelectedGame is null)
+        {
+            return;
+        }
+
+        foreach (var (kind, title) in GetGalleryAssets())
+        {
+            var path = await _coverCache.GetAsync(SelectedGame.Id, kind, cancellationToken);
+            var asset = new CoverAssetViewModel(kind, title, path);
+            CoverAssets.Add(asset);
+            SelectedCoverAsset ??= asset.HasImage ? asset : null;
+        }
+    }
+
+    private void ApplySelectionState()
+    {
+        foreach (var game in Games)
+        {
+            game.IsSelected = _selectedGameIds.Contains(game.Id);
+        }
+    }
+
+    private static IReadOnlyList<(CoverAssetKind Kind, string Title)> GetGalleryAssets()
+    {
+        return
+        [
+            (CoverAssetKind.FrontCover, "Frente"),
+            (CoverAssetKind.BackCover, "Verso"),
+            (CoverAssetKind.DiscArt, "Disco"),
+            (CoverAssetKind.Banner, "Banner"),
+            (CoverAssetKind.Icon, "Icon")
+        ];
     }
 
     private void ApplyDashboard(DashboardData data)

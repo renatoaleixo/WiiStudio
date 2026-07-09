@@ -56,6 +56,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IBannerAssetService, BannerAssetService>();
         services.AddSingleton<ICoverService, CoverService>();
         services.AddSingleton<ICoverDownloadService, CoverDownloadService>();
+        services.AddSingleton<IBatchCoverDownloadService, BatchCoverDownloadService>();
         services.AddSingleton<IMetadataSynchronizationService, MetadataSynchronizationService>();
         services.AddSingleton<IGameTdbUpdateService, GameTdbUpdateService>();
         services.AddSingleton<IApplicationUpdateService, ApplicationUpdateService>();

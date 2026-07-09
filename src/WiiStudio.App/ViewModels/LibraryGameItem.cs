@@ -1,11 +1,12 @@
 using System.Globalization;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
+using CommunityToolkit.Mvvm.ComponentModel;
 using WiiStudio.Application.DTOs;
 
 namespace WiiStudio.App.ViewModels;
 
-public sealed class LibraryGameItem
+public sealed partial class LibraryGameItem : ObservableObject
 {
     public LibraryGameItem(GameDto game, string? coverPath = null, GameMetadataDto? metadata = null)
     {
@@ -24,6 +25,9 @@ public sealed class LibraryGameItem
     public bool HasCover => CoverImage is not null;
 
     public IImage? CoverImage { get; }
+
+    [ObservableProperty]
+    private bool _isSelected;
 
     public string Id => Game.Id;
 

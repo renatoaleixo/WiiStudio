@@ -280,58 +280,108 @@
             </Border>
 
             <Border Grid.Row="1" Classes="dataGridToolbar" Margin="{StaticResource WiiSectionTopMargin}">
-              <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto" ColumnSpacing="12">
+              <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto,Auto,Auto,Auto" ColumnSpacing="8">
                 <TextBox Classes="searchBox" Watermark="Filtrar por título, ID ou região" Text="{Binding LibrarySearchText, Mode=TwoWay}" Height="34" />
                 <TextBlock Grid.Column="1" Text="{Binding SelectionSummary}" Foreground="{DynamicResource WiiBrushTextSecondary}" VerticalAlignment="Center" />
-                <Button Grid.Column="2" Command="{Binding ClearLibrarySearchCommand}" Classes="tertiary small" VerticalAlignment="Center">
+                <Button Grid.Column="2" Command="{Binding SelectAllVisibleGamesCommand}" Classes="secondary small" VerticalAlignment="Center">
+                  <TextBlock Text="Selecionar tudo" />
+                </Button>
+                <Button Grid.Column="3" Command="{Binding ClearGameSelectionCommand}" Classes="tertiary small" VerticalAlignment="Center">
+                  <TextBlock Text="Limpar seleção" />
+                </Button>
+                <Button Grid.Column="4" Command="{Binding DownloadSelectedCoversCommand}" IsEnabled="{Binding !IsBusy}" Classes="primary small" VerticalAlignment="Center">
+                  <TextBlock Text="Baixar capas" />
+                </Button>
+                <Button Grid.Column="5" Command="{Binding SynchronizeSelectedMetadataCommand}" IsEnabled="{Binding !IsBusy}" Classes="secondary small" VerticalAlignment="Center">
+                  <TextBlock Text="Metadados" />
+                </Button>
+                <Button Grid.Column="6" Command="{Binding CancelBatchOperationCommand}" IsVisible="{Binding IsCoverBatchRunning}" Classes="danger small" VerticalAlignment="Center">
+                  <TextBlock Text="Cancelar" />
+                </Button>
+                <Button Grid.Column="7" Command="{Binding ClearLibrarySearchCommand}" Classes="tertiary small" VerticalAlignment="Center">
                   <TextBlock Text="Limpar" />
-                </Button>
-                <Button Grid.Column="3" Command="{Binding RefreshDevicesCommand}" IsEnabled="{Binding !IsBusy}" Classes="secondary small" VerticalAlignment="Center">
-                  <TextBlock Text="Dispositivos" />
-                </Button>
-                <Button Grid.Column="4" Command="{Binding EjectSelectedDeviceCommand}" Classes="danger small" VerticalAlignment="Center">
-                  <TextBlock Text="Ejetar" />
                 </Button>
               </Grid>
             </Border>
 
-            <Grid Grid.Row="2" Classes="dataGrid" RowDefinitions="Auto,*" Margin="{StaticResource WiiSectionTopMargin}">
-              <Border Classes="dataGridHeader">
-                <Grid ColumnDefinitions="56,88,2*,120,110,100,90,90" ColumnSpacing="12">
-                  <TextBlock Classes="dataGridHeaderText" Text="Capa" />
-                  <TextBlock Classes="dataGridHeaderText" Grid.Column="1" Text="ID" />
-                  <TextBlock Classes="dataGridHeaderText" Grid.Column="2" Text="Título" />
-                  <TextBlock Classes="dataGridHeaderText" Grid.Column="3" Text="Região" />
-                  <TextBlock Classes="dataGridHeaderText" Grid.Column="4" Text="Formato" />
-                  <TextBlock Classes="dataGridHeaderText" Grid.Column="5" Text="Tamanho" />
-                  <TextBlock Classes="dataGridHeaderText" Grid.Column="6" Text="Adicionado" />
-                  <TextBlock Classes="dataGridHeaderText" Grid.Column="7" Text="Status" />
+            <Grid Grid.Row="2" ColumnDefinitions="*,320" ColumnSpacing="12" Margin="{StaticResource WiiSectionTopMargin}">
+              <Grid Classes="dataGrid" RowDefinitions="Auto,*">
+                <Border Classes="dataGridHeader">
+                  <Grid ColumnDefinitions="38,56,88,2*,110,90,90" ColumnSpacing="10">
+                    <TextBlock Classes="dataGridHeaderText" Text="" />
+                    <TextBlock Classes="dataGridHeaderText" Grid.Column="1" Text="Capa" />
+                    <TextBlock Classes="dataGridHeaderText" Grid.Column="2" Text="ID" />
+                    <TextBlock Classes="dataGridHeaderText" Grid.Column="3" Text="Título" />
+                    <TextBlock Classes="dataGridHeaderText" Grid.Column="4" Text="Formato" />
+                    <TextBlock Classes="dataGridHeaderText" Grid.Column="5" Text="Tamanho" />
+                    <TextBlock Classes="dataGridHeaderText" Grid.Column="6" Text="Status" />
+                  </Grid>
+                </Border>
+                <ListBox x:Name="LibraryGamesList" Grid.Row="1" ItemsSource="{Binding Games}" SelectionMode="Multiple" SelectionChanged="OnLibrarySelectionChanged" Background="Transparent" BorderThickness="0" ScrollViewer.VerticalScrollBarVisibility="Auto">
+                  <ListBox.ItemTemplate>
+                    <DataTemplate DataType="vm:LibraryGameItem">
+                      <Grid Classes="dataGridRow" ColumnDefinitions="38,56,88,2*,110,90,90" ColumnSpacing="10" Margin="{StaticResource WiiLibraryRowMargin}" MinHeight="72">
+                        <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}" Command="{Binding DataContext.ToggleGameSelectionCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" VerticalAlignment="Center" />
+                        <Border Grid.Column="1" Width="44" Height="60" CornerRadius="{StaticResource WiiRadiusSmall}" Background="{DynamicResource WiiBrushSurfaceAlt}" BorderBrush="{DynamicResource WiiBrushBorder}" BorderThickness="1" ClipToBounds="True" VerticalAlignment="Center">
+                          <Grid>
+                            <Image Source="{Binding CoverImage}" Stretch="UniformToFill" IsVisible="{Binding HasCover}" />
+                            <TextBlock Text="--" IsVisible="{Binding !HasCover}" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource WiiBrushTextMuted}" FontSize="{StaticResource WiiFontSizeCaption}" />
+                          </Grid>
+                        </Border>
+                        <TextBlock Grid.Column="2" Text="{Binding Id}" Foreground="{DynamicResource WiiBrushTextSecondary}" VerticalAlignment="Center" />
+                        <StackPanel Grid.Column="3" VerticalAlignment="Center" Spacing="2">
+                          <TextBlock Text="{Binding Title}" Foreground="{DynamicResource WiiBrushTextPrimary}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                          <TextBlock Text="{Binding MetadataSummary}" Foreground="{DynamicResource WiiBrushTextMuted}" FontSize="{StaticResource WiiFontSizeMicro}" TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+                        <Border Grid.Column="4" Classes="badge" HorizontalAlignment="Left" VerticalAlignment="Center"><TextBlock Classes="badgeText" Text="{Binding Format}" /></Border>
+                        <TextBlock Grid.Column="5" Text="{Binding Size}" Foreground="{DynamicResource WiiBrushTextSecondary}" VerticalAlignment="Center" />
+                        <Border Grid.Column="6" Classes="badge success" HorizontalAlignment="Left" VerticalAlignment="Center"><TextBlock Classes="badgeText" Text="{Binding Favorite}" /></Border>
+                      </Grid>
+                    </DataTemplate>
+                  </ListBox.ItemTemplate>
+                </ListBox>
+              </Grid>
+
+              <Border Grid.Column="1" Classes="contentBlock">
+                <Grid RowDefinitions="Auto,Auto,Auto,*" RowSpacing="10">
+                  <TextBlock Text="Detalhes" FontSize="{StaticResource WiiFontSizeSubtitle}" FontWeight="SemiBold" Foreground="{DynamicResource WiiBrushTextPrimary}" />
+                  <Border Grid.Row="1" Height="220" CornerRadius="{StaticResource WiiRadiusMedium}" Background="{DynamicResource WiiBrushSurfaceAlt}" BorderBrush="{DynamicResource WiiBrushBorder}" BorderThickness="1" ClipToBounds="True">
+                    <Grid>
+                      <Image Source="{Binding SelectedCoverAsset.Image}" Stretch="Uniform" IsVisible="{Binding SelectedCoverAsset.HasImage}" />
+                      <TextBlock Text="Imagem não disponível" IsVisible="{Binding !SelectedCoverAsset.HasImage}" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource WiiBrushTextMuted}" />
+                      <Button Command="{Binding OpenCoverLightboxCommand}" CommandParameter="{Binding SelectedCoverAsset}" IsVisible="{Binding SelectedCoverAsset.HasImage}" Classes="secondary small" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="{StaticResource WiiInsetSm}">
+                        <TextBlock Text="Ampliar" />
+                      </Button>
+                    </Grid>
+                  </Border>
+                  <StackPanel Grid.Row="2" Spacing="2">
+                    <TextBlock Text="{Binding SelectedGame.Title}" Foreground="{DynamicResource WiiBrushTextPrimary}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                    <TextBlock Text="{Binding SelectedGame.Id}" Foreground="{DynamicResource WiiBrushTextMuted}" />
+                    <TextBlock Text="{Binding CoverBatchStatus}" Foreground="{DynamicResource WiiBrushTextSecondary}" TextWrapping="Wrap" />
+                  </StackPanel>
+                  <ListBox Grid.Row="3" ItemsSource="{Binding CoverAssets}" SelectedItem="{Binding SelectedCoverAsset}" Background="Transparent" BorderThickness="0">
+                    <ListBox.ItemTemplate>
+                      <DataTemplate DataType="vm:CoverAssetViewModel">
+                        <Grid ColumnDefinitions="54,*,Auto" ColumnSpacing="10" Margin="{StaticResource WiiListItemCompactMargin}" MinHeight="64">
+                          <Border Width="46" Height="58" CornerRadius="{StaticResource WiiRadiusSmall}" Background="{DynamicResource WiiBrushSurfaceAlt}" BorderBrush="{DynamicResource WiiBrushBorder}" BorderThickness="1" ClipToBounds="True">
+                            <Grid>
+                              <Image Source="{Binding Image}" Stretch="UniformToFill" IsVisible="{Binding HasImage}" />
+                              <TextBlock Text="--" IsVisible="{Binding !HasImage}" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource WiiBrushTextMuted}" />
+                            </Grid>
+                          </Border>
+                          <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <TextBlock Text="{Binding Title}" Foreground="{DynamicResource WiiBrushTextPrimary}" FontWeight="SemiBold" />
+                            <TextBlock Text="{Binding StateText}" Foreground="{DynamicResource WiiBrushTextMuted}" FontSize="{StaticResource WiiFontSizeMicro}" />
+                          </StackPanel>
+                          <Button Grid.Column="2" Command="{Binding DataContext.OpenCoverLightboxCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" IsEnabled="{Binding HasImage}" Classes="tertiary small" VerticalAlignment="Center">
+                            <TextBlock Text="Ver" />
+                          </Button>
+                        </Grid>
+                      </DataTemplate>
+                    </ListBox.ItemTemplate>
+                  </ListBox>
                 </Grid>
               </Border>
-              <ListBox Grid.Row="1" ItemsSource="{Binding Games}" SelectedItem="{Binding SelectedGame}" Background="Transparent" BorderThickness="0" ScrollViewer.VerticalScrollBarVisibility="Auto">
-                <ListBox.ItemTemplate>
-                  <DataTemplate DataType="vm:LibraryGameItem">
-                    <Grid Classes="dataGridRow" ColumnDefinitions="56,88,2*,120,110,100,90,90" ColumnSpacing="12" Margin="{StaticResource WiiLibraryRowMargin}" MinHeight="72">
-                      <Border Width="44" Height="60" CornerRadius="{StaticResource WiiRadiusSmall}" Background="{DynamicResource WiiBrushSurfaceAlt}" BorderBrush="{DynamicResource WiiBrushBorder}" BorderThickness="1" ClipToBounds="True" VerticalAlignment="Center">
-                        <Grid>
-                          <Image Source="{Binding CoverImage}" Stretch="UniformToFill" IsVisible="{Binding HasCover}" />
-                          <TextBlock Text="--" IsVisible="{Binding !HasCover}" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource WiiBrushTextMuted}" FontSize="{StaticResource WiiFontSizeCaption}" />
-                        </Grid>
-                      </Border>
-                      <TextBlock Grid.Column="1" Text="{Binding Id}" Foreground="{DynamicResource WiiBrushTextSecondary}" VerticalAlignment="Center" />
-                      <StackPanel Grid.Column="2" VerticalAlignment="Center" Spacing="2">
-                        <TextBlock Text="{Binding Title}" Foreground="{DynamicResource WiiBrushTextPrimary}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
-                        <TextBlock Text="{Binding MetadataSummary}" Foreground="{DynamicResource WiiBrushTextMuted}" FontSize="{StaticResource WiiFontSizeMicro}" TextTrimming="CharacterEllipsis" />
-                      </StackPanel>
-                      <Border Grid.Column="3" Classes="badge" HorizontalAlignment="Left" VerticalAlignment="Center"><TextBlock Classes="badgeText" Text="{Binding Region}" /></Border>
-                      <Border Grid.Column="4" Classes="badge" HorizontalAlignment="Left" VerticalAlignment="Center"><TextBlock Classes="badgeText" Text="{Binding Format}" /></Border>
-                      <TextBlock Grid.Column="5" Text="{Binding Size}" Foreground="{DynamicResource WiiBrushTextSecondary}" VerticalAlignment="Center" />
-                      <TextBlock Grid.Column="6" Text="{Binding AddedAt}" Foreground="{DynamicResource WiiBrushTextMuted}" VerticalAlignment="Center" />
-                      <Border Grid.Column="7" Classes="badge success" HorizontalAlignment="Left" VerticalAlignment="Center"><TextBlock Classes="badgeText" Text="{Binding Favorite}" /></Border>
-                    </Grid>
-                  </DataTemplate>
-                </ListBox.ItemTemplate>
-              </ListBox>
             </Grid>
           </Grid>
 
@@ -890,7 +940,28 @@
     <Border Grid.Row="0"
             Grid.RowSpan="3"
             Classes="modalScrim"
-            IsVisible="False" />
+            IsVisible="{Binding IsCoverLightboxOpen}">
+      <Button Command="{Binding CloseCoverLightboxCommand}" Background="Transparent" BorderThickness="0" />
+    </Border>
+
+    <Border Grid.Row="0"
+            Grid.RowSpan="3"
+            Classes="modalPanel large"
+            MaxWidth="860"
+            MaxHeight="720"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            IsVisible="{Binding IsCoverLightboxOpen}">
+      <Grid RowDefinitions="Auto,*" RowSpacing="12">
+        <Grid ColumnDefinitions="*,Auto">
+          <TextBlock Text="{Binding SelectedCoverAsset.Title}" Foreground="{DynamicResource WiiBrushTextPrimary}" FontWeight="SemiBold" />
+          <Button Grid.Column="1" Command="{Binding CloseCoverLightboxCommand}" Classes="secondary small">
+            <TextBlock Text="Fechar" />
+          </Button>
+        </Grid>
+        <Image Grid.Row="1" Source="{Binding SelectedCoverAsset.Image}" Stretch="Uniform" />
+      </Grid>
+    </Border>
 
     <Border Grid.Row="0"
             Grid.RowSpan="3"

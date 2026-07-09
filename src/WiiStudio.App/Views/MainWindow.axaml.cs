@@ -1,6 +1,8 @@
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
+using Avalonia.Controls.Selection;
 using WiiStudio.App.ViewModels;
 
 namespace WiiStudio.App.Views;
@@ -11,6 +13,7 @@ public sealed partial class MainWindow : Window
     {
         InitializeComponent();
         Loaded += OnLoaded;
+        KeyDown += OnKeyDown;
     }
 
     private async void OnLoaded(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
@@ -49,6 +52,33 @@ public sealed partial class MainWindow : Window
         {
             await viewModel.SetConversionSourcePathsAsync(paths, CancellationToken.None);
         }
+    }
+
+    private async void OnLibrarySelectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (DataContext is not MainViewModel viewModel ||
+            sender is not ListBox listBox ||
+            listBox.SelectedItems is null)
+        {
+            return;
+        }
+
+        var selectedItems = listBox.SelectedItems
+            .OfType<LibraryGameItem>()
+            .ToArray();
+        await viewModel.SetSelectedLibraryItemsAsync(selectedItems, CancellationToken.None);
+    }
+
+    private void OnKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.Escape ||
+            DataContext is not MainViewModel { IsCoverLightboxOpen: true } viewModel)
+        {
+            return;
+        }
+
+        viewModel.CloseCoverLightboxCommand.Execute(null);
+        e.Handled = true;
     }
 
     private async Task<string[]> PickGameFilesAsync(string title)
