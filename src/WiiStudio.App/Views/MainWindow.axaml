@@ -399,6 +399,8 @@
       <Border Grid.Column="4"
               Classes="sidePanel"
               IsVisible="{Binding IsSidePanelVisible}">
+        <ScrollViewer VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled">
         <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,*" RowSpacing="18">
           <StackPanel Spacing="4">
             <TextBlock Text="Tarefas" FontWeight="SemiBold" Foreground="{DynamicResource WiiBrushTextPrimary}" />
@@ -486,7 +488,7 @@
                         SelectedItem="{Binding SelectedImportStep}"
                         Height="32" />
 
-              <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+              <Grid ColumnDefinitions="*,92" ColumnSpacing="8">
                 <TextBox Text="{Binding ImportSourcePathsText, Mode=TwoWay}"
                          Watermark="/jogos/mario.iso"
                          AcceptsReturn="True"
@@ -495,17 +497,19 @@
                 <Button Grid.Column="1"
                         Classes="secondary small"
                         Click="OnPickImportFilesClicked"
-                        VerticalAlignment="Top">
-                  <TextBlock Text="Selecionar" />
+                        VerticalAlignment="Top"
+                        HorizontalAlignment="Stretch">
+                  <TextBlock Text="Selecionar" TextTrimming="CharacterEllipsis" />
                 </Button>
               </Grid>
 
               <ComboBox ItemsSource="{Binding Drives}"
                         SelectedItem="{Binding SelectedImportDrive}"
+                        HorizontalContentAlignment="Stretch"
                         Height="32">
                 <ComboBox.ItemTemplate>
                   <DataTemplate DataType="domain:UsbDrive">
-                    <TextBlock Text="{Binding Name}" />
+                    <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
                   </DataTemplate>
                 </ComboBox.ItemTemplate>
               </ComboBox>
@@ -513,22 +517,26 @@
               <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
                 <Button Command="{Binding AnalyzeImportCommand}"
                         IsEnabled="{Binding !IsBusy}"
-                        Classes="secondary small">
-                  <TextBlock Text="Analisar" />
+                        Classes="secondary small"
+                        HorizontalAlignment="Stretch">
+                  <TextBlock Text="Analisar" TextTrimming="CharacterEllipsis" />
                 </Button>
                 <Button Grid.Column="1"
                         Command="{Binding ExecuteImportCommand}"
                         IsEnabled="{Binding CanExecuteImport}"
-                        Classes="primary small">
+                        Classes="primary small"
+                        HorizontalAlignment="Stretch">
                   <StackPanel Orientation="Horizontal" Spacing="{StaticResource WiiSpace8}">
                     <PathIcon Classes="small" Data="{StaticResource WiiIcon.Import}" />
-                    <TextBlock Text="Importar" />
+                    <TextBlock Text="Importar" TextTrimming="CharacterEllipsis" />
                   </StackPanel>
                 </Button>
               </Grid>
 
-              <Button Command="{Binding CancelImportCommand}" Classes="tertiary small">
-                <TextBlock Text="Cancelar" />
+              <Button Command="{Binding CancelImportCommand}"
+                      Classes="tertiary small"
+                      HorizontalAlignment="Stretch">
+                <TextBlock Text="Cancelar" TextTrimming="CharacterEllipsis" />
               </Button>
 
               <TextBlock Classes="inlineFeedback"
@@ -593,22 +601,26 @@
               <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
                 <Button Command="{Binding AnalyzeConversionCommand}"
                         IsEnabled="{Binding !IsBusy}"
-                        Classes="secondary small">
-                  <TextBlock Text="Analisar" />
+                        Classes="secondary small"
+                        HorizontalAlignment="Stretch">
+                  <TextBlock Text="Analisar" TextTrimming="CharacterEllipsis" />
                 </Button>
                 <Button Grid.Column="1"
                         Command="{Binding ExecuteConversionCommand}"
                         IsEnabled="{Binding CanExecuteConversion}"
-                        Classes="primary small">
+                        Classes="primary small"
+                        HorizontalAlignment="Stretch">
                   <StackPanel Orientation="Horizontal" Spacing="{StaticResource WiiSpace8}">
                     <PathIcon Classes="small" Data="{StaticResource WiiIcon.Convert}" />
-                    <TextBlock Text="Converter" />
+                    <TextBlock Text="Converter" TextTrimming="CharacterEllipsis" />
                   </StackPanel>
                 </Button>
               </Grid>
 
-              <Button Command="{Binding CancelConversionCommand}" Classes="tertiary small">
-                <TextBlock Text="Cancelar" />
+              <Button Command="{Binding CancelConversionCommand}"
+                      Classes="tertiary small"
+                      HorizontalAlignment="Stretch">
+                <TextBlock Text="Cancelar" TextTrimming="CharacterEllipsis" />
               </Button>
 
               <TextBlock Classes="inlineFeedback"
@@ -669,6 +681,7 @@
             </ListBox.ItemTemplate>
           </ListBox>
         </Grid>
+        </ScrollViewer>
       </Border>
 
       <Border Grid.Column="2"
