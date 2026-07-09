@@ -21,6 +21,7 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly ICommandPaletteService _commandPaletteService;
     private readonly DetectUsbDrivesUseCase _detectUsbDrivesUseCase;
     private readonly IConversionWizardService _conversionWizardService;
+    private readonly ICoverCache _coverCache;
     private readonly ICoverDownloadService _coverDownloadService;
     private readonly IDashboardService _dashboardService;
     private readonly IDeviceManagerService _deviceManagerService;
@@ -192,6 +193,7 @@ public sealed partial class MainViewModel : ObservableObject
         ICommandPaletteService commandPaletteService,
         DetectUsbDrivesUseCase detectUsbDrivesUseCase,
         IConversionWizardService conversionWizardService,
+        ICoverCache coverCache,
         ICoverDownloadService coverDownloadService,
         IDashboardService dashboardService,
         IDeviceManagerService deviceManagerService,
@@ -216,6 +218,7 @@ public sealed partial class MainViewModel : ObservableObject
         _commandPaletteService = commandPaletteService;
         _detectUsbDrivesUseCase = detectUsbDrivesUseCase;
         _conversionWizardService = conversionWizardService;
+        _coverCache = coverCache;
         _coverDownloadService = coverDownloadService;
         _dashboardService = dashboardService;
         _deviceManagerService = deviceManagerService;
@@ -374,7 +377,7 @@ public sealed partial class MainViewModel : ObservableObject
                 new SearchRequest(UsbDriveId: _activeLibraryDriveId, SearchText: LibrarySearchText),
                 cancellationToken);
 
-            ApplyLibrarySnapshot(snapshot);
+            await ApplyLibrarySnapshotAsync(snapshot, cancellationToken);
             StatusMessage = snapshot.TotalCount == 0
                 ? "Biblioteca vazia."
                 : $"{snapshot.TotalCount} jogo(s) carregado(s).";
@@ -629,7 +632,7 @@ public sealed partial class MainViewModel : ObservableObject
         }
 
         var snapshot = await _libraryViewService.SelectGamesAsync(Games.Select(game => game.Id).ToArray(), cancellationToken);
-        ApplyLibrarySnapshot(snapshot, refreshGames: false);
+        await ApplyLibrarySnapshotAsync(snapshot, cancellationToken, refreshGames: false);
         StatusMessage = $"{snapshot.SelectedGameIds.Count} jogo(s) selecionado(s).";
     }
 
@@ -785,6 +788,7 @@ public sealed partial class MainViewModel : ObservableObject
             var downloadedCount = result.Items.Count(item => item.Source == CoverAssetSource.Provider);
             var cachedCount = result.Items.Count(item => item.Source == CoverAssetSource.Cache);
             var missingCount = result.Items.Count(item => item.Source == CoverAssetSource.Missing);
+            await RefreshLibraryAsync(cancellationToken);
             StatusMessage = $"Capas processadas: {downloadedCount} baixada(s), {cachedCount} em cache, {missingCount} ausente(s).";
         }
         finally
@@ -1275,17 +1279,20 @@ public sealed partial class MainViewModel : ObservableObject
     private async Task ChangeLibraryViewModeAsync(LibraryViewMode mode)
     {
         var snapshot = await _libraryViewService.ChangeViewModeAsync(mode, CancellationToken.None);
-        ApplyLibrarySnapshot(snapshot, refreshGames: false);
+        await ApplyLibrarySnapshotAsync(snapshot, CancellationToken.None, refreshGames: false);
     }
 
     private async Task SelectVisibleGamesAsync(LibraryGameItem? game)
     {
         IReadOnlyList<string> selectedIds = game is null ? [] : [game.Id];
         var snapshot = await _libraryViewService.SelectGamesAsync(selectedIds, CancellationToken.None);
-        ApplyLibrarySnapshot(snapshot, refreshGames: false);
+        await ApplyLibrarySnapshotAsync(snapshot, CancellationToken.None, refreshGames: false);
     }
 
-    private void ApplyLibrarySnapshot(LibraryViewSnapshot snapshot, bool refreshGames = true)
+    private async Task ApplyLibrarySnapshotAsync(
+        LibraryViewSnapshot snapshot,
+        CancellationToken cancellationToken,
+        bool refreshGames = true)
     {
         LibraryState = snapshot.State;
         LibraryTotalCount = snapshot.TotalCount;
@@ -1298,7 +1305,8 @@ public sealed partial class MainViewModel : ObservableObject
             Games.Clear();
             foreach (var game in snapshot.Games)
             {
-                Games.Add(new LibraryGameItem(game));
+                var coverPath = await _coverCache.GetAsync(game.Id, CoverAssetKind.FrontCover, cancellationToken);
+                Games.Add(new LibraryGameItem(game, coverPath));
             }
         }
 
