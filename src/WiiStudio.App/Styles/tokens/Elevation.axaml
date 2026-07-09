@@ -1,7 +1,7 @@
 <ResourceDictionary xmlns="https://github.com/avaloniaui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-  <x:String x:Key="WiiShadowNone">0 0 0 0 Transparent</x:String>
-  <x:String x:Key="WiiShadowSmall">0 2 8 0 #26000000</x:String>
-  <x:String x:Key="WiiShadowMedium">0 10 28 0 #33000000</x:String>
-  <x:String x:Key="WiiShadowLarge">0 18 48 0 #42000000</x:String>
+  <BoxShadows x:Key="WiiShadowNone">0 0 0 0 Transparent</BoxShadows>
+  <BoxShadows x:Key="WiiShadowSmall">0 2 8 0 #26000000</BoxShadows>
+  <BoxShadows x:Key="WiiShadowMedium">0 10 28 0 #33000000</BoxShadows>
+  <BoxShadows x:Key="WiiShadowLarge">0 18 48 0 #42000000</BoxShadows>
 </ResourceDictionary>
