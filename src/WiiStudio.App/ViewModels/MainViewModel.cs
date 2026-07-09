@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using Avalonia;
+using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Styling;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -192,7 +193,7 @@ public sealed partial class MainViewModel : ObservableObject
         _mainWindowService = mainWindowService;
         _statusBarService = statusBarService;
         _themeService = themeService;
-        shellCommandExecutor.SetHandler(ExecuteShellCommandAsync);
+        shellCommandExecutor.SetHandler(HandleShellCommandAsync);
 
         foreach (var module in _mainWindowService.Modules)
         {
@@ -472,7 +473,18 @@ public sealed partial class MainViewModel : ObservableObject
         }
     }
 
-    private async Task ExecuteShellCommandAsync(string commandId, CancellationToken cancellationToken)
+    [RelayCommand]
+    private async Task ExecuteShellCommandAsync(string? commandId, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(commandId))
+        {
+            return;
+        }
+
+        await HandleShellCommandAsync(commandId, cancellationToken);
+    }
+
+    private async Task HandleShellCommandAsync(string commandId, CancellationToken cancellationToken)
     {
         switch (commandId)
         {
@@ -488,6 +500,12 @@ public sealed partial class MainViewModel : ObservableObject
             case "navigation.diagnostics":
                 SelectedModule = Modules.FirstOrDefault(module => module.Id == ShellModuleId.Diagnostics);
                 break;
+            case "navigation.settings":
+                SelectedModule = Modules.FirstOrDefault(module => module.Id == ShellModuleId.Settings);
+                break;
+            case "navigation.conversion":
+                SelectedModule = Modules.FirstOrDefault(module => module.Id == ShellModuleId.Conversion);
+                break;
             case "library.refresh":
                 await RefreshLibraryAsync(cancellationToken);
                 break;
@@ -499,6 +517,7 @@ public sealed partial class MainViewModel : ObservableObject
                 StatusMessage = "Fluxo de importação pronto.";
                 break;
             case "conversion.open":
+                SelectedModule = Modules.FirstOrDefault(module => module.Id == ShellModuleId.Conversion);
                 SelectedConversionStep = ConversionWizardStep.SelectingSource;
                 StatusMessage = "Fluxo de conversão pronto.";
                 break;
@@ -517,6 +536,50 @@ public sealed partial class MainViewModel : ObservableObject
             default:
                 throw new InvalidOperationException($"Command '{commandId}' is not supported by the shell.");
         }
+    }
+
+    [RelayCommand]
+    private void ExitApplication()
+    {
+        if (AvaloniaApp.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+        {
+            desktop.Shutdown();
+        }
+    }
+
+    [RelayCommand]
+    private async Task SelectAllVisibleGamesAsync(CancellationToken cancellationToken)
+    {
+        if (Games.Count == 0)
+        {
+            StatusMessage = "Nenhum jogo visível para selecionar.";
+            return;
+        }
+
+        var snapshot = await _libraryViewService.SelectGamesAsync(Games.Select(game => game.Id).ToArray(), cancellationToken);
+        ApplyLibrarySnapshot(snapshot, refreshGames: false);
+        StatusMessage = $"{snapshot.SelectedGameIds.Count} jogo(s) selecionado(s).";
+    }
+
+    [RelayCommand]
+    private void CopySelection()
+    {
+        StatusMessage = SelectedGame is null
+            ? "Selecione um jogo para copiar."
+            : $"Jogo {SelectedGame.Id} pronto para cópia.";
+    }
+
+    [RelayCommand]
+    private void ShowPendingFeature(string? featureName)
+    {
+        var displayName = string.IsNullOrWhiteSpace(featureName) ? "Recurso" : featureName;
+        StatusMessage = $"{displayName} ainda será conectado ao fluxo completo.";
+    }
+
+    [RelayCommand]
+    private void ShowAbout()
+    {
+        StatusMessage = $"WiiStudio {StatusVersion} - ambiente de gerenciamento Wii.";
     }
 
     [RelayCommand]

@@ -18,42 +18,42 @@
       <DockPanel LastChildFill="True">
       <Menu DockPanel.Dock="Top">
         <MenuItem Header="Arquivo">
-          <MenuItem Header="Importar jogo..." Command="{Binding ExecuteImportCommand}" InputGesture="Ctrl+I" />
-          <MenuItem Header="Exportar selecionados..." />
+          <MenuItem Header="Importar jogo..." Command="{Binding ExecuteShellCommandCommand}" CommandParameter="import.open" InputGesture="Ctrl+I" />
+          <MenuItem Header="Exportar selecionados..." Command="{Binding ShowPendingFeatureCommand}" CommandParameter="Exportação de selecionados" />
           <Separator />
-          <MenuItem Header="Configurações" InputGesture="Ctrl+," />
-          <MenuItem Header="Sair" InputGesture="Ctrl+Q" />
+          <MenuItem Header="Configurações" Command="{Binding ExecuteShellCommandCommand}" CommandParameter="navigation.settings" InputGesture="Ctrl+," />
+          <MenuItem Header="Sair" Command="{Binding ExitApplicationCommand}" InputGesture="Ctrl+Q" />
         </MenuItem>
         <MenuItem Header="Editar">
-          <MenuItem Header="Copiar" InputGesture="Ctrl+C" />
-          <MenuItem Header="Selecionar tudo" InputGesture="Ctrl+A" />
+          <MenuItem Header="Copiar" Command="{Binding CopySelectionCommand}" InputGesture="Ctrl+C" />
+          <MenuItem Header="Selecionar tudo" Command="{Binding SelectAllVisibleGamesCommand}" InputGesture="Ctrl+A" />
           <MenuItem Header="Limpar filtros" Command="{Binding ClearLibrarySearchCommand}" />
         </MenuItem>
         <MenuItem Header="Exibir">
-          <MenuItem Header="Dashboard" />
-          <MenuItem Header="Biblioteca" />
-          <MenuItem Header="Dispositivos" />
+          <MenuItem Header="Dashboard" Command="{Binding ExecuteShellCommandCommand}" CommandParameter="navigation.dashboard" />
+          <MenuItem Header="Biblioteca" Command="{Binding ExecuteShellCommandCommand}" CommandParameter="navigation.library" />
+          <MenuItem Header="Dispositivos" Command="{Binding ExecuteShellCommandCommand}" CommandParameter="navigation.devices" />
           <Separator />
           <MenuItem Header="Mostrar/Ocultar painel lateral" Command="{Binding ToggleSidePanelCommand}" InputGesture="Ctrl+B" />
         </MenuItem>
         <MenuItem Header="Biblioteca">
           <MenuItem Header="Atualizar biblioteca" Command="{Binding RefreshLibraryCommand}" InputGesture="Ctrl+R" />
-          <MenuItem Header="Sincronizar metadados" />
-          <MenuItem Header="Baixar capas" />
-          <MenuItem Header="Remover selecionados" Classes="danger" InputGesture="Delete" />
+          <MenuItem Header="Sincronizar metadados" Command="{Binding ShowPendingFeatureCommand}" CommandParameter="Sincronização de metadados" />
+          <MenuItem Header="Baixar capas" Command="{Binding ShowPendingFeatureCommand}" CommandParameter="Download de capas" />
+          <MenuItem Header="Remover selecionados" Command="{Binding ShowPendingFeatureCommand}" CommandParameter="Remoção de jogos" Classes="danger" InputGesture="Delete" />
         </MenuItem>
         <MenuItem Header="Ferramentas">
-          <MenuItem Header="Executar diagnóstico" InputGesture="Ctrl+Shift+D" />
+          <MenuItem Header="Executar diagnóstico" Command="{Binding ExecuteShellCommandCommand}" CommandParameter="navigation.diagnostics" InputGesture="Ctrl+Shift+D" />
           <MenuItem Header="Abrir Command Palette" Command="{Binding OpenCommandPaletteCommand}" InputGesture="Ctrl+Shift+P" />
         </MenuItem>
         <MenuItem Header="Plugins">
-          <MenuItem Header="Gerenciar plugins" />
-          <MenuItem Header="Recarregar plugins" />
+          <MenuItem Header="Gerenciar plugins" Command="{Binding ShowPendingFeatureCommand}" CommandParameter="Gerenciamento de plugins" />
+          <MenuItem Header="Recarregar plugins" Command="{Binding ShowPendingFeatureCommand}" CommandParameter="Recarga de plugins" />
         </MenuItem>
         <MenuItem Header="Ajuda">
-          <MenuItem Header="Documentação" />
-          <MenuItem Header="Atalhos de teclado" />
-          <MenuItem Header="Sobre o WiiStudio" />
+          <MenuItem Header="Documentação" Command="{Binding ShowPendingFeatureCommand}" CommandParameter="Documentação" />
+          <MenuItem Header="Atalhos de teclado" Command="{Binding ShowPendingFeatureCommand}" CommandParameter="Atalhos de teclado" />
+          <MenuItem Header="Sobre o WiiStudio" Command="{Binding ShowAboutCommand}" />
         </MenuItem>
       </Menu>
       <Grid ColumnDefinitions="Auto,*,320,Auto,Auto" ColumnSpacing="14" VerticalAlignment="Center">
