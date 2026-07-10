@@ -113,7 +113,10 @@ public sealed class PrivilegedAccessService : IPrivilegedAccessService
                 || argument.Contains("&&", StringComparison.Ordinal)
                 || argument.Contains('|')
                 || argument.Contains(';')
-                || argument.Contains('>'))
+                || argument.Contains('>')
+                || argument.Contains('<')
+                || argument.Contains('`')
+                || argument.Contains("$(", StringComparison.Ordinal))
             {
                 return Failed("Privileged tool argument contains unsafe shell syntax.");
             }
@@ -137,10 +140,21 @@ public sealed class PrivilegedAccessService : IPrivilegedAccessService
             PrivilegedDeviceOperation.ListWbfsGames => "list",
             PrivilegedDeviceOperation.AddWbfsGame => "add",
             PrivilegedDeviceOperation.RemoveWbfsGame => "remove",
+            PrivilegedDeviceOperation.FormatWbfsPartition => "FORMAT",
             _ => null
         };
 
-        if (expectedCommand is null || request.Arguments.Count == 0 || !string.Equals(request.Arguments[0], expectedCommand, StringComparison.OrdinalIgnoreCase))
+        if (expectedCommand is null)
+        {
+            return Failed("Privileged wwt operation does not match the allowed command catalog.");
+        }
+
+        if (request.Operation == PrivilegedDeviceOperation.FormatWbfsPartition)
+        {
+            return ValidateFormatWbfsOperation(request);
+        }
+
+        if (request.Arguments.Count == 0 || !string.Equals(request.Arguments[0], expectedCommand, StringComparison.OrdinalIgnoreCase))
         {
             return Failed("Privileged wwt operation does not match the allowed command catalog.");
         }
@@ -152,6 +166,47 @@ public sealed class PrivilegedAccessService : IPrivilegedAccessService
         }
 
         return null;
+    }
+
+    private static PrivilegedAccessStatus? ValidateFormatWbfsOperation(PrivilegedToolRequest request)
+    {
+        if (request.Arguments.Count != 5
+            || !string.Equals(request.Arguments[0], "--force", StringComparison.Ordinal)
+            || !string.Equals(request.Arguments[1], "--verbose", StringComparison.Ordinal)
+            || !string.Equals(request.Arguments[2], "--progress", StringComparison.Ordinal)
+            || !string.Equals(request.Arguments[3], "FORMAT", StringComparison.Ordinal))
+        {
+            return Failed("Privileged WBFS format operation does not match the allowed command catalog.");
+        }
+
+        var target = request.Arguments[4];
+        if (string.IsNullOrWhiteSpace(request.DevicePath)
+            || !string.Equals(target, request.DevicePath, StringComparison.OrdinalIgnoreCase))
+        {
+            return Failed("Privileged WBFS format target does not match the validated device path.");
+        }
+
+        if (!IsAllowedWbfsFormatTarget(target))
+        {
+            return Failed("Privileged WBFS format target is not an allowed block device path.");
+        }
+
+        return null;
+    }
+
+    private static bool IsAllowedWbfsFormatTarget(string target)
+    {
+        if (target.Contains("..", StringComparison.Ordinal)
+            || target.Contains('*')
+            || target.Contains('?'))
+        {
+            return false;
+        }
+
+        return target.StartsWith("/dev/sd", StringComparison.OrdinalIgnoreCase)
+            || target.StartsWith("/dev/disk/by-id/", StringComparison.OrdinalIgnoreCase)
+            || target.StartsWith(@"\\.\", StringComparison.OrdinalIgnoreCase)
+            || target.StartsWith("/dev/disk", StringComparison.OrdinalIgnoreCase);
     }
 
     private static PrivilegedAccessStatus Failed(string message)

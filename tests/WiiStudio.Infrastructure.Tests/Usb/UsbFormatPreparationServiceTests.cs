@@ -63,6 +63,18 @@ public sealed class UsbFormatPreparationServiceTests
     }
 
     [Fact]
+    public async Task CreatePreviewAsync_ShouldBlockWbfsWhenTargetIsMounted()
+    {
+        var device = CreateDevice(fileSystem: "FAT32", mountPath: "/media/wii");
+        var service = CreateService([device], executor: new FakeWiimmsFormatCommandExecutor(hasCatalog: true));
+
+        var preview = await service.CreatePreviewAsync(new UsbFormatPreparationRequest(device.DeviceId, null, UsbPreparationMode.FormatAsWbfs));
+
+        preview.IsBlocked.Should().BeTrue();
+        preview.BlockReasonKey.Should().Be("usbFormat.targetMounted");
+    }
+
+    [Fact]
     public async Task ExecuteAsync_ShouldRunCataloguedWbfsExecutorAfterStrongConfirmation()
     {
         var executor = new FakeWiimmsFormatCommandExecutor(hasCatalog: true);
@@ -102,7 +114,7 @@ public sealed class UsbFormatPreparationServiceTests
         bool isUsb = true,
         bool isRemovable = true,
         string fileSystem = "FAT32",
-        string mountPath = "/media/wii")
+        string mountPath = "/dev/sdb1")
     {
         var partition = new UsbPartitionInfo(
             "partition-1",

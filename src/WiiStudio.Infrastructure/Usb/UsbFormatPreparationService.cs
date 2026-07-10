@@ -301,6 +301,11 @@ public sealed class UsbFormatPreparationService : IUsbFormatPreparationService
             return "usbFormat.devicePathMissing";
         }
 
+        if (mode == UsbPreparationMode.FormatAsWbfs && IsMountedVolume(partition))
+        {
+            return "usbFormat.targetMounted";
+        }
+
         if (mode == UsbPreparationMode.PrepareFat32WbfsFolder)
         {
             if (!string.Equals(partition.FileSystem, "FAT32", StringComparison.OrdinalIgnoreCase))
@@ -325,6 +330,22 @@ public sealed class UsbFormatPreparationService : IUsbFormatPreparationService
         }
 
         return null;
+    }
+
+    private static bool IsMountedVolume(UsbPartitionInfo partition)
+    {
+        if (string.IsNullOrWhiteSpace(partition.MountPath))
+        {
+            return false;
+        }
+
+        if (string.Equals(partition.MountPath, partition.DevicePath, StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        return !partition.MountPath.StartsWith("/dev/", StringComparison.OrdinalIgnoreCase)
+            && !partition.MountPath.StartsWith(@"\\.\", StringComparison.OrdinalIgnoreCase);
     }
 
     private static bool IsToolReady(ExternalToolStatus? status) =>

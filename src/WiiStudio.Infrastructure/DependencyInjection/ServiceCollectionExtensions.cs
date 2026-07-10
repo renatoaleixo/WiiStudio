@@ -180,7 +180,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IUsbDriveService, UsbDriveService>();
         services.AddSingleton<IUsbWriteWorkflowService, SafeUsbWriteWorkflowService>();
         services.AddSingleton<IUsbPreparationFileSystem, PhysicalUsbPreparationFileSystem>();
-        services.AddSingleton<IWiimmsFormatCommandExecutor, DisabledWiimmsFormatCommandExecutor>();
+        services.AddSingleton<IWiimmsFormatCommandExecutor, CataloguedWiimmsFormatCommandExecutor>();
         services.AddSingleton<IUsbFormatPreparationService, UsbFormatPreparationService>();
         services.AddSingleton<IWitService, WitService>();
         services.AddSingleton<IWwtService, WwtService>();

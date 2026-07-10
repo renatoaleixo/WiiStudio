@@ -77,6 +77,48 @@ public sealed class PrivilegedAccessServiceTests : IDisposable
         strategy.LastRequest!.Operation.Should().Be(PrivilegedDeviceOperation.ListWbfsGames);
     }
 
+    [Fact]
+    public async Task RunKnownToolAsync_ShouldAllowCataloguedWbfsFormatCommand()
+    {
+        var executablePath = CreateTool("wwt");
+        var strategy = new FakePrivilegeStrategy(OSPlatformKind.Linux);
+        var service = CreateService(OSPlatformKind.Linux, strategy);
+
+        var result = await service.RunKnownToolAsync(
+            new PrivilegedToolRequest(
+                "wwt",
+                executablePath,
+                ["--force", "--verbose", "--progress", "FORMAT", "/dev/sdc1"],
+                TimeSpan.FromSeconds(5),
+                PrivilegedDeviceOperation.FormatWbfsPartition,
+                DevicePath: "/dev/sdc1"),
+            CancellationToken.None);
+
+        result.IsSuccess.Should().BeTrue();
+        strategy.RunCount.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task RunKnownToolAsync_ShouldRejectUncataloguedWbfsFormatArguments()
+    {
+        var executablePath = CreateTool("wwt");
+        var strategy = new FakePrivilegeStrategy(OSPlatformKind.Linux);
+        var service = CreateService(OSPlatformKind.Linux, strategy);
+
+        var result = await service.RunKnownToolAsync(
+            new PrivilegedToolRequest(
+                "wwt",
+                executablePath,
+                ["--force", "--all", "FORMAT", "/dev/sdc1"],
+                TimeSpan.FromSeconds(5),
+                PrivilegedDeviceOperation.FormatWbfsPartition,
+                DevicePath: "/dev/sdc1"),
+            CancellationToken.None);
+
+        result.IsSuccess.Should().BeFalse();
+        strategy.RunCount.Should().Be(0);
+    }
+
     public void Dispose()
     {
         if (Directory.Exists(_rootDirectory))
