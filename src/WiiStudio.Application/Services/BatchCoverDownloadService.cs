@@ -38,7 +38,7 @@ public sealed class BatchCoverDownloadService : IBatchCoverDownloadService
             ? Enum.GetValues<CoverAssetKind>()
             : assetKinds.Distinct().ToArray();
 
-        await _taskManager.EnqueueAsync(
+        var taskId = await _taskManager.EnqueueAsync(
             new TaskRequest(ManagedTaskType.Download, "Baixando capas", $"{normalizedGameIds.Length} jogo(s) selecionado(s)."),
             cancellationToken);
 
@@ -67,6 +67,12 @@ public sealed class BatchCoverDownloadService : IBatchCoverDownloadService
 
             try
             {
+                await _taskManager.UpdateProgressAsync(
+                    taskId,
+                    normalizedGameIds.Length == 0 ? 0 : (double)processedGames / normalizedGameIds.Length,
+                    ManagedTaskStatus.Running,
+                    cancellationToken);
+
                 var result = await _coverDownloadService.DownloadAsync(
                     new CoverDownloadRequest([gameId], forceRefresh, selectedKinds),
                     cancellationToken);
@@ -114,6 +120,19 @@ public sealed class BatchCoverDownloadService : IBatchCoverDownloadService
             failed,
             processedGames,
             cancelled);
+
+        if (cancelled)
+        {
+            await _taskManager.CancelAsync(taskId, CancellationToken.None);
+        }
+        else if (failed > 0)
+        {
+            await _taskManager.FailAsync(taskId, CreateMessage(summary), CancellationToken.None);
+        }
+        else
+        {
+            await _taskManager.CompleteAsync(taskId, CancellationToken.None);
+        }
 
         await _notificationService.PublishAsync(
             NotificationMessage.Create(

@@ -59,6 +59,40 @@ public sealed class JsonTaskManager : ITaskManager
         await ChangeStatusAsync(taskId, ManagedTaskStatus.Paused, NotificationType.Information, "Task paused.", cancellationToken);
     }
 
+    public async Task UpdateProgressAsync(Guid taskId, double progress, ManagedTaskStatus status, CancellationToken cancellationToken)
+    {
+        if (progress is < 0 or > 1)
+        {
+            throw new ArgumentOutOfRangeException(nameof(progress), "Task progress must be between 0 and 1.");
+        }
+
+        var tasks = await LoadTasksAsync(cancellationToken);
+        var index = FindTaskIndex(tasks, taskId);
+        var task = tasks[index];
+        EnsureCanTransition(task.Status, status);
+
+        var updated = task with
+        {
+            Status = status,
+            Progress = progress,
+            UpdatedAt = DateTimeOffset.UtcNow
+        };
+        tasks[index] = updated;
+        await SaveTasksAsync(ApplyHistoryLimit(tasks), cancellationToken);
+        await PublishNotificationAsync(updated, NotificationType.Progress, "Task progress updated.", cancellationToken);
+    }
+
+    public async Task CompleteAsync(Guid taskId, CancellationToken cancellationToken)
+    {
+        await ChangeStatusAsync(taskId, ManagedTaskStatus.Completed, NotificationType.Success, "Task completed.", cancellationToken, progress: 1);
+    }
+
+    public async Task FailAsync(Guid taskId, string errorMessage, CancellationToken cancellationToken)
+    {
+        var message = string.IsNullOrWhiteSpace(errorMessage) ? "Task failed." : errorMessage.Trim();
+        await ChangeStatusAsync(taskId, ManagedTaskStatus.Failed, NotificationType.Error, message, cancellationToken, errorMessage: message);
+    }
+
     public async Task ResumeAsync(Guid taskId, CancellationToken cancellationToken)
     {
         var tasks = await LoadTasksAsync(cancellationToken);
@@ -106,7 +140,9 @@ public sealed class JsonTaskManager : ITaskManager
         ManagedTaskStatus status,
         NotificationType notificationType,
         string notificationMessage,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        double? progress = null,
+        string? errorMessage = null)
     {
         var tasks = await LoadTasksAsync(cancellationToken);
         var index = FindTaskIndex(tasks, taskId);
@@ -117,8 +153,10 @@ public sealed class JsonTaskManager : ITaskManager
         var updated = task with
         {
             Status = status,
+            Progress = progress ?? task.Progress,
             UpdatedAt = now,
-            FinishedAt = status is ManagedTaskStatus.Completed or ManagedTaskStatus.Failed or ManagedTaskStatus.Cancelled ? now : task.FinishedAt
+            FinishedAt = status is ManagedTaskStatus.Completed or ManagedTaskStatus.Failed or ManagedTaskStatus.Cancelled ? now : task.FinishedAt,
+            ErrorMessage = errorMessage ?? task.ErrorMessage
         };
         tasks[index] = updated;
         await SaveTasksAsync(ApplyHistoryLimit(tasks), cancellationToken);

@@ -84,6 +84,51 @@ public sealed class JsonTaskManagerTests
     }
 
     [Fact]
+    public async Task UpdateProgressAsync_ShouldPersistRunningProgress()
+    {
+        using var fixture = TemporaryTaskManagerFixture.Create();
+        var manager = fixture.CreateManager();
+        var taskId = await manager.EnqueueAsync(new TaskRequest(ManagedTaskType.Download, "Download covers"), CancellationToken.None);
+
+        await manager.UpdateProgressAsync(taskId, 0.5, ManagedTaskStatus.Running, CancellationToken.None);
+
+        var task = (await manager.GetActiveTasksAsync(CancellationToken.None)).Should().ContainSingle().Subject;
+        task.Status.Should().Be(ManagedTaskStatus.Running);
+        task.Progress.Should().Be(0.5);
+    }
+
+    [Fact]
+    public async Task CompleteAsync_ShouldMoveTaskToHistory()
+    {
+        using var fixture = TemporaryTaskManagerFixture.Create();
+        var manager = fixture.CreateManager();
+        var taskId = await manager.EnqueueAsync(new TaskRequest(ManagedTaskType.Update, "Update GameTDB"), CancellationToken.None);
+
+        await manager.CompleteAsync(taskId, CancellationToken.None);
+
+        (await manager.GetActiveTasksAsync(CancellationToken.None)).Should().BeEmpty();
+        var task = (await manager.GetHistoryAsync(CancellationToken.None)).Should().ContainSingle().Subject;
+        task.Status.Should().Be(ManagedTaskStatus.Completed);
+        task.Progress.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task FailAsync_ShouldPersistErrorAndPublishErrorNotification()
+    {
+        using var fixture = TemporaryTaskManagerFixture.Create();
+        var notifications = new FakeNotificationService();
+        var manager = fixture.CreateManager(notifications);
+        var taskId = await manager.EnqueueAsync(new TaskRequest(ManagedTaskType.Update, "Update GameTDB"), CancellationToken.None);
+
+        await manager.FailAsync(taskId, "boom", CancellationToken.None);
+
+        var task = (await manager.GetHistoryAsync(CancellationToken.None)).Should().ContainSingle().Subject;
+        task.Status.Should().Be(ManagedTaskStatus.Failed);
+        task.ErrorMessage.Should().Be("boom");
+        notifications.Messages.Should().Contain(message => message.Type == NotificationType.Error && message.Message == "boom");
+    }
+
+    [Fact]
     public async Task CancelAsync_ShouldRejectMissingTask()
     {
         using var fixture = TemporaryTaskManagerFixture.Create();

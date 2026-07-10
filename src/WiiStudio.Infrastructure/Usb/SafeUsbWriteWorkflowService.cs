@@ -16,17 +16,23 @@ public sealed class SafeUsbWriteWorkflowService : IUsbWriteWorkflowService
     private readonly IWwtService _wwtService;
     private readonly IExternalToolManager _externalToolManager;
     private readonly IDevicePermissionService _devicePermissionService;
+    private readonly ITaskManager _taskManager;
+    private readonly INotificationService _notificationService;
 
     public SafeUsbWriteWorkflowService(
         IUsbDriveService usbDriveService,
         IWwtService wwtService,
         IExternalToolManager externalToolManager,
-        IDevicePermissionService devicePermissionService)
+        IDevicePermissionService devicePermissionService,
+        ITaskManager taskManager,
+        INotificationService notificationService)
     {
         _usbDriveService = usbDriveService;
         _wwtService = wwtService;
         _externalToolManager = externalToolManager;
         _devicePermissionService = devicePermissionService;
+        _taskManager = taskManager;
+        _notificationService = notificationService;
     }
 
     public async Task<UsbWritePreview> CreatePreviewAsync(
@@ -98,24 +104,37 @@ public sealed class SafeUsbWriteWorkflowService : IUsbWriteWorkflowService
             return Failed(request.Preview, request.Preview.BlockReasonKey ?? "usbWrite.blocked", TimeSpan.Zero);
         }
 
+        var taskId = await _taskManager.EnqueueAsync(
+            new TaskRequest(ManagedTaskType.Import, "Escrevendo jogo no USB", request.Preview.SourcePath),
+            cancellationToken);
         var drive = await FindDriveAsync(request.Preview.TargetDriveId, cancellationToken);
         var stopwatch = Stopwatch.StartNew();
         try
         {
             progress?.Report(new WiimmsOperationProgress(null, "Iniciando escrita USB", request.Preview.SourcePath, null, null, null, null, IsIndeterminate: true));
+            await _taskManager.UpdateProgressAsync(taskId, 0.1, ManagedTaskStatus.Running, cancellationToken);
             await _wwtService.AddGameAsync(drive, request.Preview.SourcePath, cancellationToken);
             stopwatch.Stop();
+            await _taskManager.CompleteAsync(taskId, cancellationToken);
+            await _notificationService.PublishAsync(
+                NotificationMessage.Create(NotificationType.Success, "Escrita USB concluída", request.Preview.SourcePath, groupKey: taskId.ToString("N")),
+                cancellationToken);
             progress?.Report(new WiimmsOperationProgress(100, "Escrita USB concluída", request.Preview.SourcePath, null, null, null, TimeSpan.Zero, IsIndeterminate: false));
             return new UsbWriteResult(true, request.Preview.GameId, drive.Id, null, stopwatch.Elapsed);
         }
         catch (OperationCanceledException)
         {
             stopwatch.Stop();
+            await _taskManager.CancelAsync(taskId, CancellationToken.None);
             return Failed(request.Preview, "usbWrite.cancelled", stopwatch.Elapsed);
         }
         catch (Exception)
         {
             stopwatch.Stop();
+            await _taskManager.FailAsync(taskId, "usbWrite.failed", CancellationToken.None);
+            await _notificationService.PublishAsync(
+                NotificationMessage.Create(NotificationType.Error, "Falha na escrita USB", request.Preview.SourcePath, isPersistent: true, groupKey: taskId.ToString("N")),
+                CancellationToken.None);
             return Failed(request.Preview, "usbWrite.failed", stopwatch.Elapsed);
         }
     }

@@ -141,7 +141,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IGameTdbXmlParser, GameTdbXmlParser>();
         services.AddSingleton<IGameTdbMetadataMapper, GameTdbMetadataMapper>();
         services.AddSingleton<IGameMetadataProvider, GameTdbMetadataProvider>();
-        services.AddSingleton<IGameTdbUpdateSource, NullGameTdbUpdateSource>();
+        services.AddSingleton<IGameTdbUpdateSource, GameTdbUpdateSource>();
         services.AddSingleton<IGameTdbUpdateStateStore, JsonGameTdbUpdateStateStore>();
         services.AddSingleton<IWiimmsToolLocator, WiimmsToolLocator>();
         services.AddSingleton<IWiimmsProgressParser, WiimmsProgressParser>();

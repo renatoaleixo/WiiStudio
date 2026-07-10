@@ -75,13 +75,15 @@ public sealed class SafeUsbWriteWorkflowServiceTests : IDisposable
         var sourcePath = CreateSource("RMCP01.iso", 1024);
         var drive = CreateDrive(UsbDriveFileSystem.Wbfs, freeSpace: 512L * 1024L * 1024L);
         var wwtService = new FakeWwtService();
-        var service = CreateService([drive], wwtService: wwtService);
+        var taskManager = new FakeTaskManager();
+        var service = CreateService([drive], wwtService: wwtService, taskManager: taskManager);
         var preview = await service.CreatePreviewAsync(sourcePath, drive.Id, CancellationToken.None);
 
         var result = await service.ExecuteAsync(new UsbWriteExecutionRequest(preview, UserConfirmed: true), null, CancellationToken.None);
 
         result.Success.Should().BeTrue();
         wwtService.AddedSources.Should().ContainSingle().Which.Should().Be(sourcePath);
+        taskManager.Statuses.Should().Contain(ManagedTaskStatus.Completed);
     }
 
     public void Dispose()
@@ -96,13 +98,17 @@ public sealed class SafeUsbWriteWorkflowServiceTests : IDisposable
         IReadOnlyList<UsbDrive> drives,
         FakeWwtService? wwtService = null,
         FakeExternalToolManager? externalToolManager = null,
-        FakeDevicePermissionService? devicePermissionService = null)
+        FakeDevicePermissionService? devicePermissionService = null,
+        FakeTaskManager? taskManager = null,
+        FakeNotificationService? notificationService = null)
     {
         return new SafeUsbWriteWorkflowService(
             new FakeUsbDriveService(drives),
             wwtService ?? new FakeWwtService(),
             externalToolManager ?? new FakeExternalToolManager(),
-            devicePermissionService ?? new FakeDevicePermissionService());
+            devicePermissionService ?? new FakeDevicePermissionService(),
+            taskManager ?? new FakeTaskManager(),
+            notificationService ?? new FakeNotificationService());
     }
 
     private string CreateSource(string fileName, int size)
@@ -201,5 +207,62 @@ public sealed class SafeUsbWriteWorkflowServiceTests : IDisposable
         {
             return CheckAsync(request, cancellationToken);
         }
+    }
+
+    private sealed class FakeTaskManager : ITaskManager
+    {
+        public List<ManagedTaskStatus> Statuses { get; } = [];
+
+        public Task<Guid> EnqueueAsync(TaskRequest request, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            Statuses.Add(ManagedTaskStatus.Queued);
+            return Task.FromResult(Guid.NewGuid());
+        }
+
+        public Task UpdateProgressAsync(Guid taskId, double progress, ManagedTaskStatus status, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            Statuses.Add(status);
+            return Task.CompletedTask;
+        }
+
+        public Task CompleteAsync(Guid taskId, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            Statuses.Add(ManagedTaskStatus.Completed);
+            return Task.CompletedTask;
+        }
+
+        public Task FailAsync(Guid taskId, string errorMessage, CancellationToken cancellationToken)
+        {
+            Statuses.Add(ManagedTaskStatus.Failed);
+            return Task.CompletedTask;
+        }
+
+        public Task PauseAsync(Guid taskId, CancellationToken cancellationToken) => Task.CompletedTask;
+
+        public Task ResumeAsync(Guid taskId, CancellationToken cancellationToken) => Task.CompletedTask;
+
+        public Task CancelAsync(Guid taskId, CancellationToken cancellationToken)
+        {
+            Statuses.Add(ManagedTaskStatus.Cancelled);
+            return Task.CompletedTask;
+        }
+
+        public Task<IReadOnlyList<TaskInfo>> GetActiveTasksAsync(CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<TaskInfo>>([]);
+
+        public Task<IReadOnlyList<TaskInfo>> GetHistoryAsync(CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<TaskInfo>>([]);
+    }
+
+    private sealed class FakeNotificationService : INotificationService
+    {
+        public Task PublishAsync(NotificationMessage message, CancellationToken cancellationToken) => Task.CompletedTask;
+
+        public Task DismissAsync(Guid notificationId, CancellationToken cancellationToken) => Task.CompletedTask;
+
+        public Task<IReadOnlyList<NotificationMessage>> GetHistoryAsync(CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<NotificationMessage>>([]);
+
+        public Task ClearHistoryAsync(CancellationToken cancellationToken) => Task.CompletedTask;
     }
 }

@@ -41,6 +41,7 @@ public sealed class BatchCoverDownloadServiceTests
         notifications.Messages.Should().ContainSingle(message => message.Type == NotificationType.Success);
         progress.Should().Contain(item => item.CurrentGameId == "RMCP01");
         coverDownload.Requests.Should().HaveCount(2);
+        tasks.Statuses.Should().Contain(ManagedTaskStatus.Completed);
     }
 
     [Fact]
@@ -134,17 +135,42 @@ public sealed class BatchCoverDownloadServiceTests
     {
         public List<TaskRequest> Requests { get; } = [];
 
+        public List<ManagedTaskStatus> Statuses { get; } = [];
+
         public Task<Guid> EnqueueAsync(TaskRequest request, CancellationToken cancellationToken)
         {
             Requests.Add(request);
+            Statuses.Add(ManagedTaskStatus.Queued);
             return Task.FromResult(Guid.NewGuid());
+        }
+
+        public Task UpdateProgressAsync(Guid taskId, double progress, ManagedTaskStatus status, CancellationToken cancellationToken)
+        {
+            Statuses.Add(status);
+            return Task.CompletedTask;
+        }
+
+        public Task CompleteAsync(Guid taskId, CancellationToken cancellationToken)
+        {
+            Statuses.Add(ManagedTaskStatus.Completed);
+            return Task.CompletedTask;
+        }
+
+        public Task FailAsync(Guid taskId, string errorMessage, CancellationToken cancellationToken)
+        {
+            Statuses.Add(ManagedTaskStatus.Failed);
+            return Task.CompletedTask;
         }
 
         public Task PauseAsync(Guid taskId, CancellationToken cancellationToken) => Task.CompletedTask;
 
         public Task ResumeAsync(Guid taskId, CancellationToken cancellationToken) => Task.CompletedTask;
 
-        public Task CancelAsync(Guid taskId, CancellationToken cancellationToken) => Task.CompletedTask;
+        public Task CancelAsync(Guid taskId, CancellationToken cancellationToken)
+        {
+            Statuses.Add(ManagedTaskStatus.Cancelled);
+            return Task.CompletedTask;
+        }
 
         public Task<IReadOnlyList<TaskInfo>> GetActiveTasksAsync(CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<TaskInfo>>([]);
 

@@ -102,13 +102,17 @@ public sealed class GameTdbUpdateServiceTests
         IGameTdbUpdateSource source,
         IGameTdbUpdateStateStore stateStore,
         IMetadataCacheService? metadataCache = null,
-        IAssetManager? assetManager = null)
+        IAssetManager? assetManager = null,
+        FakeNotificationService? notificationService = null,
+        FakeTaskManager? taskManager = null)
     {
         return new GameTdbUpdateService(
             source,
             stateStore,
             metadataCache ?? new FakeMetadataCache(),
-            assetManager ?? new FakeAssetManager());
+            assetManager ?? new FakeAssetManager(),
+            notificationService ?? new FakeNotificationService(),
+            taskManager ?? new FakeTaskManager());
     }
 
     private static GameTdbUpdateInfo CreateInfo(string version, string? checksum = null)
@@ -178,6 +182,81 @@ public sealed class GameTdbUpdateServiceTests
 
             return Task.CompletedTask;
         }
+    }
+
+    private sealed class FakeNotificationService : INotificationService
+    {
+        public List<NotificationMessage> Messages { get; } = [];
+
+        public Task PublishAsync(NotificationMessage message, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            Messages.Add(message);
+            return Task.CompletedTask;
+        }
+
+        public Task DismissAsync(Guid notificationId, CancellationToken cancellationToken) => Task.CompletedTask;
+
+        public Task<IReadOnlyList<NotificationMessage>> GetHistoryAsync(CancellationToken cancellationToken)
+        {
+            return Task.FromResult<IReadOnlyList<NotificationMessage>>(Messages);
+        }
+
+        public Task ClearHistoryAsync(CancellationToken cancellationToken)
+        {
+            Messages.Clear();
+            return Task.CompletedTask;
+        }
+    }
+
+    private sealed class FakeTaskManager : ITaskManager
+    {
+        public List<TaskRequest> Requests { get; } = [];
+
+        public List<ManagedTaskStatus> Statuses { get; } = [];
+
+        public Task<Guid> EnqueueAsync(TaskRequest request, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            Requests.Add(request);
+            Statuses.Add(ManagedTaskStatus.Queued);
+            return Task.FromResult(Guid.NewGuid());
+        }
+
+        public Task UpdateProgressAsync(Guid taskId, double progress, ManagedTaskStatus status, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            Statuses.Add(status);
+            return Task.CompletedTask;
+        }
+
+        public Task CompleteAsync(Guid taskId, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            Statuses.Add(ManagedTaskStatus.Completed);
+            return Task.CompletedTask;
+        }
+
+        public Task FailAsync(Guid taskId, string errorMessage, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            Statuses.Add(ManagedTaskStatus.Failed);
+            return Task.CompletedTask;
+        }
+
+        public Task PauseAsync(Guid taskId, CancellationToken cancellationToken) => Task.CompletedTask;
+
+        public Task ResumeAsync(Guid taskId, CancellationToken cancellationToken) => Task.CompletedTask;
+
+        public Task CancelAsync(Guid taskId, CancellationToken cancellationToken)
+        {
+            Statuses.Add(ManagedTaskStatus.Cancelled);
+            return Task.CompletedTask;
+        }
+
+        public Task<IReadOnlyList<TaskInfo>> GetActiveTasksAsync(CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<TaskInfo>>([]);
+
+        public Task<IReadOnlyList<TaskInfo>> GetHistoryAsync(CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<TaskInfo>>([]);
     }
 
     private sealed class FakeMetadataCache : IMetadataCacheService
