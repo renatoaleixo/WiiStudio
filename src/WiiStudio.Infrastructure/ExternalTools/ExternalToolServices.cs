@@ -197,6 +197,13 @@ public sealed class ZipArchiveExtractor : IArchiveExtractor
 
 public sealed class ExternalToolDownloader : IExternalToolDownloader
 {
+    private readonly IExternalToolNetworkDownloader? networkDownloader;
+
+    public ExternalToolDownloader(IExternalToolNetworkDownloader? networkDownloader = null)
+    {
+        this.networkDownloader = networkDownloader;
+    }
+
     public Task<DownloadedToolPackage> DownloadAsync(
         ExternalToolPackageSource source,
         CancellationToken cancellationToken = default)
@@ -219,7 +226,153 @@ public sealed class ExternalToolDownloader : IExternalToolDownloader
             throw new InvalidOperationException("Automatic download is disabled for this tool package.");
         }
 
-        throw new NotSupportedException("Network downloads are not implemented in the default pipeline.");
+        if (networkDownloader is null)
+        {
+            throw new NotSupportedException("Network downloads are not configured in the default pipeline.");
+        }
+
+        return networkDownloader.DownloadAsync(source, progress: null, cancellationToken);
+    }
+}
+
+public sealed class ExternalToolNetworkDownloader : IExternalToolNetworkDownloader
+{
+    private readonly HttpClient httpClient;
+    private readonly IChecksumValidator checksumValidator;
+    private readonly ExternalToolOptions options;
+
+    public ExternalToolNetworkDownloader(
+        HttpClient httpClient,
+        IChecksumValidator checksumValidator,
+        ExternalToolOptions options)
+    {
+        this.httpClient = httpClient;
+        this.checksumValidator = checksumValidator;
+        this.options = options;
+    }
+
+    public async Task<DownloadedToolPackage> DownloadAsync(
+        ExternalToolPackageSource source,
+        IProgress<ExternalToolDownloadProgress>? progress = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(source);
+        ValidateSource(source);
+        Directory.CreateDirectory(options.TemporaryDirectory);
+
+        using var timeoutSource = new CancellationTokenSource(TimeSpan.FromSeconds(options.DownloadTimeoutSeconds));
+        using var linkedSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutSource.Token);
+        var uri = new Uri(source.DownloadUrl);
+        var fileName = Path.GetFileName(uri.LocalPath);
+        if (string.IsNullOrWhiteSpace(fileName))
+        {
+            fileName = $"{source.SourceName}-{source.Version}.zip";
+        }
+
+        var targetPath = Path.Combine(options.TemporaryDirectory, $"{Guid.NewGuid():N}-{fileName}");
+        try
+        {
+            progress?.Report(new ExternalToolDownloadProgress(null, 0, null, "externalTools.download.starting", ExternalToolDownloadState.Downloading));
+            using var response = await httpClient.GetAsync(uri, HttpCompletionOption.ResponseHeadersRead, linkedSource.Token);
+            response.EnsureSuccessStatusCode();
+
+            if (response.RequestMessage?.RequestUri is { } finalUri
+                && !string.Equals(finalUri.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException("externalTools.download.redirectInsecure");
+            }
+
+            var totalBytes = response.Content.Headers.ContentLength;
+            if (totalBytes > options.MaxDownloadBytes)
+            {
+                throw new InvalidOperationException("externalTools.download.tooLarge");
+            }
+
+            long downloaded = 0;
+            await using (var sourceStream = await response.Content.ReadAsStreamAsync(linkedSource.Token))
+            await using (var targetStream = File.Create(targetPath))
+            {
+                var buffer = new byte[81920];
+                while (true)
+                {
+                    var read = await sourceStream.ReadAsync(buffer.AsMemory(0, buffer.Length), linkedSource.Token);
+                    if (read == 0)
+                    {
+                        break;
+                    }
+
+                    downloaded += read;
+                    if (downloaded > options.MaxDownloadBytes)
+                    {
+                        throw new InvalidOperationException("externalTools.download.tooLarge");
+                    }
+
+                    await targetStream.WriteAsync(buffer.AsMemory(0, read), linkedSource.Token);
+                    double? percentage = totalBytes is > 0 ? downloaded * 100d / totalBytes.Value : null;
+                    progress?.Report(new ExternalToolDownloadProgress(totalBytes, downloaded, percentage, "externalTools.download.downloading", ExternalToolDownloadState.Downloading));
+                }
+            }
+
+            progress?.Report(new ExternalToolDownloadProgress(totalBytes, downloaded, 100, "externalTools.download.validatingChecksum", ExternalToolDownloadState.ValidatingChecksum));
+            var checksum = await checksumValidator.ValidateSha256Async(targetPath, source.Sha256, linkedSource.Token);
+            if (!checksum.Success)
+            {
+                DeletePartial(targetPath);
+                progress?.Report(new ExternalToolDownloadProgress(totalBytes, downloaded, 100, "externalTools.download.checksumInvalid", ExternalToolDownloadState.ChecksumInvalid));
+                throw new InvalidOperationException("externalTools.download.checksumInvalid");
+            }
+
+            progress?.Report(new ExternalToolDownloadProgress(totalBytes, downloaded, 100, "externalTools.download.completed", ExternalToolDownloadState.ChecksumValid));
+            return new DownloadedToolPackage(targetPath, source);
+        }
+        catch (OperationCanceledException)
+        {
+            DeletePartial(targetPath);
+            progress?.Report(new ExternalToolDownloadProgress(null, 0, null, "externalTools.download.cancelled", ExternalToolDownloadState.Cancelled));
+            throw;
+        }
+        catch
+        {
+            DeletePartial(targetPath);
+            throw;
+        }
+    }
+
+    private static void ValidateSource(ExternalToolPackageSource source)
+    {
+        if (!source.AutoDownloadEnabled)
+        {
+            throw new InvalidOperationException("externalTools.download.disabled");
+        }
+
+        if (!source.IsTrusted)
+        {
+            throw new InvalidOperationException("externalTools.download.untrustedSource");
+        }
+
+        if (string.IsNullOrWhiteSpace(source.Sha256))
+        {
+            throw new InvalidOperationException("externalTools.download.checksumRequired");
+        }
+
+        if (!Uri.TryCreate(source.DownloadUrl, UriKind.Absolute, out var uri)
+            || !string.Equals(uri.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException("externalTools.download.httpsRequired");
+        }
+
+        if (string.IsNullOrWhiteSpace(source.Version))
+        {
+            throw new InvalidOperationException("externalTools.download.versionRequired");
+        }
+    }
+
+    private static void DeletePartial(string path)
+    {
+        if (File.Exists(path))
+        {
+            File.Delete(path);
+        }
     }
 }
 

@@ -36,6 +36,14 @@ public interface IExternalToolDownloader
         CancellationToken cancellationToken = default);
 }
 
+public interface IExternalToolNetworkDownloader
+{
+    Task<DownloadedToolPackage> DownloadAsync(
+        ExternalToolPackageSource source,
+        IProgress<ExternalToolDownloadProgress>? progress = null,
+        CancellationToken cancellationToken = default);
+}
+
 public interface IChecksumValidator
 {
     Task<ChecksumValidationResult> ValidateSha256Async(
@@ -68,6 +76,20 @@ public enum ExternalToolState
     Offline
 }
 
+public enum ExternalToolDownloadState
+{
+    Pending,
+    Confirming,
+    Downloading,
+    Downloaded,
+    ValidatingChecksum,
+    ChecksumValid,
+    ChecksumInvalid,
+    Cancelled,
+    Failed,
+    Offline
+}
+
 public sealed record ExternalToolDefinition(
     string ToolId,
     string DisplayName,
@@ -96,6 +118,13 @@ public sealed record ExternalToolPackageSource(
     bool IsTrusted,
     bool AutoDownloadEnabled,
     string? LocalPackagePath = null);
+
+public sealed record ExternalToolDownloadProgress(
+    long? TotalBytes,
+    long DownloadedBytes,
+    double? Percentage,
+    string? CurrentStatusKey,
+    ExternalToolDownloadState State = ExternalToolDownloadState.Pending);
 
 public sealed record ExternalToolLocationResult(
     bool Found,

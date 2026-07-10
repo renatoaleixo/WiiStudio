@@ -14,8 +14,8 @@ public sealed class SystemProcessExecutor : IProcessExecutor
 
         process.Start();
 
-        var standardOutputTask = process.StandardOutput.ReadToEndAsync(linkedSource.Token);
-        var standardErrorTask = process.StandardError.ReadToEndAsync(linkedSource.Token);
+        var standardOutputTask = ReadToEndAsync(process.StandardOutput, request.OnStandardOutputLine, linkedSource.Token);
+        var standardErrorTask = ReadToEndAsync(process.StandardError, request.OnStandardErrorLine, linkedSource.Token);
 
         try
         {
@@ -34,6 +34,26 @@ public sealed class SystemProcessExecutor : IProcessExecutor
             await standardOutputTask,
             await standardErrorTask,
             stopwatch.Elapsed);
+    }
+
+    private static async Task<string> ReadToEndAsync(
+        StreamReader reader,
+        Action<string>? onLine,
+        CancellationToken cancellationToken)
+    {
+        if (onLine is null)
+        {
+            return await reader.ReadToEndAsync(cancellationToken);
+        }
+
+        var builder = new System.Text.StringBuilder();
+        while (await reader.ReadLineAsync(cancellationToken) is { } line)
+        {
+            builder.AppendLine(line);
+            onLine(line);
+        }
+
+        return builder.ToString();
     }
 
     private static Process CreateProcess(ProcessRequest request)

@@ -116,6 +116,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IProcessExecutor, SystemProcessExecutor>();
         services.AddSingleton<IExternalToolDefinitionProvider, ExternalToolDefinitionProvider>();
         services.AddSingleton<IExternalToolLocator, ExternalToolLocator>();
+        services.AddSingleton<IExternalToolNetworkDownloader, ExternalToolNetworkDownloader>();
         services.AddSingleton<IExternalToolDownloader, ExternalToolDownloader>();
         services.AddSingleton<IChecksumValidator, ChecksumValidator>();
         services.AddSingleton<IArchiveExtractor, ZipArchiveExtractor>();
@@ -143,6 +144,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IGameTdbUpdateSource, NullGameTdbUpdateSource>();
         services.AddSingleton<IGameTdbUpdateStateStore, JsonGameTdbUpdateStateStore>();
         services.AddSingleton<IWiimmsToolLocator, WiimmsToolLocator>();
+        services.AddSingleton<IWiimmsProgressParser, WiimmsProgressParser>();
         services.AddSingleton<IOperatingSystemInfo, OperatingSystemInfo>();
         services.AddSingleton<IPolkitPolicyLocator, PolkitPolicyLocator>();
         services.AddSingleton<IPolkitPolicyValidator, PolkitPolicyValidator>();

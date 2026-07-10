@@ -16,17 +16,20 @@ public sealed class WwtService : IWwtService
     private readonly IWiimmsToolLocator _toolLocator;
     private readonly ILogger<WwtService> _logger;
     private readonly IPrivilegedAccessService? _privilegedAccessService;
+    private readonly IWiimmsProgressParser? _progressParser;
 
     public WwtService(
         IProcessRunner processRunner,
         IWiimmsToolLocator toolLocator,
         ILogger<WwtService> logger,
-        IPrivilegedAccessService? privilegedAccessService = null)
+        IPrivilegedAccessService? privilegedAccessService = null,
+        IWiimmsProgressParser? progressParser = null)
     {
         _processRunner = processRunner;
         _toolLocator = toolLocator;
         _logger = logger;
         _privilegedAccessService = privilegedAccessService;
+        _progressParser = progressParser;
     }
 
     public async Task<IReadOnlyList<Game>> ListGamesAsync(UsbDrive drive, CancellationToken cancellationToken)
@@ -69,7 +72,9 @@ public sealed class WwtService : IWwtService
                 "--update",
                 "--progress"
             ],
-            DefaultTimeout);
+            DefaultTimeout,
+            TrackWiimmsOutput,
+            TrackWiimmsOutput);
 
         await RunOrThrowAsync(request, "wwt add", cancellationToken);
         _logger.LogInformation("Added game source {SourcePath} to USB drive {DriveId}", sourcePath, drive.Id);
@@ -171,6 +176,22 @@ public sealed class WwtService : IWwtService
         {
             return new ProcessResult(124, string.Empty, exception.Message, request.Timeout);
         }
+    }
+
+    private void TrackWiimmsOutput(string line)
+    {
+        if (_progressParser?.TryParse(line, out var progress) != true)
+        {
+            return;
+        }
+
+        var progressText = progress.Percentage is null
+            ? "indeterminate"
+            : $"{progress.Percentage:0.#}%";
+        _logger.LogInformation(
+            "Wiimms progress {Progress}: {Operation}",
+            progressText,
+            progress.CurrentOperation ?? progress.CurrentFile ?? "running");
     }
 
     private static bool HasPermissionDenied(ProcessResult result)
