@@ -171,6 +171,25 @@ design system, application shell, plugin SDK, segurança, testes e documentaçã
 # EP014 - External Tools
 
 - `F101-ExternalToolDependencyManager.md`
+- `F102-GameTdbCoverProvider.md`
+- `F103-GameTDBMetadataProvider.md`
+- `F104-CoverAssetGalleryAndBatchSelection.md`
+- `F105-CrossPlatformPrivilegedDeviceAccess.md`
+- `F106-PolkitPolicyInstaller.md`
+- `F107-CrossPlatformUsbDeviceProvider.md`
+- `F108-ExternalToolNetworkDownloader.md`
+- `F109-WiimmsOperationProgress.md`
+- `F110-SafeUsbWriteWorkflow.md`
+- `F111-GameTdbUpdateSource.md`
+- `F112-ApplicationUpdateProvider.md`
+- `F113-TaskAndNotificationCenterIntegration.md`
+- `F114-LibraryPersistenceWithSQLite.md`
+- `F115-AdvancedGameDetailsPanel.md`
+- `F116-CoverAssetBulkActions.md`
+- `F117-PluginMarketplaceUI.md`
+- `F118-DiagnosticsRepairActions.md`
+- `F119-FirstRunSetupWizard.md`
+- `F120-EndToEndWiiUsbReadinessCheck.md`
 - `EXTERNAL_TOOLS_REFERENCE.md`
 
 ---
