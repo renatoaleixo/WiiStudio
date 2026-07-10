@@ -65,6 +65,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IDiagnosticsRepairService, DiagnosticsRepairService>();
         services.AddSingleton<IFirstRunSetupService, FirstRunSetupService>();
         services.AddSingleton<IWiiUsbReadinessService, WiiUsbReadinessService>();
+        services.AddSingleton<IReleaseValidationService, ReleaseValidationService>();
         services.AddSingleton<IApplicationUpdateService, ApplicationUpdateService>();
         services.AddSingleton<IBackupService, ZipBackupService>();
         services.AddSingleton<ILoggingCenter, JsonLineLoggingCenter>();
