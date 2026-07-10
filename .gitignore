@@ -24,6 +24,7 @@ coverage/
 # Avalonia / desktop app local files
 *.log
 logs/
+exports/
 
 # OS files
 .DS_Store

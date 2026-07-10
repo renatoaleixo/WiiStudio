@@ -131,11 +131,27 @@ public sealed class DiagnosticsRepairService : IDiagnosticsRepairService
     {
         return actionId switch
         {
-            InstallPolkitPolicyAction => (await _polkitPolicyInstaller.InstallAsync(cancellationToken)).State.ToString(),
+            InstallPolkitPolicyAction => CreatePolkitInstallMessage(await _polkitPolicyInstaller.InstallAsync(cancellationToken)),
             ValidateExternalToolsAction => $"Ferramentas verificadas: {(await _externalToolManager.CheckAllAsync(cancellationToken)).Count}.",
             UpdateGameTdbAction => (await _gameTdbUpdateService.UpdateAsync(new GameTdbUpdateOptions(Force: true), cancellationToken)).Message,
             _ => throw new InvalidOperationException($"Ação de reparo desconhecida: {actionId}.")
         };
+    }
+
+    private static string CreatePolkitInstallMessage(PolkitPolicyInstallResult result)
+    {
+        if (result.Success)
+        {
+            return result.MessageKey ?? result.State.ToString();
+        }
+
+        var message = result.MessageKey ?? "Falha ao instalar a policy Polkit.";
+        if (!string.IsNullOrWhiteSpace(result.DiagnosticDetails))
+        {
+            message = $"{message} {result.DiagnosticDetails}";
+        }
+
+        throw new InvalidOperationException(message);
     }
 
     private static DiagnosticRepairAction GetCatalogAction(string actionId)

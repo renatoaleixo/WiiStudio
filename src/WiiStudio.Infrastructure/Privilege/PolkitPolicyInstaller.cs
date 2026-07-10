@@ -7,6 +7,21 @@ namespace WiiStudio.Infrastructure.Privilege;
 public sealed class PolkitPolicyInstaller : IPolkitPolicyInstaller
 {
     private static readonly TimeSpan InstallTimeout = TimeSpan.FromMinutes(2);
+    private const string OfficialPolicyXml = """
+        <?xml version="1.0" encoding="UTF-8"?>
+        <policyconfig>
+          <vendor>WiiStudio</vendor>
+          <action id="com.wiistudio.device.raw-access">
+            <description>Allow WiiStudio to access Wii USB/WBFS devices</description>
+            <message>Authentication is required to access Wii USB/WBFS devices</message>
+            <defaults>
+              <allow_any>auth_admin</allow_any>
+              <allow_inactive>auth_admin</allow_inactive>
+              <allow_active>auth_admin_keep</allow_active>
+            </defaults>
+          </action>
+        </policyconfig>
+        """;
 
     private readonly IOperatingSystemInfo _operatingSystemInfo;
     private readonly IPolkitPolicyLocator _policyLocator;
@@ -75,19 +90,10 @@ public sealed class PolkitPolicyInstaller : IPolkitPolicyInstaller
             return Result(PolkitPolicyInstallState.PkexecMissing, success: false, status.MessageKey, status.RecommendedActionKey, status.DiagnosticDetails);
         }
 
-        if (!File.Exists(PolkitPolicyConstants.InstallerPath))
-        {
-            return Result(
-                PolkitPolicyInstallState.InstallRequiresAuthorization,
-                success: false,
-                "O instalador privilegiado da policy não está disponível.",
-                $"Instale o pacote oficial do WiiStudio ou copie manualmente a policy para {_policyLocator.ExpectedPolicyPath}.",
-                $"Missing installer: {PolkitPolicyConstants.InstallerPath}");
-        }
+        var process = File.Exists(PolkitPolicyConstants.InstallerPath)
+            ? await RunPackagedInstallerAsync(pkexecPath, cancellationToken)
+            : await RunInlinePolicyInstallAsync(pkexecPath, cancellationToken);
 
-        var process = await _processRunner.RunAsync(
-            new ProcessRequest(pkexecPath, [PolkitPolicyConstants.InstallerPath, PolkitPolicyConstants.InstallCommand], InstallTimeout),
-            cancellationToken);
         if (!process.IsSuccess)
         {
             return Result(
@@ -107,6 +113,59 @@ public sealed class PolkitPolicyInstaller : IPolkitPolicyInstaller
     public Task<PolkitPolicyValidationResult> ValidateInstalledPolicyAsync(CancellationToken cancellationToken = default)
     {
         return _policyValidator.ValidateInstalledPolicyAsync(_policyLocator.ExpectedPolicyPath, cancellationToken);
+    }
+
+    private Task<ProcessResult> RunPackagedInstallerAsync(string pkexecPath, CancellationToken cancellationToken)
+    {
+        return _processRunner.RunAsync(
+            new ProcessRequest(pkexecPath, [PolkitPolicyConstants.InstallerPath, PolkitPolicyConstants.InstallCommand], InstallTimeout),
+            cancellationToken);
+    }
+
+    private async Task<ProcessResult> RunInlinePolicyInstallAsync(string pkexecPath, CancellationToken cancellationToken)
+    {
+        var installPath = FindExecutable("install")
+            ?? throw new FileNotFoundException("The install command was not found in PATH.", "install");
+        var tempDirectory = Path.Combine(Path.GetTempPath(), $"wiistudio-polkit-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(tempDirectory);
+        var sourcePolicy = Path.Combine(tempDirectory, Path.GetFileName(_policyLocator.ExpectedPolicyPath));
+        try
+        {
+            await File.WriteAllTextAsync(sourcePolicy, OfficialPolicyXml, cancellationToken);
+            var sourceValidation = await _policyValidator.ValidateSourcePolicyAsync(sourcePolicy, cancellationToken);
+            if (!sourceValidation.IsValid)
+            {
+                return new ProcessResult(
+                    125,
+                    string.Empty,
+                    $"Generated policy failed validation: {string.Join("; ", sourceValidation.Errors)}",
+                    TimeSpan.Zero);
+            }
+
+            return await _processRunner.RunAsync(
+                new ProcessRequest(
+                    pkexecPath,
+                    [
+                        installPath,
+                        "-o",
+                        "root",
+                        "-g",
+                        "root",
+                        "-m",
+                        "0644",
+                        sourcePolicy,
+                        _policyLocator.ExpectedPolicyPath
+                    ],
+                    InstallTimeout),
+                cancellationToken);
+        }
+        finally
+        {
+            if (Directory.Exists(tempDirectory))
+            {
+                Directory.Delete(tempDirectory, recursive: true);
+            }
+        }
     }
 
     private PolkitPolicyInstallStatus Status(
