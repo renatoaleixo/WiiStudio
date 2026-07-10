@@ -62,6 +62,9 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<ICoverAssetBulkActionService, CoverAssetBulkActionService>();
         services.AddSingleton<IMetadataSynchronizationService, MetadataSynchronizationService>();
         services.AddSingleton<IGameTdbUpdateService, GameTdbUpdateService>();
+        services.AddSingleton<IDiagnosticsRepairService, DiagnosticsRepairService>();
+        services.AddSingleton<IFirstRunSetupService, FirstRunSetupService>();
+        services.AddSingleton<IWiiUsbReadinessService, WiiUsbReadinessService>();
         services.AddSingleton<IApplicationUpdateService, ApplicationUpdateService>();
         services.AddSingleton<IBackupService, ZipBackupService>();
         services.AddSingleton<ILoggingCenter, JsonLineLoggingCenter>();

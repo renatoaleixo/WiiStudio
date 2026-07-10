@@ -4,7 +4,7 @@ namespace WiiStudio.App.ViewModels;
 
 public sealed class DiagnosticsCheckItemViewModel
 {
-    public DiagnosticsCheckItemViewModel(DiagnosticsCheckResult check)
+    public DiagnosticsCheckItemViewModel(DiagnosticsCheckResult check, DiagnosticRepairAction? repairAction = null)
     {
         Name = check.Name;
         Status = check.Status.ToString();
@@ -12,6 +12,8 @@ public sealed class DiagnosticsCheckItemViewModel
         Severity = check.Severity.ToString();
         Message = check.Message;
         Detail = string.IsNullOrWhiteSpace(check.Version) ? check.Message : check.Version;
+        RepairActionId = repairAction?.ActionId;
+        RepairActionTitle = repairAction?.Title ?? "Corrigir";
     }
 
     public string Name { get; }
@@ -25,4 +27,10 @@ public sealed class DiagnosticsCheckItemViewModel
     public string Message { get; }
 
     public string Detail { get; }
+
+    public string? RepairActionId { get; }
+
+    public string RepairActionTitle { get; }
+
+    public bool HasRepairAction => !string.IsNullOrWhiteSpace(RepairActionId);
 }

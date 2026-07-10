@@ -35,4 +35,8 @@ public sealed class Settings
     public string? CoverCachePath { get; init; }
 
     public string? MetadataCachePath { get; init; }
+
+    public bool FirstRunCompleted { get; init; }
+
+    public DateTimeOffset? FirstRunCompletedAt { get; init; }
 }

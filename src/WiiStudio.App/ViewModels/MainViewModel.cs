@@ -28,6 +28,7 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly IDashboardService _dashboardService;
     private readonly IDeviceManagerService _deviceManagerService;
     private readonly IDiagnosticsService _diagnosticsService;
+    private readonly IDiagnosticsRepairService _diagnosticsRepairService;
     private readonly IDockService _dockService;
     private readonly IExportGameService _exportGameService;
     private readonly IImportWizardService _importWizardService;
@@ -44,6 +45,8 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly ISettingsService _settingsService;
     private readonly IStatusBarService _statusBarService;
     private readonly IThemeService _themeService;
+    private readonly IFirstRunSetupService _firstRunSetupService;
+    private readonly IWiiUsbReadinessService _wiiUsbReadinessService;
     private Guid? _activeLibraryDriveId;
     private CancellationTokenSource? _coverBatchCancellation;
     private bool _isApplyingDeviceSnapshot;
@@ -223,6 +226,7 @@ public sealed partial class MainViewModel : ObservableObject
         IDashboardService dashboardService,
         IDeviceManagerService deviceManagerService,
         IDiagnosticsService diagnosticsService,
+        IDiagnosticsRepairService diagnosticsRepairService,
         IDockService dockService,
         IExportGameService exportGameService,
         IImportWizardService importWizardService,
@@ -239,7 +243,9 @@ public sealed partial class MainViewModel : ObservableObject
         ISettingsService settingsService,
         IStatusBarService statusBarService,
         ShellCommandExecutor shellCommandExecutor,
-        IThemeService themeService)
+        IThemeService themeService,
+        IFirstRunSetupService firstRunSetupService,
+        IWiiUsbReadinessService wiiUsbReadinessService)
     {
         _commandPaletteService = commandPaletteService;
         _batchCoverDownloadService = batchCoverDownloadService;
@@ -251,6 +257,7 @@ public sealed partial class MainViewModel : ObservableObject
         _dashboardService = dashboardService;
         _deviceManagerService = deviceManagerService;
         _diagnosticsService = diagnosticsService;
+        _diagnosticsRepairService = diagnosticsRepairService;
         _dockService = dockService;
         _exportGameService = exportGameService;
         _importWizardService = importWizardService;
@@ -267,6 +274,8 @@ public sealed partial class MainViewModel : ObservableObject
         _settingsService = settingsService;
         _statusBarService = statusBarService;
         _themeService = themeService;
+        _firstRunSetupService = firstRunSetupService;
+        _wiiUsbReadinessService = wiiUsbReadinessService;
         shellCommandExecutor.SetHandler(HandleShellCommandAsync);
 
         foreach (var module in _mainWindowService.Modules)
@@ -447,6 +456,13 @@ public sealed partial class MainViewModel : ObservableObject
         await RefreshDockLayoutsAsync(cancellationToken);
         await RefreshThemesAsync(cancellationToken);
         await RefreshStatusBarAsync(cancellationToken);
+
+        var firstRun = await _firstRunSetupService.GetStatusAsync(cancellationToken);
+        if (!firstRun.IsCompleted)
+        {
+            SelectedModule = Modules.FirstOrDefault(module => module.Id == ShellModuleId.Settings) ?? SelectedModule;
+            StatusMessage = "Primeira execução detectada. Use o Assistente inicial em Configurações para preparar o WiiStudio.";
+        }
     }
 
     public async Task SetSelectedLibraryItemsAsync(IReadOnlyList<LibraryGameItem> selectedItems, CancellationToken cancellationToken)
@@ -857,7 +873,7 @@ public sealed partial class MainViewModel : ObservableObject
         try
         {
             var report = await _diagnosticsService.RunAsync(cancellationToken);
-            ApplyDiagnosticsReport(report);
+            await ApplyDiagnosticsReportAsync(report, cancellationToken);
             var unhealthyCount = report.Checks.Count(check => check.Status == DiagnosticsStatus.Unhealthy);
             var warningCount = report.Checks.Count(check => check.Status == DiagnosticsStatus.Warning);
             DiagnosticsSummary = report.IsHealthy
@@ -870,6 +886,84 @@ public sealed partial class MainViewModel : ObservableObject
         {
             IsBusy = false;
         }
+    }
+
+    [RelayCommand]
+    private async Task RepairDiagnosticAsync(DiagnosticsCheckItemViewModel? item, CancellationToken cancellationToken)
+    {
+        if (item is null || string.IsNullOrWhiteSpace(item.RepairActionId))
+        {
+            StatusMessage = "Nenhuma ação de reparo disponível para este item.";
+            return;
+        }
+
+        IsBusy = true;
+        StatusMessage = $"Executando reparo: {item.RepairActionTitle}...";
+        try
+        {
+            var result = await _diagnosticsRepairService.ExecuteAsync(
+                new DiagnosticRepairRequest(item.RepairActionId, UserConfirmed: true),
+                cancellationToken);
+            if (result.RefreshedReport is not null)
+            {
+                await ApplyDiagnosticsReportAsync(result.RefreshedReport, cancellationToken);
+            }
+
+            StatusMessage = result.Message;
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task RunWiiUsbReadinessCheckAsync(CancellationToken cancellationToken)
+    {
+        if (SelectedImportDrive is null)
+        {
+            StatusMessage = "Selecione um dispositivo USB para verificar.";
+            return;
+        }
+
+        IsBusy = true;
+        StatusMessage = "Verificando se o HD USB está pronto para Wii...";
+        try
+        {
+            var result = await _wiiUsbReadinessService.CheckAsync(SelectedImportDrive.Id, cancellationToken);
+            DiagnosticsSummary = $"Wii USB readiness: {result.State}. {result.Items.Count} verificação(ões).";
+            DiagnosticsChecks.Clear();
+            foreach (var item in result.Items)
+            {
+                var status = item.State switch
+                {
+                    ReadinessState.Ready => DiagnosticsStatus.Healthy,
+                    ReadinessState.Warning => DiagnosticsStatus.Warning,
+                    ReadinessState.NotReady => DiagnosticsStatus.Unhealthy,
+                    _ => DiagnosticsStatus.Warning
+                };
+                DiagnosticsChecks.Add(new DiagnosticsCheckItemViewModel(
+                    new DiagnosticsCheckResult(item.CheckId, status, item.Details ?? item.Title, Category: "Wii USB", Severity: status == DiagnosticsStatus.Unhealthy ? DiagnosticsSeverity.Error : DiagnosticsSeverity.Warning),
+                    string.IsNullOrWhiteSpace(item.RepairActionId)
+                        ? null
+                        : new DiagnosticRepairAction(item.RepairActionId, item.RecommendedAction ?? "Corrigir", item.RecommendedAction ?? "Executar reparo sugerido.", RequiresConfirmation: true, IsDestructive: false, DiagnosticRepairRiskLevel.RequiresConfirmation)));
+            }
+
+            StatusMessage = DiagnosticsSummary;
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task CompleteFirstRunSetupAsync(CancellationToken cancellationToken)
+    {
+        var result = await _firstRunSetupService.CompleteAsync(
+            new FirstRunSetupRequest("pt-BR", "System", null, null, UserConfirmedDownloads: false),
+            cancellationToken);
+        StatusMessage = result.Skipped ? "Assistente inicial pulado." : "Assistente inicial concluído.";
     }
 
     [RelayCommand]
@@ -1803,12 +1897,13 @@ public sealed partial class MainViewModel : ObservableObject
         SelectedCommandPaletteItem = CommandPaletteItems.FirstOrDefault();
     }
 
-    private void ApplyDiagnosticsReport(DiagnosticsReport report)
+    private async Task ApplyDiagnosticsReportAsync(DiagnosticsReport report, CancellationToken cancellationToken)
     {
         DiagnosticsChecks.Clear();
         foreach (var check in report.Checks)
         {
-            DiagnosticsChecks.Add(new DiagnosticsCheckItemViewModel(check));
+            var actions = await _diagnosticsRepairService.GetAvailableActionsAsync(check, cancellationToken);
+            DiagnosticsChecks.Add(new DiagnosticsCheckItemViewModel(check, actions.FirstOrDefault()));
         }
     }
 
