@@ -153,6 +153,40 @@ public sealed class PluginSdkTests : IDisposable
         await act.Should().ThrowAsync<InvalidOperationException>();
     }
 
+    [Fact]
+    public async Task Plugin_management_installs_local_directory_without_loading_assembly()
+    {
+        var sourceDirectory = Path.Combine(tempRoot, "source");
+        Directory.CreateDirectory(sourceDirectory);
+        await File.WriteAllTextAsync(Path.Combine(sourceDirectory, "plugin.json"), ValidManifestJson("com.example.install"));
+        var service = CreateManagementService();
+
+        var result = await service.InstallLocalAsync(sourceDirectory);
+
+        result.Success.Should().BeTrue();
+        result.Plugin.Should().NotBeNull();
+        result.Plugin!.Id.Should().Be("com.example.install");
+        result.Plugin.State.Should().Be(PluginDiscoveryState.ReadyForLoad);
+        File.Exists(Path.Combine(tempRoot, "installed", "com.example.install", "plugin.json")).Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task Plugin_management_can_disable_and_enable_plugin()
+    {
+        var installedDirectory = Path.Combine(tempRoot, "installed", "com.example.toggle");
+        Directory.CreateDirectory(installedDirectory);
+        await File.WriteAllTextAsync(Path.Combine(installedDirectory, "plugin.json"), ValidManifestJson("com.example.toggle"));
+        var service = CreateManagementService();
+
+        var disabled = await service.DisableAsync("com.example.toggle");
+        var enabled = await service.EnableAsync("com.example.toggle");
+
+        disabled.Success.Should().BeTrue();
+        enabled.Success.Should().BeTrue();
+        File.Exists(Path.Combine(tempRoot, "installed", "com.example.toggle", "plugin.json")).Should().BeTrue();
+        Directory.Exists(Path.Combine(tempRoot, "disabled", "com.example.toggle")).Should().BeFalse();
+    }
+
     public void Dispose()
     {
         if (Directory.Exists(tempRoot))
@@ -212,6 +246,41 @@ public sealed class PluginSdkTests : IDisposable
           "dependencies": []
         }
         """;
+
+    private IPluginManagementService CreateManagementService()
+    {
+        var options = new PluginHostOptions
+        {
+            InstalledDirectory = Path.Combine(tempRoot, "installed"),
+            DisabledDirectory = Path.Combine(tempRoot, "disabled"),
+            QuarantineDirectory = Path.Combine(tempRoot, "quarantine")
+        };
+        var diagnostics = new PluginDiagnosticService();
+        var registry = new PluginRegistry();
+        var reader = new JsonPluginManifestReader();
+        var validator = new PluginManifestValidator(options);
+        var permissions = new PluginPermissionService();
+        var discovery = new FileSystemPluginDiscoveryService(options, reader, validator, registry, diagnostics);
+        var loader = new PluginLoaderService(
+            options,
+            validator,
+            permissions,
+            registry,
+            diagnostics,
+            new EmptyServiceProvider(),
+            new FileSystemPluginStorage(Path.Combine(tempRoot, "storage")),
+            new NullPluginNotificationService());
+
+        return new FileSystemPluginManagementService(
+            options,
+            discovery,
+            reader,
+            validator,
+            loader,
+            diagnostics,
+            permissions,
+            new DefaultPluginPermissionPolicy());
+    }
 
     private sealed class EmptyServiceProvider : IServiceProvider
     {

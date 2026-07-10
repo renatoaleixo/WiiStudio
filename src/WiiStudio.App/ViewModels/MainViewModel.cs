@@ -40,6 +40,7 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly IMetadataSynchronizationService _metadataSynchronizationService;
     private readonly IPluginDiscoveryService _pluginDiscoveryService;
     private readonly IPluginLoaderService _pluginLoaderService;
+    private readonly IPluginManagementService _pluginManagementService;
     private readonly IPluginRegistry _pluginRegistry;
     private readonly RemoveGameUseCase _removeGameUseCase;
     private readonly ISettingsService _settingsService;
@@ -215,6 +216,15 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private LibraryGameItem? _selectedAssetGame;
 
+    [ObservableProperty]
+    private PluginManagementItemViewModel? _selectedPlugin;
+
+    [ObservableProperty]
+    private string? _pluginInstallPath;
+
+    [ObservableProperty]
+    private string _pluginSummary = "Nenhum plugin carregado.";
+
     public MainViewModel(
         ICommandPaletteService commandPaletteService,
         IBatchCoverDownloadService batchCoverDownloadService,
@@ -238,6 +248,7 @@ public sealed partial class MainViewModel : ObservableObject
         IMetadataSynchronizationService metadataSynchronizationService,
         IPluginDiscoveryService pluginDiscoveryService,
         IPluginLoaderService pluginLoaderService,
+        IPluginManagementService pluginManagementService,
         IPluginRegistry pluginRegistry,
         RemoveGameUseCase removeGameUseCase,
         ISettingsService settingsService,
@@ -269,6 +280,7 @@ public sealed partial class MainViewModel : ObservableObject
         _metadataSynchronizationService = metadataSynchronizationService;
         _pluginDiscoveryService = pluginDiscoveryService;
         _pluginLoaderService = pluginLoaderService;
+        _pluginManagementService = pluginManagementService;
         _pluginRegistry = pluginRegistry;
         _removeGameUseCase = removeGameUseCase;
         _settingsService = settingsService;
@@ -315,6 +327,8 @@ public sealed partial class MainViewModel : ObservableObject
     public ObservableCollection<ConversionPreviewItemViewModel> ConversionPreviewItems { get; } = new();
 
     public ObservableCollection<DiagnosticsCheckItemViewModel> DiagnosticsChecks { get; } = new();
+
+    public ObservableCollection<PluginManagementItemViewModel> Plugins { get; } = new();
 
     public IReadOnlyList<ImportWizardStep> ImportSteps { get; } =
     [
@@ -369,6 +383,8 @@ public sealed partial class MainViewModel : ObservableObject
     public bool IsTasksModuleSelected => IsSelectedModule(ShellModuleId.Tasks);
 
     public bool IsNotificationsModuleSelected => IsSelectedModule(ShellModuleId.Notifications);
+
+    public bool IsPluginsModuleSelected => IsSelectedModule(ShellModuleId.Plugins);
 
     public bool IsSettingsModuleSelected => IsSelectedModule(ShellModuleId.Settings);
 
@@ -1197,11 +1213,8 @@ public sealed partial class MainViewModel : ObservableObject
     [RelayCommand]
     private async Task ManagePluginsAsync(CancellationToken cancellationToken)
     {
-        SelectedModule = Modules.FirstOrDefault(module => module.Id == ShellModuleId.Settings);
-        var descriptors = await _pluginDiscoveryService.DiscoverAsync(cancellationToken);
-        StatusMessage = descriptors.Count == 0
-            ? "Nenhum plugin instalado encontrado."
-            : $"{descriptors.Count} plugin(s) encontrado(s).";
+        SelectedModule = Modules.FirstOrDefault(module => module.Id == ShellModuleId.Plugins);
+        await RefreshPluginsAsync(cancellationToken);
     }
 
     [RelayCommand]
@@ -1231,11 +1244,98 @@ public sealed partial class MainViewModel : ObservableObject
             var loadedCount = results.Count(result => result.Success);
             var failedCount = results.Count - loadedCount;
             StatusMessage = $"Plugins recarregados: {loadedCount} carregado(s), {failedCount} falha(s), {descriptors.Count} descoberto(s).";
+            await RefreshPluginsAsync(cancellationToken);
         }
         finally
         {
             IsBusy = false;
         }
+    }
+
+    [RelayCommand]
+    private async Task RefreshPluginsAsync(CancellationToken cancellationToken)
+    {
+        IsBusy = true;
+        try
+        {
+            var selectedId = SelectedPlugin?.Id;
+            var plugins = await _pluginManagementService.GetInstalledAsync(cancellationToken);
+            Plugins.Clear();
+            foreach (var plugin in plugins)
+            {
+                Plugins.Add(new PluginManagementItemViewModel(plugin));
+            }
+
+            SelectedPlugin = Plugins.FirstOrDefault(plugin => string.Equals(plugin.Id, selectedId, StringComparison.OrdinalIgnoreCase))
+                ?? Plugins.FirstOrDefault();
+            PluginSummary = Plugins.Count == 0
+                ? "Nenhum plugin instalado."
+                : $"{Plugins.Count} plugin(s): {Plugins.Count(plugin => plugin.IsReady)} pronto(s), {Plugins.Count(plugin => plugin.HasIssues)} com atenção.";
+            StatusMessage = PluginSummary;
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task InstallPluginAsync(CancellationToken cancellationToken)
+    {
+        IsBusy = true;
+        try
+        {
+            var result = await _pluginManagementService.InstallLocalAsync(PluginInstallPath ?? string.Empty, cancellationToken);
+            StatusMessage = result.Message;
+            await RefreshPluginsAsync(cancellationToken);
+            if (result.Plugin is not null)
+            {
+                SelectedPlugin = Plugins.FirstOrDefault(plugin => string.Equals(plugin.Id, result.Plugin.Id, StringComparison.OrdinalIgnoreCase));
+            }
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task EnablePluginAsync(PluginManagementItemViewModel? plugin, CancellationToken cancellationToken)
+    {
+        if (plugin is null)
+        {
+            return;
+        }
+
+        var result = await _pluginManagementService.EnableAsync(plugin.Id, cancellationToken);
+        StatusMessage = result.Message;
+        await RefreshPluginsAsync(cancellationToken);
+    }
+
+    [RelayCommand]
+    private async Task DisablePluginAsync(PluginManagementItemViewModel? plugin, CancellationToken cancellationToken)
+    {
+        if (plugin is null)
+        {
+            return;
+        }
+
+        var result = await _pluginManagementService.DisableAsync(plugin.Id, cancellationToken);
+        StatusMessage = result.Message;
+        await RefreshPluginsAsync(cancellationToken);
+    }
+
+    [RelayCommand]
+    private async Task RemovePluginAsync(PluginManagementItemViewModel? plugin, CancellationToken cancellationToken)
+    {
+        if (plugin is null)
+        {
+            return;
+        }
+
+        var result = await _pluginManagementService.RemoveAsync(plugin.Id, cancellationToken);
+        StatusMessage = result.Message;
+        await RefreshPluginsAsync(cancellationToken);
     }
 
     [RelayCommand]
@@ -1607,6 +1707,7 @@ public sealed partial class MainViewModel : ObservableObject
         OnPropertyChanged(nameof(IsAssetsModuleSelected));
         OnPropertyChanged(nameof(IsTasksModuleSelected));
         OnPropertyChanged(nameof(IsNotificationsModuleSelected));
+        OnPropertyChanged(nameof(IsPluginsModuleSelected));
         OnPropertyChanged(nameof(IsSettingsModuleSelected));
         OnPropertyChanged(nameof(IsDiagnosticsModuleSelected));
         OnPropertyChanged(nameof(IsLogsModuleSelected));
@@ -1652,6 +1753,9 @@ public sealed partial class MainViewModel : ObservableObject
                 case ShellModuleId.Notifications:
                     await RefreshStatusBarAsync(CancellationToken.None);
                     StatusMessage = NotificationSummary;
+                    break;
+                case ShellModuleId.Plugins:
+                    await RefreshPluginsAsync(CancellationToken.None);
                     break;
                 case ShellModuleId.Logs:
                     StatusMessage = "Logs recentes aparecem na barra de status e no console da aplicação.";

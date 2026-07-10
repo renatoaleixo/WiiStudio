@@ -110,6 +110,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton(new NotificationStoreOptions());
         services.AddSingleton(new TaskManagerOptions());
         services.AddSingleton(new ApplicationUpdateStateStoreOptions());
+        services.AddSingleton(new ManifestApplicationUpdateProviderOptions());
         services.AddSingleton(new BackupServiceOptions());
         services.AddSingleton(new LoggingCenterOptions());
         services.AddSingleton(new MainWindowStoreOptions());
@@ -141,8 +142,8 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IProfileService, JsonProfileService>();
         services.AddSingleton<INotificationService, JsonNotificationService>();
         services.AddSingleton<ITaskManager, JsonTaskManager>();
-        services.AddSingleton<IApplicationUpdateProvider, NullApplicationUpdateProvider>();
-        services.AddSingleton<IApplicationUpdateInstaller, NullApplicationUpdateInstaller>();
+        services.AddSingleton<IApplicationUpdateProvider, ManifestApplicationUpdateProvider>();
+        services.AddSingleton<IApplicationUpdateInstaller, StagedApplicationUpdateInstaller>();
         services.AddSingleton<IApplicationUpdateStateStore, JsonApplicationUpdateStateStore>();
         services.AddSingleton<ICoverCache, FileSystemCoverCache>();
         services.AddSingleton<IGameTdbCoverUrlBuilder, GameTdbCoverUrlBuilder>();
@@ -200,6 +201,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IPluginNotificationService, NullPluginNotificationService>();
         services.AddSingleton<IPluginDiscoveryService, FileSystemPluginDiscoveryService>();
         services.AddSingleton<IPluginLoaderService, PluginLoaderService>();
+        services.AddSingleton<IPluginManagementService, FileSystemPluginManagementService>();
 
         return services;
     }

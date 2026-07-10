@@ -21,6 +21,7 @@ public sealed class JsonMainWindowService : IMainWindowService
         new(ShellModuleId.Assets, "Capas e Assets", "Capas, banners, disc art e metadados visuais."),
         new(ShellModuleId.Tasks, "Tarefas", "Operações em andamento e histórico."),
         new(ShellModuleId.Notifications, "Notificações", "Avisos, erros e eventos recentes."),
+        new(ShellModuleId.Plugins, "Plugins", "Instalação local, permissões e diagnóstico de plugins."),
         new(ShellModuleId.Settings, "Configurações", "Preferências, perfis e caminhos."),
         new(ShellModuleId.Diagnostics, "Diagnóstico", "Verificações do ambiente e dependências."),
         new(ShellModuleId.Logs, "Logs", "Eventos estruturados e exportação para suporte.")

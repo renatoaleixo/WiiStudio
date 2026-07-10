@@ -1,11 +1,13 @@
 using System.Reflection;
 using System.Runtime.Loader;
+using System.IO.Compression;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using WiiStudio.Plugin.Abstractions;
 using WiiStudio.Plugin.Diagnostics;
+using WiiStudio.Plugin.Security;
 
 namespace WiiStudio.Plugin.Hosting;
 
@@ -41,6 +43,15 @@ public interface IPluginLoaderService
     Task UnloadAsync(string pluginId, CancellationToken cancellationToken = default);
 }
 
+public interface IPluginManagementService
+{
+    Task<IReadOnlyList<PluginManagementItem>> GetInstalledAsync(CancellationToken cancellationToken = default);
+    Task<PluginInstallResult> InstallLocalAsync(string sourcePath, CancellationToken cancellationToken = default);
+    Task<PluginManagementResult> EnableAsync(string pluginId, CancellationToken cancellationToken = default);
+    Task<PluginManagementResult> DisableAsync(string pluginId, CancellationToken cancellationToken = default);
+    Task<PluginManagementResult> RemoveAsync(string pluginId, CancellationToken cancellationToken = default);
+}
+
 public interface IPluginRegistry
 {
     IReadOnlyList<PluginDescriptor> Descriptors { get; }
@@ -51,6 +62,36 @@ public interface IPluginRegistry
     void RegisterRunningPlugin(PluginDescriptor descriptor, IWiiStudioPlugin plugin, AssemblyLoadContext loadContext);
     bool Remove(string pluginId, out IWiiStudioPlugin? plugin, out AssemblyLoadContext? loadContext);
 }
+
+public sealed record PluginManagementItem(
+    string Id,
+    string Name,
+    string Version,
+    string Description,
+    string Author,
+    string DirectoryPath,
+    PluginDiscoveryState State,
+    PluginLoadState LoadState,
+    IReadOnlyList<PluginCapability> Capabilities,
+    IReadOnlyList<PluginPermissionStatus> Permissions,
+    IReadOnlyList<string> Warnings,
+    IReadOnlyList<string> Errors,
+    IReadOnlyList<PluginDiagnosticEvent> Diagnostics);
+
+public sealed record PluginPermissionStatus(
+    PluginPermission Permission,
+    PluginRiskLevel RiskLevel,
+    PermissionDecision Decision,
+    bool IsGranted);
+
+public sealed record PluginInstallResult(
+    bool Success,
+    PluginManagementItem? Plugin,
+    string Message,
+    IReadOnlyList<string> Errors,
+    string? QuarantinePath = null);
+
+public sealed record PluginManagementResult(bool Success, string Message, IReadOnlyList<string> Errors);
 
 public sealed class JsonPluginManifestReader : IPluginManifestReader
 {
@@ -443,6 +484,283 @@ public sealed class PluginLoaderService : IPluginLoaderService
         new(pluginId, eventType, severity, messageKey, DateTimeOffset.UtcNow, new Dictionary<string, string>());
 }
 
+public sealed class FileSystemPluginManagementService : IPluginManagementService
+{
+    private readonly PluginHostOptions options;
+    private readonly IPluginDiscoveryService discovery;
+    private readonly IPluginManifestReader reader;
+    private readonly IPluginManifestValidator validator;
+    private readonly IPluginLoaderService loader;
+    private readonly IPluginDiagnosticService diagnostics;
+    private readonly IPluginPermissionService permissions;
+    private readonly IPluginPermissionPolicy permissionPolicy;
+
+    public FileSystemPluginManagementService(
+        PluginHostOptions options,
+        IPluginDiscoveryService discovery,
+        IPluginManifestReader reader,
+        IPluginManifestValidator validator,
+        IPluginLoaderService loader,
+        IPluginDiagnosticService diagnostics,
+        IPluginPermissionService permissions,
+        IPluginPermissionPolicy permissionPolicy)
+    {
+        this.options = options;
+        this.discovery = discovery;
+        this.reader = reader;
+        this.validator = validator;
+        this.loader = loader;
+        this.diagnostics = diagnostics;
+        this.permissions = permissions;
+        this.permissionPolicy = permissionPolicy;
+    }
+
+    public async Task<IReadOnlyList<PluginManagementItem>> GetInstalledAsync(CancellationToken cancellationToken = default)
+    {
+        var descriptors = await discovery.DiscoverAsync(cancellationToken);
+        var items = new List<PluginManagementItem>();
+
+        foreach (var descriptor in descriptors.OrderBy(item => item.Name, StringComparer.OrdinalIgnoreCase))
+        {
+            items.Add(await ToManagementItemAsync(descriptor, cancellationToken));
+        }
+
+        return items;
+    }
+
+    public async Task<PluginInstallResult> InstallLocalAsync(string sourcePath, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(sourcePath))
+        {
+            return new PluginInstallResult(false, null, "Informe uma pasta ou arquivo .zip de plugin.", ["Caminho vazio."]);
+        }
+
+        if (!Directory.Exists(sourcePath) && !File.Exists(sourcePath))
+        {
+            return new PluginInstallResult(false, null, "Origem do plugin não encontrada.", [$"Caminho não existe: {sourcePath}"]);
+        }
+
+        var tempDirectory = Path.Combine(Path.GetTempPath(), "wiistudio-plugin-install", Guid.NewGuid().ToString("N"));
+        var preparedDirectory = sourcePath;
+        try
+        {
+            if (File.Exists(sourcePath))
+            {
+                if (!string.Equals(Path.GetExtension(sourcePath), ".zip", StringComparison.OrdinalIgnoreCase))
+                {
+                    return new PluginInstallResult(false, null, "Somente pacotes .zip são aceitos para instalação local.", ["Formato de pacote não suportado."]);
+                }
+
+                Directory.CreateDirectory(tempDirectory);
+                ZipFile.ExtractToDirectory(sourcePath, tempDirectory);
+                preparedDirectory = FindPluginDirectory(tempDirectory) ?? tempDirectory;
+            }
+            else
+            {
+                preparedDirectory = FindPluginDirectory(sourcePath) ?? sourcePath;
+            }
+
+            var manifestPath = Path.Combine(preparedDirectory, "plugin.json");
+            if (!File.Exists(manifestPath))
+            {
+                var quarantinePath = await QuarantineAsync(preparedDirectory, Path.GetFileNameWithoutExtension(sourcePath), cancellationToken);
+                return new PluginInstallResult(false, null, "plugin.json não encontrado no pacote.", ["Manifest ausente."], quarantinePath);
+            }
+
+            var manifest = await reader.ReadAsync(manifestPath, cancellationToken);
+            var validation = validator.Validate(manifest, preparedDirectory);
+            if (!validation.IsValid)
+            {
+                var quarantinePath = await QuarantineAsync(preparedDirectory, manifest.Id, cancellationToken);
+                return new PluginInstallResult(false, null, "Plugin inválido enviado para quarentena.", validation.Errors, quarantinePath);
+            }
+
+            var destination = Path.Combine(options.InstalledDirectory, SanitizePluginId(manifest.Id));
+            if (Directory.Exists(destination))
+            {
+                return new PluginInstallResult(false, null, "Já existe um plugin instalado com esse identificador.", [$"Plugin duplicado: {manifest.Id}."]);
+            }
+
+            CopyDirectory(preparedDirectory, destination);
+            var descriptor = new PluginDescriptor(
+                manifest.Id,
+                manifest.Name,
+                manifest.Version,
+                destination,
+                Path.Combine(destination, "plugin.json"),
+                manifest,
+                PluginDiscoveryState.ReadyForLoad,
+                validation.Warnings,
+                validation.Errors);
+
+            diagnostics.Record(CreateDiagnostic(manifest.Id, "management.installed", DiagnosticSeverity.Information, "plugin.management.installed"));
+            return new PluginInstallResult(true, await ToManagementItemAsync(descriptor, cancellationToken), "Plugin instalado e pronto para revisão.", []);
+        }
+        catch (Exception ex) when (ex is IOException or InvalidDataException or UnauthorizedAccessException or JsonException)
+        {
+            return new PluginInstallResult(false, null, "Falha ao instalar plugin local.", [ex.Message]);
+        }
+        finally
+        {
+            if (Directory.Exists(tempDirectory))
+            {
+                Directory.Delete(tempDirectory, recursive: true);
+            }
+        }
+    }
+
+    public async Task<PluginManagementResult> EnableAsync(string pluginId, CancellationToken cancellationToken = default)
+    {
+        var descriptor = await FindDescriptorAsync(pluginId, cancellationToken);
+        if (descriptor is null)
+        {
+            return new PluginManagementResult(false, "Plugin não encontrado.", [$"Plugin não encontrado: {pluginId}."]);
+        }
+
+        if (descriptor.State != PluginDiscoveryState.Disabled)
+        {
+            return new PluginManagementResult(false, "Somente plugins desabilitados podem ser habilitados.", [$"Estado atual: {descriptor.State}."]);
+        }
+
+        var destination = Path.Combine(options.InstalledDirectory, Path.GetFileName(descriptor.DirectoryPath));
+        MoveDirectory(descriptor.DirectoryPath, destination);
+        diagnostics.Record(CreateDiagnostic(pluginId, "management.enabled", DiagnosticSeverity.Information, "plugin.management.enabled"));
+
+        return new PluginManagementResult(true, "Plugin habilitado.", []);
+    }
+
+    public async Task<PluginManagementResult> DisableAsync(string pluginId, CancellationToken cancellationToken = default)
+    {
+        var descriptor = await FindDescriptorAsync(pluginId, cancellationToken);
+        if (descriptor is null)
+        {
+            return new PluginManagementResult(false, "Plugin não encontrado.", [$"Plugin não encontrado: {pluginId}."]);
+        }
+
+        await loader.UnloadAsync(pluginId, cancellationToken);
+
+        if (descriptor.State == PluginDiscoveryState.Disabled)
+        {
+            return new PluginManagementResult(true, "Plugin já estava desabilitado.", []);
+        }
+
+        var destination = Path.Combine(options.DisabledDirectory, Path.GetFileName(descriptor.DirectoryPath));
+        MoveDirectory(descriptor.DirectoryPath, destination);
+        diagnostics.Record(CreateDiagnostic(pluginId, "management.disabled", DiagnosticSeverity.Warning, "plugin.management.disabled"));
+
+        return new PluginManagementResult(true, "Plugin desabilitado.", []);
+    }
+
+    public async Task<PluginManagementResult> RemoveAsync(string pluginId, CancellationToken cancellationToken = default)
+    {
+        var descriptor = await FindDescriptorAsync(pluginId, cancellationToken);
+        if (descriptor is null)
+        {
+            return new PluginManagementResult(false, "Plugin não encontrado.", [$"Plugin não encontrado: {pluginId}."]);
+        }
+
+        await loader.UnloadAsync(pluginId, cancellationToken);
+        Directory.Delete(descriptor.DirectoryPath, recursive: true);
+        diagnostics.Record(CreateDiagnostic(pluginId, "management.removed", DiagnosticSeverity.Warning, "plugin.management.removed"));
+
+        return new PluginManagementResult(true, "Plugin removido.", []);
+    }
+
+    private async Task<PluginDescriptor?> FindDescriptorAsync(string pluginId, CancellationToken cancellationToken)
+    {
+        var descriptors = await discovery.DiscoverAsync(cancellationToken);
+        return descriptors.FirstOrDefault(item => string.Equals(item.Id, pluginId, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private async Task<PluginManagementItem> ToManagementItemAsync(PluginDescriptor descriptor, CancellationToken cancellationToken)
+    {
+        var granted = await permissions.GetGrantedPermissionsAsync(descriptor.Id, cancellationToken);
+        var permissionItems = descriptor.Manifest.Permissions
+            .Select(permission => new PluginPermissionStatus(
+                permission,
+                permissionPolicy.GetRiskLevel(permission),
+                permissionPolicy.Evaluate(permission),
+                granted.Contains(permission)))
+            .ToArray();
+
+        return new PluginManagementItem(
+            descriptor.Id,
+            descriptor.Name,
+            descriptor.Version,
+            descriptor.Manifest.Description,
+            descriptor.Manifest.Author,
+            descriptor.DirectoryPath,
+            descriptor.State,
+            descriptor.State == PluginDiscoveryState.Disabled ? PluginLoadState.Disabled : PluginLoadState.Pending,
+            descriptor.Manifest.Capabilities,
+            permissionItems,
+            descriptor.Warnings,
+            descriptor.Errors,
+            diagnostics.GetEvents(descriptor.Id));
+    }
+
+    private async Task<string> QuarantineAsync(string sourceDirectory, string pluginId, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        var destination = Path.Combine(options.QuarantineDirectory, $"{SanitizePluginId(pluginId)}-{DateTimeOffset.UtcNow:yyyyMMddHHmmss}");
+        CopyDirectory(sourceDirectory, destination);
+        diagnostics.Record(CreateDiagnostic(pluginId, "management.quarantined", DiagnosticSeverity.Error, "plugin.management.quarantined"));
+        return destination;
+    }
+
+    private static string? FindPluginDirectory(string rootDirectory)
+    {
+        if (File.Exists(Path.Combine(rootDirectory, "plugin.json")))
+        {
+            return rootDirectory;
+        }
+
+        return Directory.EnumerateFiles(rootDirectory, "plugin.json", SearchOption.AllDirectories)
+            .Select(Path.GetDirectoryName)
+            .FirstOrDefault(path => !string.IsNullOrWhiteSpace(path));
+    }
+
+    private static void CopyDirectory(string sourceDirectory, string destinationDirectory)
+    {
+        Directory.CreateDirectory(destinationDirectory);
+        foreach (var directory in Directory.EnumerateDirectories(sourceDirectory, "*", SearchOption.AllDirectories))
+        {
+            Directory.CreateDirectory(directory.Replace(sourceDirectory, destinationDirectory, StringComparison.Ordinal));
+        }
+
+        foreach (var file in Directory.EnumerateFiles(sourceDirectory, "*", SearchOption.AllDirectories))
+        {
+            var destination = file.Replace(sourceDirectory, destinationDirectory, StringComparison.Ordinal);
+            Directory.CreateDirectory(Path.GetDirectoryName(destination) ?? destinationDirectory);
+            File.Copy(file, destination, overwrite: true);
+        }
+    }
+
+    private static void MoveDirectory(string sourceDirectory, string destinationDirectory)
+    {
+        if (Directory.Exists(destinationDirectory))
+        {
+            Directory.Delete(destinationDirectory, recursive: true);
+        }
+
+        Directory.CreateDirectory(Path.GetDirectoryName(destinationDirectory) ?? ".");
+        Directory.Move(sourceDirectory, destinationDirectory);
+    }
+
+    private static string SanitizePluginId(string pluginId)
+    {
+        foreach (var invalid in Path.GetInvalidFileNameChars())
+        {
+            pluginId = pluginId.Replace(invalid, '_');
+        }
+
+        return pluginId;
+    }
+
+    private static PluginDiagnosticEvent CreateDiagnostic(string pluginId, string eventType, DiagnosticSeverity severity, string messageKey) =>
+        new(pluginId, eventType, severity, messageKey, DateTimeOffset.UtcNow, new Dictionary<string, string>());
+}
+
 public sealed class PluginRegistry : IPluginRegistry
 {
     private readonly Dictionary<string, PluginDescriptor> descriptors = new(StringComparer.OrdinalIgnoreCase);
@@ -469,12 +787,7 @@ public sealed class PluginRegistry : IPluginRegistry
 
     public void RegisterDescriptor(PluginDescriptor descriptor)
     {
-        if (descriptors.ContainsKey(descriptor.Id))
-        {
-            throw new InvalidOperationException($"Plugin duplicado: {descriptor.Id}.");
-        }
-
-        descriptors.Add(descriptor.Id, descriptor);
+        descriptors[descriptor.Id] = descriptor;
     }
 
     public void RegisterRunningPlugin(PluginDescriptor descriptor, IWiiStudioPlugin plugin, AssemblyLoadContext loadContext)

@@ -11,5 +11,6 @@ public enum ShellModuleId
     Notifications = 7,
     Settings = 8,
     Diagnostics = 9,
-    Logs = 10
+    Logs = 10,
+    Plugins = 11
 }
