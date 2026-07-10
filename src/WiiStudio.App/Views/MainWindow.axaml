@@ -623,7 +623,7 @@
           </Grid>
 
           <ScrollViewer IsVisible="{Binding IsDevicesModuleSelected}" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-            <Grid RowDefinitions="Auto,Auto" RowSpacing="12">
+            <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="12">
               <Border Classes="contentBlock">
                 <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10">
                   <StackPanel>
@@ -657,6 +657,49 @@
                   </DataTemplate>
                 </ListBox.ItemTemplate>
               </ListBox>
+              <Border Grid.Row="2" Classes="contentBlock">
+                <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="10">
+                  <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                    <StackPanel>
+                      <TextBlock Text="Preparação Wii USB" FontSize="{StaticResource WiiFontSizeSubtitle}" FontWeight="SemiBold" Foreground="{DynamicResource WiiBrushTextPrimary}" />
+                      <TextBlock Text="{Binding UsbPreparationSummary}" Foreground="{DynamicResource WiiBrushTextSecondary}" TextWrapping="Wrap" />
+                    </StackPanel>
+                    <WrapPanel Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center">
+                      <Button Command="{Binding PrepareFat32WbfsFolderCommand}" Classes="primary small"><TextBlock Text="Preparar FAT32" /></Button>
+                      <Button Command="{Binding PreviewWbfsFormatCommand}" Classes="secondary small"><TextBlock Text="Preview WBFS" /></Button>
+                    </WrapPanel>
+                  </Grid>
+                  <Border Grid.Row="1" Background="{DynamicResource WiiBrushSurfaceAlt}" BorderBrush="{DynamicResource WiiBrushBorder}" BorderThickness="1" CornerRadius="{StaticResource WiiRadiusMedium}" Padding="{StaticResource WiiInsetSm}">
+                    <Grid RowDefinitions="Auto,Auto" RowSpacing="4">
+                      <TextBlock Text="WBFS é avançado e destrutivo. FAT32 com /wbfs é a opção recomendada para preservar dados." Foreground="{DynamicResource WiiBrushTextSecondary}" TextWrapping="Wrap" />
+                      <Grid Grid.Row="1" ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                        <TextBox Text="{Binding UsbFormatConfirmationPhrase, Mode=TwoWay}" Watermark="Digite FORMATAR WBFS" Height="34" />
+                        <Button Grid.Column="1" Command="{Binding ExecuteWbfsFormatCommand}" Classes="danger small"><TextBlock Text="Formatar WBFS" /></Button>
+                      </Grid>
+                    </Grid>
+                  </Border>
+                  <Grid Grid.Row="2" ColumnDefinitions="*,*,*" ColumnSpacing="8">
+                    <Border Classes="chip">
+                      <StackPanel>
+                        <TextBlock Text="Alvo" Foreground="{DynamicResource WiiBrushTextMuted}" FontSize="{StaticResource WiiFontSizeMicro}" />
+                        <TextBlock Text="{Binding UsbFormatPreview.TargetDisplayName}" Foreground="{DynamicResource WiiBrushTextPrimary}" TextTrimming="CharacterEllipsis" />
+                      </StackPanel>
+                    </Border>
+                    <Border Grid.Column="1" Classes="chip">
+                      <StackPanel>
+                        <TextBlock Text="Partição" Foreground="{DynamicResource WiiBrushTextMuted}" FontSize="{StaticResource WiiFontSizeMicro}" />
+                        <TextBlock Text="{Binding UsbFormatPreview.PartitionPath}" Foreground="{DynamicResource WiiBrushTextPrimary}" TextTrimming="CharacterEllipsis" />
+                      </StackPanel>
+                    </Border>
+                    <Border Grid.Column="2" Classes="chip">
+                      <StackPanel>
+                        <TextBlock Text="Confirmação" Foreground="{DynamicResource WiiBrushTextMuted}" FontSize="{StaticResource WiiFontSizeMicro}" />
+                        <TextBlock Text="{Binding UsbFormatPreview.RequiredConfirmationPhrase}" Foreground="{DynamicResource WiiBrushTextPrimary}" TextTrimming="CharacterEllipsis" />
+                      </StackPanel>
+                    </Border>
+                  </Grid>
+                </Grid>
+              </Border>
             </Grid>
           </ScrollViewer>
 

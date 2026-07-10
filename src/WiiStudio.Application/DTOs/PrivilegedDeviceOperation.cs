@@ -7,5 +7,6 @@ public enum PrivilegedDeviceOperation
     ListWbfsGames,
     ReadWbfsMetadata,
     AddWbfsGame,
-    RemoveWbfsGame
+    RemoveWbfsGame,
+    FormatWbfsPartition
 }

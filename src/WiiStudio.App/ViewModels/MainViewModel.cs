@@ -48,6 +48,7 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly IThemeService _themeService;
     private readonly IFirstRunSetupService _firstRunSetupService;
     private readonly IWiiUsbReadinessService _wiiUsbReadinessService;
+    private readonly IUsbFormatPreparationService _usbFormatPreparationService;
     private Guid? _activeLibraryDriveId;
     private CancellationTokenSource? _coverBatchCancellation;
     private bool _isApplyingDeviceSnapshot;
@@ -137,6 +138,15 @@ public sealed partial class MainViewModel : ObservableObject
 
     [ObservableProperty]
     private string _deviceManagerSummary = "Nenhum dispositivo";
+
+    [ObservableProperty]
+    private string _usbPreparationSummary = "Selecione um dispositivo para preparar.";
+
+    [ObservableProperty]
+    private string? _usbFormatConfirmationPhrase;
+
+    [ObservableProperty]
+    private UsbFormatPreview? _usbFormatPreview;
 
     [ObservableProperty]
     private DashboardState _dashboardState = DashboardState.Loading;
@@ -256,7 +266,8 @@ public sealed partial class MainViewModel : ObservableObject
         ShellCommandExecutor shellCommandExecutor,
         IThemeService themeService,
         IFirstRunSetupService firstRunSetupService,
-        IWiiUsbReadinessService wiiUsbReadinessService)
+        IWiiUsbReadinessService wiiUsbReadinessService,
+        IUsbFormatPreparationService usbFormatPreparationService)
     {
         _commandPaletteService = commandPaletteService;
         _batchCoverDownloadService = batchCoverDownloadService;
@@ -288,6 +299,7 @@ public sealed partial class MainViewModel : ObservableObject
         _themeService = themeService;
         _firstRunSetupService = firstRunSetupService;
         _wiiUsbReadinessService = wiiUsbReadinessService;
+        _usbFormatPreparationService = usbFormatPreparationService;
         shellCommandExecutor.SetHandler(HandleShellCommandAsync);
 
         foreach (var module in _mainWindowService.Modules)
@@ -966,6 +978,96 @@ public sealed partial class MainViewModel : ObservableObject
             }
 
             StatusMessage = DiagnosticsSummary;
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task PrepareFat32WbfsFolderAsync(CancellationToken cancellationToken)
+    {
+        if (SelectedDevice is null)
+        {
+            StatusMessage = "Selecione um dispositivo USB para preparar.";
+            return;
+        }
+
+        IsBusy = true;
+        try
+        {
+            var preview = await CreateUsbFormatPreviewAsync(UsbPreparationMode.PrepareFat32WbfsFolder, cancellationToken);
+            UsbFormatPreview = preview;
+            if (preview.IsBlocked)
+            {
+                UsbPreparationSummary = FormatUsbPreparationSummary(preview);
+                StatusMessage = $"Preparação bloqueada: {preview.BlockReasonKey}.";
+                return;
+            }
+
+            var result = await _usbFormatPreparationService.ExecuteAsync(
+                new UsbFormatExecutionRequest(preview, ConfirmationPhrase: string.Empty, UserConfirmed: true),
+                null,
+                cancellationToken);
+            UsbPreparationSummary = result.Success
+                ? "FAT32 preparado: pasta /wbfs validada para receber jogos."
+                : $"Falha ao preparar FAT32: {result.ErrorMessageKey}.";
+            StatusMessage = UsbPreparationSummary;
+            await RefreshDevicesAsync(cancellationToken);
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task PreviewWbfsFormatAsync(CancellationToken cancellationToken)
+    {
+        if (SelectedDevice is null)
+        {
+            StatusMessage = "Selecione um dispositivo USB para formatar.";
+            return;
+        }
+
+        IsBusy = true;
+        try
+        {
+            UsbFormatPreview = await CreateUsbFormatPreviewAsync(UsbPreparationMode.FormatAsWbfs, cancellationToken);
+            UsbFormatConfirmationPhrase = string.Empty;
+            UsbPreparationSummary = FormatUsbPreparationSummary(UsbFormatPreview);
+            StatusMessage = UsbFormatPreview.IsBlocked
+                ? $"Formatação WBFS bloqueada: {UsbFormatPreview.BlockReasonKey}."
+                : "Preview WBFS pronto. Digite FORMATAR WBFS para continuar.";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task ExecuteWbfsFormatAsync(CancellationToken cancellationToken)
+    {
+        if (UsbFormatPreview is null || UsbFormatPreview.Mode != UsbPreparationMode.FormatAsWbfs)
+        {
+            StatusMessage = "Gere o preview WBFS antes de executar.";
+            return;
+        }
+
+        IsBusy = true;
+        try
+        {
+            var result = await _usbFormatPreparationService.ExecuteAsync(
+                new UsbFormatExecutionRequest(UsbFormatPreview, UsbFormatConfirmationPhrase ?? string.Empty, UserConfirmed: true),
+                null,
+                cancellationToken);
+            UsbPreparationSummary = result.Success
+                ? "Dispositivo formatado em WBFS e validado."
+                : $"Formatação WBFS não executada: {result.ErrorMessageKey}.";
+            StatusMessage = UsbPreparationSummary;
+            await RefreshDevicesAsync(cancellationToken);
         }
         finally
         {
@@ -2155,6 +2257,30 @@ public sealed partial class MainViewModel : ObservableObject
 
         OnPropertyChanged(nameof(DeviceSummary));
         return drives;
+    }
+
+    private Task<UsbFormatPreview> CreateUsbFormatPreviewAsync(
+        UsbPreparationMode mode,
+        CancellationToken cancellationToken)
+    {
+        if (SelectedDevice is null)
+        {
+            throw new InvalidOperationException("Nenhum dispositivo selecionado.");
+        }
+
+        return _usbFormatPreparationService.CreatePreviewAsync(
+            new UsbFormatPreparationRequest(SelectedDevice.DeviceId, TargetPartitionId: null, mode),
+            cancellationToken);
+    }
+
+    private static string FormatUsbPreparationSummary(UsbFormatPreview preview)
+    {
+        var operation = preview.Mode == UsbPreparationMode.FormatAsWbfs
+            ? "Formatar em WBFS"
+            : "Preparar FAT32 /wbfs";
+        var risk = preview.IsDestructive ? "apaga dados" : "preserva dados";
+        var state = preview.IsBlocked ? $"bloqueado: {preview.BlockReasonKey}" : "pronto para executar";
+        return $"{operation} · {preview.TargetDisplayName} · {preview.CurrentFileSystem ?? "-"} · {risk} · {state}";
     }
 
     private void SelectImportDriveForSelectedDevice()
