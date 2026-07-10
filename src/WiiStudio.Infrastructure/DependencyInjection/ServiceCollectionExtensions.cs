@@ -164,6 +164,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IUsbDeviceProvider, CrossPlatformUsbDeviceProvider>();
         services.AddSingleton<IUsbDetectionService, UsbDetectionService>();
         services.AddSingleton<IUsbDriveService, UsbDriveService>();
+        services.AddSingleton<IUsbWriteWorkflowService, SafeUsbWriteWorkflowService>();
         services.AddSingleton<IWitService, WitService>();
         services.AddSingleton<IWwtService, WwtService>();
         services.AddSingleton<INKitService, NKitService>();

@@ -11,7 +11,7 @@ public sealed class CommandValidatorTests
     public void ImportGameCommandValidator_ShouldRejectEmptySourcePaths()
     {
         var validator = new ImportGameCommandValidator();
-        var command = new ImportGameCommand([], Guid.NewGuid());
+        var command = new ImportGameCommand([], Guid.NewGuid(), UserConfirmed: true);
 
         var result = validator.Validate(command);
 
@@ -22,7 +22,7 @@ public sealed class CommandValidatorTests
     public void ImportGameCommandValidator_ShouldAcceptValidCommand()
     {
         var validator = new ImportGameCommandValidator();
-        var command = new ImportGameCommand(["/games/mario.iso"], Guid.NewGuid());
+        var command = new ImportGameCommand(["/games/mario.iso"], Guid.NewGuid(), UserConfirmed: true);
 
         var result = validator.Validate(command);
 
@@ -33,7 +33,7 @@ public sealed class CommandValidatorTests
     public void ImportGameCommandValidator_ShouldRejectUnsupportedExtensions()
     {
         var validator = new ImportGameCommandValidator();
-        var command = new ImportGameCommand(["/games/mario.txt"], Guid.NewGuid());
+        var command = new ImportGameCommand(["/games/mario.txt"], Guid.NewGuid(), UserConfirmed: true);
 
         var result = validator.Validate(command);
 

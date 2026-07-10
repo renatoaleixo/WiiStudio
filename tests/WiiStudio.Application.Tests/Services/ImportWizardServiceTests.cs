@@ -60,18 +60,16 @@ public sealed class ImportWizardServiceTests
     public async Task ExecuteAsync_ShouldDelegateToImportUseCase()
     {
         var drive = CreateDrive();
-        var wwtService = new FakeWwtService();
-        var service = CreateService(drive, wwtService);
+        var workflowService = new FakeUsbWriteWorkflowService();
+        var service = CreateService(drive, workflowService);
 
         var result = await service.ExecuteAsync(
-            new ImportWizardRequest(["/games/mario.iso", "/games/zelda.wbfs"], drive.Id),
+            new ImportWizardRequest(["/games/mario.iso", "/games/zelda.wbfs"], drive.Id, UserConfirmed: true),
             CancellationToken.None);
 
         result.State.Should().Be(ImportWizardState.Completed);
         result.ImportedCount.Should().Be(2);
-        wwtService.AddedGames.Should().Equal(
-            (drive, "/games/mario.iso"),
-            (drive, "/games/zelda.wbfs"));
+        workflowService.ExecutedSources.Should().Equal("/games/mario.iso", "/games/zelda.wbfs");
     }
 
     [Theory]
@@ -81,17 +79,17 @@ public sealed class ImportWizardServiceTests
     {
         var validator = new ImportGameCommandValidator();
 
-        var result = await validator.ValidateAsync(new ImportGameCommand([sourcePath], Guid.NewGuid()));
+        var result = await validator.ValidateAsync(new ImportGameCommand([sourcePath], Guid.NewGuid(), UserConfirmed: true));
 
         result.IsValid.Should().BeTrue();
     }
 
-    private static ImportWizardService CreateService(UsbDrive drive, FakeWwtService? wwtService = null)
+    private static ImportWizardService CreateService(UsbDrive drive, FakeUsbWriteWorkflowService? workflowService = null)
     {
         var useCase = new ImportGamesUseCase(
             new ImportGameCommandValidator(),
             new FakeUsbDriveService([drive]),
-            wwtService ?? new FakeWwtService(),
+            workflowService ?? new FakeUsbWriteWorkflowService(),
             new FakeGameLibraryService());
 
         return new ImportWizardService(useCase);
@@ -156,30 +154,37 @@ public sealed class ImportWizardServiceTests
         }
     }
 
-    private sealed class FakeWwtService : IWwtService
+    private sealed class FakeUsbWriteWorkflowService : IUsbWriteWorkflowService
     {
-        public List<(UsbDrive Drive, string SourcePath)> AddedGames { get; } = [];
+        public List<string> ExecutedSources { get; } = [];
 
-        public Task<IReadOnlyList<Game>> ListGamesAsync(UsbDrive drive, CancellationToken cancellationToken)
+        public Task<UsbWritePreview> CreatePreviewAsync(string sourcePath, Guid targetDriveId, CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
-
-            return Task.FromResult<IReadOnlyList<Game>>([]);
+            return Task.FromResult(new UsbWritePreview(
+                sourcePath,
+                GameId: null,
+                targetDriveId,
+                "Wii HD",
+                "/dev/sdb1",
+                "/media/wii",
+                UsbDriveFileSystem.Wbfs,
+                SourceSizeBytes: 100,
+                RequiredBytes: 100,
+                FreeBytes: 500,
+                RequiresFat32Split: false,
+                UserConfirmationRequired: true,
+                IsBlocked: false,
+                BlockReasonKey: null,
+                PermissionStatus: null,
+                Warnings: []));
         }
 
-        public Task AddGameAsync(UsbDrive drive, string sourcePath, CancellationToken cancellationToken)
+        public Task<UsbWriteResult> ExecuteAsync(UsbWriteExecutionRequest request, IProgress<WiimmsOperationProgress>? progress = null, CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            AddedGames.Add((drive, sourcePath));
-
-            return Task.CompletedTask;
-        }
-
-        public Task RemoveGameAsync(UsbDrive drive, string gameId, CancellationToken cancellationToken)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-
-            return Task.CompletedTask;
+            ExecutedSources.Add(request.Preview.SourcePath);
+            return Task.FromResult(new UsbWriteResult(true, request.Preview.GameId, request.Preview.TargetDriveId, null, TimeSpan.FromMilliseconds(1)));
         }
     }
 

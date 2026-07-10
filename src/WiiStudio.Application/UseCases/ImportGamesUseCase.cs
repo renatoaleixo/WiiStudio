@@ -1,5 +1,6 @@
 using FluentValidation;
 using WiiStudio.Application.Commands;
+using WiiStudio.Application.DTOs;
 using WiiStudio.Application.Exceptions;
 using WiiStudio.Application.Interfaces;
 
@@ -9,18 +10,18 @@ public sealed class ImportGamesUseCase
 {
     private readonly IValidator<ImportGameCommand> _validator;
     private readonly IUsbDriveService _usbDriveService;
-    private readonly IWwtService _wwtService;
+    private readonly IUsbWriteWorkflowService _usbWriteWorkflowService;
     private readonly IGameLibraryService _gameLibraryService;
 
     public ImportGamesUseCase(
         IValidator<ImportGameCommand> validator,
         IUsbDriveService usbDriveService,
-        IWwtService wwtService,
+        IUsbWriteWorkflowService usbWriteWorkflowService,
         IGameLibraryService gameLibraryService)
     {
         _validator = validator;
         _usbDriveService = usbDriveService;
-        _wwtService = wwtService;
+        _usbWriteWorkflowService = usbWriteWorkflowService;
         _gameLibraryService = gameLibraryService;
     }
 
@@ -32,7 +33,20 @@ public sealed class ImportGamesUseCase
         foreach (var sourcePath in command.SourcePaths)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            await _wwtService.AddGameAsync(drive, sourcePath, cancellationToken);
+            var preview = await _usbWriteWorkflowService.CreatePreviewAsync(sourcePath, drive.Id, cancellationToken);
+            if (preview.IsBlocked)
+            {
+                throw new InvalidOperationException(preview.BlockReasonKey ?? "usbWrite.blocked");
+            }
+
+            var result = await _usbWriteWorkflowService.ExecuteAsync(
+                new UsbWriteExecutionRequest(preview, command.UserConfirmed),
+                progress: null,
+                cancellationToken);
+            if (!result.Success)
+            {
+                throw new InvalidOperationException(result.ErrorMessageKey ?? "usbWrite.failed");
+            }
         }
 
         await _gameLibraryService.RefreshAsync(drive.Id, cancellationToken);

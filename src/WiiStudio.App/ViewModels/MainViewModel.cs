@@ -1181,7 +1181,7 @@ public sealed partial class MainViewModel : ObservableObject
         try
         {
             var result = await _importWizardService.ExecuteAsync(
-                new ImportWizardRequest(ParseImportSourcePaths(), SelectedImportDrive.Id),
+                new ImportWizardRequest(ParseImportSourcePaths(), SelectedImportDrive.Id, UserConfirmed: true),
                 cancellationToken);
 
             ImportWizardState = result.State;

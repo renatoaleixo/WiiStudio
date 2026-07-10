@@ -39,7 +39,7 @@ public sealed class ImportWizardService : IImportWizardService
         cancellationToken.ThrowIfCancellationRequested();
 
         await _importGamesUseCase.ExecuteAsync(
-            new ImportGameCommand(request.SourcePaths, request.DestinationDriveId),
+            new ImportGameCommand(request.SourcePaths, request.DestinationDriveId, request.UserConfirmed),
             cancellationToken);
 
         return new ImportWizardResult(
