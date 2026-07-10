@@ -3,7 +3,7 @@
 # Objetivo
 
 Registrar a finalização organizacional do repositório WiiStudio após a implementação
-das features documentadas de `F001` até `F100`.
+das features documentadas de `F001` até `F125`.
 
 ---
 
@@ -15,6 +15,7 @@ das features documentadas de `F001` até `F100`.
 - Plugin SDK: `F071` até `F080` implementadas.
 - Security: `F081` até `F090` implementadas.
 - Testing & Quality: `F091` até `F100` implementadas.
+- Tools, Readiness & Release Engineering: `F101` até `F125` implementadas.
 
 ---
 
@@ -32,6 +33,7 @@ docs/
 ├── 05-plugin-sdk/
 ├── 06-security/
 ├── 07-testing-quality/
+├── 08-tools/
 └── 99-final/
 ```
 
@@ -104,6 +106,19 @@ Durante a implementação foram adicionados:
 - `docs/06-security/SECURITY_REFERENCE.md`;
 - `docs/07-testing-quality/TESTING_QUALITY_REFERENCE.md`.
 
+Após F100, a pasta `docs/08-tools/` passou a concentrar as features de
+dependências externas, GameTDB, USB/WBFS, updates, marketplace remoto de plugins
+e prontidão de release:
+
+- `F101` até `F105`: ferramentas externas, GameTDB e acesso privilegiado;
+- `F106` até `F120`: Polkit, USB multiplataforma, Wiimms, SQLite, diagnósticos,
+  first-run wizard e readiness USB;
+- `F121`: catálogo do comando real de formatação WBFS;
+- `F122`: distribuição e manifesto de atualização do app;
+- `F123`: marketplace remoto de plugins e política de confiança;
+- `F124`: scripts/pipeline de empacotamento e release;
+- `F125`: evidências de homologação de hardware e aceite de release.
+
 ---
 
 # Validação Esperada
@@ -111,9 +126,44 @@ Durante a implementação foram adicionados:
 Antes de considerar o repositório pronto:
 
 ```bash
-dotnet build WiiStudio.sln
-dotnet test WiiStudio.sln --no-build
+dotnet build WiiStudio.sln -c Release
+dotnet test WiiStudio.sln --no-build -c Release
+bash -n scripts/release/package.sh
+bash -n scripts/release/smoke-test.sh
 git status --short
 ```
 
 O resultado esperado é build limpo, testes verdes e working tree limpo após commit.
+
+Para empacotamento controlado:
+
+```bash
+WIISTUDIO_CHANNEL=dev scripts/release/package.sh 0.1.0-dev.1
+WIISTUDIO_CHANNEL=dev scripts/release/smoke-test.sh 0.1.0-dev.1
+```
+
+Os artefatos são gerados em `artifacts/release/<version>/`, pasta ignorada pelo Git.
+
+---
+
+# Homologação Final
+
+O código possui `IReleaseValidationService` para gerar a estrutura de evidências
+da F125:
+
+```text
+release-validation/
+├── version.txt
+├── environment-linux.md
+├── environment-windows.md
+├── environment-macos.md
+├── hardware-matrix.md
+├── release-checklist.md
+├── screenshots/
+├── logs/
+└── acceptance-report.md
+```
+
+Esse pacote não aprova a release automaticamente. Gates que exigem HD WBFS real,
+FAT32 `/wbfs`, pendrive e Wii real permanecem pendentes até homologação manual
+com dispositivos dedicados e evidências anexadas.
