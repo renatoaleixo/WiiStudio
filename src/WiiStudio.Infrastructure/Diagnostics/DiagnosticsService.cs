@@ -50,6 +50,8 @@ public sealed class DiagnosticsService : IDiagnosticsService
     private readonly BackupServiceOptions _backupOptions;
     private readonly IUsbDriveService _usbDriveService;
     private readonly IDevicePermissionService _devicePermissionService;
+    private readonly IPolkitPolicyInstaller _polkitPolicyInstaller;
+    private readonly IUsbDeviceProvider _usbDeviceProvider;
     private readonly ILogger<DiagnosticsService> _logger;
 
     public DiagnosticsService(
@@ -71,6 +73,8 @@ public sealed class DiagnosticsService : IDiagnosticsService
         BackupServiceOptions backupOptions,
         IUsbDriveService usbDriveService,
         IDevicePermissionService devicePermissionService,
+        IPolkitPolicyInstaller polkitPolicyInstaller,
+        IUsbDeviceProvider usbDeviceProvider,
         ILogger<DiagnosticsService> logger)
     {
         _witService = witService;
@@ -91,6 +95,8 @@ public sealed class DiagnosticsService : IDiagnosticsService
         _backupOptions = backupOptions;
         _usbDriveService = usbDriveService;
         _devicePermissionService = devicePermissionService;
+        _polkitPolicyInstaller = polkitPolicyInstaller;
+        _usbDeviceProvider = usbDeviceProvider;
         _logger = logger;
     }
 
@@ -338,7 +344,77 @@ public sealed class DiagnosticsService : IDiagnosticsService
         }
 
         checks.Add(await CheckPrivilegedDeviceAccessAsync(cancellationToken));
+        checks.Add(await CheckPolkitPolicyAsync(cancellationToken));
+        checks.Add(await CheckUsbDeviceProviderAsync(cancellationToken));
         return checks;
+    }
+
+    private async Task<DiagnosticsCheckResult> CheckPolkitPolicyAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            var status = await _polkitPolicyInstaller.CheckAsync(cancellationToken);
+            var diagnosticStatus = status.State switch
+            {
+                PolkitPolicyInstallState.Installed or PolkitPolicyInstallState.NotLinux => DiagnosticsStatus.Healthy,
+                PolkitPolicyInstallState.Invalid or PolkitPolicyInstallState.ValidationFailed or PolkitPolicyInstallState.InstallFailed => DiagnosticsStatus.Unhealthy,
+                _ => DiagnosticsStatus.Warning
+            };
+            var severity = diagnosticStatus switch
+            {
+                DiagnosticsStatus.Healthy => DiagnosticsSeverity.Information,
+                DiagnosticsStatus.Unhealthy => DiagnosticsSeverity.Error,
+                _ => DiagnosticsSeverity.Warning
+            };
+            var message = $"{status.MessageKey ?? status.State.ToString()} {status.RecommendedActionKey ?? string.Empty}".Trim();
+            return new DiagnosticsCheckResult(
+                "polkit-policy",
+                diagnosticStatus,
+                message,
+                status.PolicyPath,
+                "Polkit Policy",
+                severity);
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            return new DiagnosticsCheckResult(
+                "polkit-policy",
+                DiagnosticsStatus.Warning,
+                exception.Message,
+                Category: "Polkit Policy",
+                Severity: DiagnosticsSeverity.Warning);
+        }
+    }
+
+    private async Task<DiagnosticsCheckResult> CheckUsbDeviceProviderAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            var devices = await _usbDeviceProvider.GetDevicesAsync(cancellationToken);
+            var partitions = devices.SelectMany(device => device.Partitions).ToArray();
+            var wbfsCandidates = partitions.Count(partition => partition.IsWbfsCandidate);
+            var permissionIssues = devices.Count(device => device.PermissionStatus?.State is
+                PrivilegedAccessState.AuthorizationRequired
+                or PrivilegedAccessState.PolicyMissing
+                or PrivilegedAccessState.PermissionDenied
+                or PrivilegedAccessState.HelperMissing);
+            var status = permissionIssues == 0 ? DiagnosticsStatus.Healthy : DiagnosticsStatus.Warning;
+            return new DiagnosticsCheckResult(
+                "usb-device-provider",
+                status,
+                $"Devices found: {devices.Count}; partitions: {partitions.Length}; WBFS candidates: {wbfsCandidates}; permission issues: {permissionIssues}.",
+                Category: "Devices",
+                Severity: status == DiagnosticsStatus.Healthy ? DiagnosticsSeverity.Information : DiagnosticsSeverity.Warning);
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            return new DiagnosticsCheckResult(
+                "usb-device-provider",
+                DiagnosticsStatus.Warning,
+                exception.Message,
+                Category: "Devices",
+                Severity: DiagnosticsSeverity.Warning);
+        }
     }
 
     private async Task<DiagnosticsCheckResult> CheckPrivilegedDeviceAccessAsync(CancellationToken cancellationToken)

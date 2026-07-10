@@ -1,5 +1,7 @@
 using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
+using WiiStudio.Application.DTOs;
+using WiiStudio.Application.Interfaces;
 using WiiStudio.Domain.Entities;
 using WiiStudio.Domain.Enums;
 using WiiStudio.Infrastructure.Processes;
@@ -14,7 +16,7 @@ public sealed class UsbDetectionServiceTests
     public async Task ScanAsync_ShouldMapProviderDrivesToDtos()
     {
         var driveId = Guid.NewGuid();
-        var provider = new FakeUsbProvider([
+        var provider = new FakeUsbDriveService([
             new UsbDrive(
                 driveId,
                 "/dev/sdb1",
@@ -41,12 +43,25 @@ public sealed class UsbDetectionServiceTests
     public async Task UsbDriveService_ShouldDelegateDetectionToProvider()
     {
         var expectedDrive = new UsbDrive("Wii HD", "/media/wii", UsbDriveFileSystem.Wbfs, 1000, 400);
-        var provider = new FakeUsbProvider([expectedDrive]);
+        var provider = new FakeUsbDeviceProvider([
+            new UsbDeviceInfo(
+                expectedDrive.Id.ToString(),
+                expectedDrive.Label,
+                expectedDrive.DevicePath,
+                expectedDrive.MountPoint,
+                IsUsb: true,
+                IsRemovable: true,
+                expectedDrive.Capacity,
+                [new UsbPartitionInfo(expectedDrive.Id.ToString(), expectedDrive.DevicePath, expectedDrive.MountPoint, "Wbfs", expectedDrive.Capacity, expectedDrive.FreeSpace, IsWbfsCandidate: true, IsWritable: true)])
+        ]);
         var service = new UsbDriveService(provider);
 
         var drives = await service.DetectAsync(CancellationToken.None);
 
-        drives.Should().ContainSingle().Which.Should().BeSameAs(expectedDrive);
+        var drive = drives.Should().ContainSingle().Subject;
+        drive.DevicePath.Should().Be(expectedDrive.DevicePath);
+        drive.MountPoint.Should().Be(expectedDrive.MountPoint);
+        drive.FileSystem.Should().Be(UsbDriveFileSystem.Wbfs);
     }
 
     [Fact]
@@ -134,6 +149,36 @@ public sealed class UsbDetectionServiceTests
         public Task<IReadOnlyList<UsbDrive>> DetectAsync(CancellationToken cancellationToken)
         {
             return Task.FromResult(_drives);
+        }
+    }
+
+    private sealed class FakeUsbDriveService : IUsbDriveService
+    {
+        private readonly IReadOnlyList<UsbDrive> _drives;
+
+        public FakeUsbDriveService(IReadOnlyList<UsbDrive> drives)
+        {
+            _drives = drives;
+        }
+
+        public Task<IReadOnlyList<UsbDrive>> DetectAsync(CancellationToken cancellationToken)
+        {
+            return Task.FromResult(_drives);
+        }
+    }
+
+    private sealed class FakeUsbDeviceProvider : IUsbDeviceProvider
+    {
+        private readonly IReadOnlyList<UsbDeviceInfo> _devices;
+
+        public FakeUsbDeviceProvider(IReadOnlyList<UsbDeviceInfo> devices)
+        {
+            _devices = devices;
+        }
+
+        public Task<IReadOnlyList<UsbDeviceInfo>> GetDevicesAsync(CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult(_devices);
         }
     }
 

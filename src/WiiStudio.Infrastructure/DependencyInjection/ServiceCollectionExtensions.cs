@@ -144,6 +144,9 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IGameTdbUpdateStateStore, JsonGameTdbUpdateStateStore>();
         services.AddSingleton<IWiimmsToolLocator, WiimmsToolLocator>();
         services.AddSingleton<IOperatingSystemInfo, OperatingSystemInfo>();
+        services.AddSingleton<IPolkitPolicyLocator, PolkitPolicyLocator>();
+        services.AddSingleton<IPolkitPolicyValidator, PolkitPolicyValidator>();
+        services.AddSingleton<IPolkitPolicyInstaller, PolkitPolicyInstaller>();
         services.AddSingleton<IWindowsElevationDetector, WindowsElevationDetector>();
         services.AddSingleton<IOperatingSystemPrivilegeStrategy, LinuxPolkitPrivilegeStrategy>();
         services.AddSingleton<IOperatingSystemPrivilegeStrategy, WindowsPrivilegeStrategy>();
@@ -151,7 +154,12 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IOperatingSystemPrivilegeStrategy, UnknownPrivilegeStrategy>();
         services.AddSingleton<IPrivilegedAccessService, PrivilegedAccessService>();
         services.AddSingleton<IDevicePermissionService, DevicePermissionService>();
-        services.AddSingleton<IUsbProvider, LinuxUsbProvider>();
+        services.AddSingleton<LinuxUsbProvider>();
+        services.AddSingleton<IUsbProvider>(services => services.GetRequiredService<LinuxUsbProvider>());
+        services.AddSingleton<IPlatformUsbDeviceProvider, LinuxUsbDeviceProvider>();
+        services.AddSingleton<IPlatformUsbDeviceProvider, WindowsUsbDeviceProvider>();
+        services.AddSingleton<IPlatformUsbDeviceProvider, MacOSUsbDeviceProvider>();
+        services.AddSingleton<IUsbDeviceProvider, CrossPlatformUsbDeviceProvider>();
         services.AddSingleton<IUsbDetectionService, UsbDetectionService>();
         services.AddSingleton<IUsbDriveService, UsbDriveService>();
         services.AddSingleton<IWitService, WitService>();

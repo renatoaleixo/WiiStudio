@@ -106,6 +106,8 @@ public sealed class DiagnosticsServiceTests
         report.Checks.Should().Contain(check => check.Category == "Configuration" && check.Name == "diagnostics-enabled");
         report.Checks.Should().Contain(check => check.Category == "Devices" && check.Name == "usb-drives" && check.Message.Contains("1 compatible"));
         report.Checks.Should().Contain(check => check.Category == "Privileged Device Access" && check.Name == "privileged-device-access");
+        report.Checks.Should().Contain(check => check.Category == "Polkit Policy" && check.Name == "polkit-policy");
+        report.Checks.Should().Contain(check => check.Category == "Devices" && check.Name == "usb-device-provider");
     }
 
     [Fact]
@@ -300,6 +302,64 @@ public sealed class DiagnosticsServiceTests
         }
     }
 
+    private sealed class FakePolkitPolicyInstaller : IPolkitPolicyInstaller
+    {
+        public Task<PolkitPolicyInstallStatus> CheckAsync(CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return Task.FromResult(new PolkitPolicyInstallStatus(
+                PolkitPolicyInstallState.Installed,
+                "/usr/share/polkit-1/actions/com.wiistudio.device.policy",
+                "Policy Polkit instalada e válida.",
+                "Nenhuma ação necessária."));
+        }
+
+        public Task<PolkitPolicyInstallResult> InstallAsync(CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return Task.FromResult(new PolkitPolicyInstallResult(
+                PolkitPolicyInstallState.Installed,
+                Success: true,
+                "/usr/share/polkit-1/actions/com.wiistudio.device.policy",
+                "Policy instalada com sucesso.",
+                "Nenhuma ação necessária."));
+        }
+
+        public Task<PolkitPolicyValidationResult> ValidateInstalledPolicyAsync(CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return Task.FromResult(new PolkitPolicyValidationResult(
+                IsValid: true,
+                PolkitPolicyInstallState.Installed,
+                "/usr/share/polkit-1/actions/com.wiistudio.device.policy",
+                HasExpectedAction: true,
+                HasAuthAdminKeep: true,
+                HasExpectedVendor: true,
+                []));
+        }
+    }
+
+    private sealed class FakeUsbDeviceProvider : IUsbDeviceProvider
+    {
+        public Task<IReadOnlyList<UsbDeviceInfo>> GetDevicesAsync(CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            IReadOnlyList<UsbDeviceInfo> devices =
+            [
+                new(
+                    "usb-1",
+                    "Wii USB",
+                    "/dev/sdc",
+                    "/dev/sdc1",
+                    IsUsb: true,
+                    IsRemovable: true,
+                    1024,
+                    [new UsbPartitionInfo("usb-1p1", "/dev/sdc1", "/dev/sdc1", "Wbfs", 1024, 512, IsWbfsCandidate: true, IsWritable: true)])
+            ];
+            return Task.FromResult(devices);
+        }
+    }
+
     private sealed class TemporaryDiagnosticsFixture : IDisposable
     {
         private TemporaryDiagnosticsFixture(string rootDirectory)
@@ -338,6 +398,8 @@ public sealed class DiagnosticsServiceTests
                 new BackupServiceOptions { RestorePointDirectory = Path.Combine(RootDirectory, "restore-points") },
                 new FakeUsbDriveService(usbDrives),
                 new FakeDevicePermissionService(),
+                new FakePolkitPolicyInstaller(),
+                new FakeUsbDeviceProvider(),
                 NullLogger<DiagnosticsService>.Instance);
         }
 

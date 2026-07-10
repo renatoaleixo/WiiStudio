@@ -1,65 +1,76 @@
 using WiiStudio.Application.DTOs;
+using WiiStudio.Application.Interfaces;
 using WiiStudio.Infrastructure.Processes;
 
 namespace WiiStudio.Infrastructure.Privilege;
 
 public sealed class LinuxPolkitPrivilegeStrategy : IOperatingSystemPrivilegeStrategy
 {
-    private const string PkexecExecutable = "pkexec";
-    private const string WiiStudioPolicyPath = "/usr/share/polkit-1/actions/com.wiistudio.device.policy";
-    private const string LegacyWwtPolicyPath = "/usr/share/polkit-1/actions/com.wiistudio.wwt.policy";
-
     private readonly IProcessRunner _processRunner;
+    private readonly IPolkitPolicyInstaller _policyInstaller;
 
-    public LinuxPolkitPrivilegeStrategy(IProcessRunner processRunner)
+    public LinuxPolkitPrivilegeStrategy(IProcessRunner processRunner, IPolkitPolicyInstaller policyInstaller)
     {
         _processRunner = processRunner;
+        _policyInstaller = policyInstaller;
     }
 
     public OSPlatformKind Platform => OSPlatformKind.Linux;
 
-    public Task<PrivilegedAccessStatus> CheckStatusAsync(
+    public async Task<PrivilegedAccessStatus> CheckStatusAsync(
         PrivilegedAccessRequest request,
         CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        if (FindExecutable(PkexecExecutable) is null)
+        var policyStatus = await _policyInstaller.CheckAsync(cancellationToken);
+        if (policyStatus.State == PolkitPolicyInstallState.PkexecMissing)
         {
-            return Task.FromResult(CreateStatus(
+            return CreateStatus(
                 PrivilegedAccessState.HelperMissing,
                 canRetry: false,
                 requiresUserAction: true,
-                "pkexec não está disponível para solicitar permissão administrativa.",
-                "Instale o pacote polkit/pkexec do sistema e execute o diagnóstico novamente.",
-                "Linux privileged access requires pkexec."));
+                policyStatus.MessageKey ?? "pkexec não está disponível para solicitar permissão administrativa.",
+                policyStatus.RecommendedActionKey ?? "Instale o pacote polkit/pkexec do sistema e execute o diagnóstico novamente.",
+                policyStatus.DiagnosticDetails ?? "Linux privileged access requires pkexec.");
         }
 
-        if (!File.Exists(WiiStudioPolicyPath) && !File.Exists(LegacyWwtPolicyPath))
+        if (policyStatus.State == PolkitPolicyInstallState.Missing)
         {
-            return Task.FromResult(CreateStatus(
+            return CreateStatus(
                 PrivilegedAccessState.PolicyMissing,
                 canRetry: true,
                 requiresUserAction: true,
-                "A política Polkit do WiiStudio não está instalada.",
-                $"Instale uma política com auth_admin_keep em {WiiStudioPolicyPath}.",
-                $"Missing policy: {WiiStudioPolicyPath}. Legacy policy checked: {LegacyWwtPolicyPath}."));
+                policyStatus.MessageKey ?? "A política Polkit do WiiStudio não está instalada.",
+                policyStatus.RecommendedActionKey ?? "Instale a policy oficial do WiiStudio.",
+                policyStatus.DiagnosticDetails ?? $"Missing policy: {policyStatus.PolicyPath}.");
         }
 
-        return Task.FromResult(CreateStatus(
+        if (policyStatus.State is PolkitPolicyInstallState.Invalid or PolkitPolicyInstallState.ValidationFailed)
+        {
+            return CreateStatus(
+                PrivilegedAccessState.Failed,
+                canRetry: true,
+                requiresUserAction: true,
+                policyStatus.MessageKey ?? "A política Polkit do WiiStudio é inválida.",
+                policyStatus.RecommendedActionKey ?? "Reinstale a policy oficial do WiiStudio.",
+                policyStatus.DiagnosticDetails ?? "Policy validation failed.");
+        }
+
+        return CreateStatus(
             PrivilegedAccessState.AuthorizationRequired,
             canRetry: true,
             requiresUserAction: true,
             "O Linux pode solicitar a senha administrativa para acessar partições WBFS brutas.",
             "Autorize o prompt do sistema; a sessão Polkit pode manter a liberação por alguns minutos.",
-            $"Policy detected. Tool={request.ToolId}; Device={request.DevicePath ?? "-"}"));
+            $"Policy detected. Tool={request.ToolId}; Device={request.DevicePath ?? "-"}");
     }
 
     public async Task<PrivilegedProcessResult> RunAsync(
         PrivilegedToolRequest request,
         CancellationToken cancellationToken)
     {
-        var pkexecPath = FindExecutable(PkexecExecutable);
+        var pkexecPath = FindExecutable(PolkitPolicyConstants.PkexecExecutable);
         if (pkexecPath is null)
         {
             var missingHelperStatus = CreateStatus(

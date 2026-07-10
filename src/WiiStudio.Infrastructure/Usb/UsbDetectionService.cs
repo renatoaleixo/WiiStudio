@@ -10,12 +10,12 @@ public sealed class UsbDetectionService : IUsbDetectionService
 {
     private static readonly TimeSpan PollingInterval = TimeSpan.FromSeconds(2);
 
-    private readonly IUsbProvider _usbProvider;
+    private readonly IUsbDriveService _usbDriveService;
     private readonly ILogger<UsbDetectionService> _logger;
 
-    public UsbDetectionService(IUsbProvider usbProvider, ILogger<UsbDetectionService> logger)
+    public UsbDetectionService(IUsbDriveService usbDriveService, ILogger<UsbDetectionService> logger)
     {
-        _usbProvider = usbProvider;
+        _usbDriveService = usbDriveService;
         _logger = logger;
     }
 
@@ -23,7 +23,7 @@ public sealed class UsbDetectionService : IUsbDetectionService
     {
         _logger.LogInformation("Starting USB scan");
 
-        var drives = await _usbProvider.DetectAsync(cancellationToken);
+        var drives = await _usbDriveService.DetectAsync(cancellationToken);
         var result = drives.Select(UsbDriveMapper.ToDto).ToArray();
 
         _logger.LogInformation("USB scan completed with {DriveCount} compatible drive(s)", result.Length);
