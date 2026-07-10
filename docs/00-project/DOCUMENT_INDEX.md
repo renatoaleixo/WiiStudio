@@ -180,6 +180,7 @@ design system, application shell, plugin SDK, segurança, testes e documentaçã
 - `F108-ExternalToolNetworkDownloader.md`
 - `F109-WiimmsOperationProgress.md`
 - `F110-SafeUsbWriteWorkflow.md`
+- `F110-1-UsbFormatAndWbfsPreparation.md`
 - `F111-GameTdbUpdateSource.md`
 - `F112-ApplicationUpdateProvider.md`
 - `F113-TaskAndNotificationCenterIntegration.md`

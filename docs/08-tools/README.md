@@ -15,6 +15,7 @@ integração GameTDB, operações Wiimms e fluxos de prontidão USB do WiiStudio
 - `F108-ExternalToolNetworkDownloader.md`
 - `F109-WiimmsOperationProgress.md`
 - `F110-SafeUsbWriteWorkflow.md`
+- `F110-1-UsbFormatAndWbfsPreparation.md`
 - `F111-GameTdbUpdateSource.md`
 - `F112-ApplicationUpdateProvider.md`
 - `F113-TaskAndNotificationCenterIntegration.md`
@@ -44,11 +45,15 @@ Para desenvolvimento incremental, seguir esta ordem:
 11. `F118-DiagnosticsRepairActions.md`
 12. `F119-FirstRunSetupWizard.md`
 13. `F120-EndToEndWiiUsbReadinessCheck.md`
-14. `F112-ApplicationUpdateProvider.md`
-15. `F117-PluginMarketplaceUI.md`
+14. `F110-1-UsbFormatAndWbfsPreparation.md`
+15. `F112-ApplicationUpdateProvider.md`
+16. `F117-PluginMarketplaceUI.md`
 
 `F112` e `F117` podem ser desenvolvidas em paralelo depois que `F108` e `F113`
 estiverem estáveis.
+
+`F110-1` deve ser implementada somente depois de `F110`, `F113` e `F120`, pois
+é um fluxo destrutivo de preparação/formatação USB.
 
 # Pacotes Locais
 
