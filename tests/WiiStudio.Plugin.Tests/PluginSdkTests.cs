@@ -1,3 +1,7 @@
+using System.IO.Compression;
+using System.Net;
+using System.Security.Cryptography;
+using System.Text;
 using WiiStudio.Plugin.Abstractions;
 using WiiStudio.Plugin.Diagnostics;
 using WiiStudio.Plugin.Hosting;
@@ -187,6 +191,158 @@ public sealed class PluginSdkTests : IDisposable
         Directory.Exists(Path.Combine(tempRoot, "disabled", "com.example.toggle")).Should().BeFalse();
     }
 
+    [Fact]
+    public async Task Remote_catalog_installs_valid_plugin_disabled_by_default()
+    {
+        var packageBytes = CreatePluginPackage("com.example.remote");
+        var checksum = Convert.ToHexString(SHA256.HashData(packageBytes)).ToLowerInvariant();
+        var http = new FakeHttpMessageHandler();
+        http.AddJson("https://plugins.example/catalog.json", $$"""
+        {
+          "schemaVersion": 1,
+          "publishedAt": "2026-01-01T10:00:00Z",
+          "catalogVersion": "1.0.0",
+          "plugins": [
+            {
+              "pluginId": "com.example.remote",
+              "name": "Remote Example",
+              "description": "Remote plugin.",
+              "author": "Example",
+              "version": "1.0.0",
+              "minWiiStudioVersion": "1.0.0",
+              "packageUrl": "https://plugins.example/com.example.remote.zip",
+              "sha256": "{{checksum}}",
+              "permissions": ["AccessMetadata"],
+              "riskLevel": "Low",
+              "trustLevel": "Community",
+              "status": "Active"
+            }
+          ],
+          "revocations": []
+        }
+        """);
+        http.AddBytes("https://plugins.example/com.example.remote.zip", packageBytes);
+        var service = CreateManagementService(new PluginHostOptions
+        {
+            InstalledDirectory = Path.Combine(tempRoot, "installed"),
+            DisabledDirectory = Path.Combine(tempRoot, "disabled"),
+            QuarantineDirectory = Path.Combine(tempRoot, "quarantine"),
+            DownloadDirectory = Path.Combine(tempRoot, "downloads"),
+            CatalogCachePath = Path.Combine(tempRoot, "catalog-cache.json"),
+            RemoteCatalogUrl = "https://plugins.example/catalog.json",
+            TrustedCatalogHosts = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "plugins.example" }
+        }, new HttpClient(http));
+
+        var result = await service.InstallRemoteAsync("com.example.remote");
+
+        result.Success.Should().BeTrue();
+        result.Plugin.Should().NotBeNull();
+        result.Plugin!.State.Should().Be(PluginDiscoveryState.Disabled);
+        File.Exists(Path.Combine(tempRoot, "disabled", "com.example.remote", "plugin.json")).Should().BeTrue();
+        File.Exists(Path.Combine(tempRoot, "catalog-cache.json")).Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task Remote_catalog_rejects_http_package_url()
+    {
+        var http = new FakeHttpMessageHandler();
+        http.AddJson("https://plugins.example/catalog.json", """
+        {
+          "schemaVersion": 1,
+          "plugins": [
+            {
+              "pluginId": "com.example.bad",
+              "name": "Bad",
+              "description": "Bad plugin.",
+              "author": "Example",
+              "version": "1.0.0",
+              "minWiiStudioVersion": "1.0.0",
+              "packageUrl": "http://plugins.example/com.example.bad.zip",
+              "sha256": "checksum",
+              "permissions": ["AccessMetadata"],
+              "riskLevel": "Low",
+              "trustLevel": "Community",
+              "status": "Active"
+            }
+          ],
+          "revocations": []
+        }
+        """);
+        var service = CreateRemoteManagementService(http);
+
+        var catalog = await service.RefreshRemoteCatalogAsync();
+
+        catalog.Success.Should().BeFalse();
+        catalog.Errors.Should().Contain(error => error.Contains("packageUrl", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public async Task Remote_install_quarantines_invalid_checksum_package()
+    {
+        var packageBytes = CreatePluginPackage("com.example.badchecksum");
+        var http = new FakeHttpMessageHandler();
+        http.AddJson("https://plugins.example/catalog.json", """
+        {
+          "schemaVersion": 1,
+          "plugins": [
+            {
+              "pluginId": "com.example.badchecksum",
+              "name": "Bad Checksum",
+              "description": "Bad checksum plugin.",
+              "author": "Example",
+              "version": "1.0.0",
+              "minWiiStudioVersion": "1.0.0",
+              "packageUrl": "https://plugins.example/com.example.badchecksum.zip",
+              "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+              "permissions": ["AccessMetadata"],
+              "riskLevel": "Low",
+              "trustLevel": "Community",
+              "status": "Active"
+            }
+          ],
+          "revocations": []
+        }
+        """);
+        http.AddBytes("https://plugins.example/com.example.badchecksum.zip", packageBytes);
+        var service = CreateRemoteManagementService(http);
+
+        var result = await service.InstallRemoteAsync("com.example.badchecksum");
+
+        result.Success.Should().BeFalse();
+        result.QuarantinePath.Should().NotBeNull();
+        Directory.Exists(result.QuarantinePath!).Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task Remote_revocation_moves_installed_plugin_to_quarantine()
+    {
+        var installedDirectory = Path.Combine(tempRoot, "installed", "com.example.revoked");
+        Directory.CreateDirectory(installedDirectory);
+        await File.WriteAllTextAsync(Path.Combine(installedDirectory, "plugin.json"), ValidManifestJson("com.example.revoked"));
+        var http = new FakeHttpMessageHandler();
+        http.AddJson("https://plugins.example/catalog.json", """
+        {
+          "schemaVersion": 1,
+          "plugins": [],
+          "revocations": [
+            {
+              "pluginId": "com.example.revoked",
+              "reason": "Unsafe behavior",
+              "revokedAt": "2026-01-01T10:00:00Z"
+            }
+          ]
+        }
+        """);
+        var service = CreateRemoteManagementService(http);
+
+        var results = await service.ApplyRemoteRevocationsAsync();
+
+        results.Should().ContainSingle(item => item.PluginId == "com.example.revoked" && item.Applied);
+        Directory.Exists(installedDirectory).Should().BeFalse();
+        Directory.EnumerateFiles(Path.Combine(tempRoot, "quarantine"), "plugin.json", SearchOption.AllDirectories)
+            .Should().ContainSingle();
+    }
+
     public void Dispose()
     {
         if (Directory.Exists(tempRoot))
@@ -249,12 +405,30 @@ public sealed class PluginSdkTests : IDisposable
 
     private IPluginManagementService CreateManagementService()
     {
-        var options = new PluginHostOptions
+        return CreateManagementService(new PluginHostOptions
         {
             InstalledDirectory = Path.Combine(tempRoot, "installed"),
             DisabledDirectory = Path.Combine(tempRoot, "disabled"),
             QuarantineDirectory = Path.Combine(tempRoot, "quarantine")
-        };
+        });
+    }
+
+    private IPluginManagementService CreateRemoteManagementService(FakeHttpMessageHandler http)
+    {
+        return CreateManagementService(new PluginHostOptions
+        {
+            InstalledDirectory = Path.Combine(tempRoot, "installed"),
+            DisabledDirectory = Path.Combine(tempRoot, "disabled"),
+            QuarantineDirectory = Path.Combine(tempRoot, "quarantine"),
+            DownloadDirectory = Path.Combine(tempRoot, "downloads"),
+            CatalogCachePath = Path.Combine(tempRoot, "catalog-cache.json"),
+            RemoteCatalogUrl = "https://plugins.example/catalog.json",
+            TrustedCatalogHosts = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "plugins.example" }
+        }, new HttpClient(http));
+    }
+
+    private IPluginManagementService CreateManagementService(PluginHostOptions options, HttpClient? httpClient = null)
+    {
         var diagnostics = new PluginDiagnosticService();
         var registry = new PluginRegistry();
         var reader = new JsonPluginManifestReader();
@@ -279,11 +453,52 @@ public sealed class PluginSdkTests : IDisposable
             loader,
             diagnostics,
             permissions,
-            new DefaultPluginPermissionPolicy());
+            new DefaultPluginPermissionPolicy(),
+            httpClient);
+    }
+
+    private static byte[] CreatePluginPackage(string pluginId)
+    {
+        using var memory = new MemoryStream();
+        using (var archive = new ZipArchive(memory, ZipArchiveMode.Create, leaveOpen: true))
+        {
+            var manifest = archive.CreateEntry("plugin/plugin.json");
+            using var writer = new StreamWriter(manifest.Open(), Encoding.UTF8);
+            writer.Write(ValidManifestJson(pluginId));
+        }
+
+        return memory.ToArray();
     }
 
     private sealed class EmptyServiceProvider : IServiceProvider
     {
         public object? GetService(Type serviceType) => null;
+    }
+
+    private sealed class FakeHttpMessageHandler : HttpMessageHandler
+    {
+        private readonly Dictionary<string, Func<HttpResponseMessage>> responses = new(StringComparer.OrdinalIgnoreCase);
+
+        public void AddJson(string url, string json) =>
+            responses[url] = () => new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(json, Encoding.UTF8, "application/json")
+            };
+
+        public void AddBytes(string url, byte[] bytes) =>
+            responses[url] = () => new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new ByteArrayContent(bytes)
+            };
+
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            if (request.RequestUri is not null && responses.TryGetValue(request.RequestUri.ToString(), out var responseFactory))
+            {
+                return Task.FromResult(responseFactory());
+            }
+
+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.NotFound));
+        }
     }
 }

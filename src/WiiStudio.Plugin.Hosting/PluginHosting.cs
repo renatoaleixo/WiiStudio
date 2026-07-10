@@ -1,6 +1,7 @@
 using System.Reflection;
 using System.Runtime.Loader;
 using System.IO.Compression;
+using System.Security.Cryptography;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.Logging;
@@ -16,6 +17,18 @@ public sealed record PluginHostOptions
     public string InstalledDirectory { get; init; } = Path.Combine("plugins", "installed");
     public string DisabledDirectory { get; init; } = Path.Combine("plugins", "disabled");
     public string QuarantineDirectory { get; init; } = Path.Combine("plugins", "quarantine");
+    public string DownloadDirectory { get; init; } = Path.Combine("plugins", "downloads");
+    public string CatalogCachePath { get; init; } = Path.Combine("plugins", "catalog-cache.json");
+    public string? RemoteCatalogUrl { get; init; }
+    public IReadOnlySet<string> TrustedCatalogHosts { get; init; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+    {
+        "github.com",
+        "githubusercontent.com",
+        "objects.githubusercontent.com",
+        "plugins.wiistudio.app"
+    };
+
+    public bool RequireRemoteSignatureForTrustedPlugins { get; init; } = true;
     public string CurrentWiiStudioVersion { get; init; } = "1.0.0";
     public string CurrentPluginSdkVersion { get; init; } = "1.0.0";
     public TimeSpan InitializeTimeout { get; init; } = TimeSpan.FromSeconds(30);
@@ -47,6 +60,9 @@ public interface IPluginManagementService
 {
     Task<IReadOnlyList<PluginManagementItem>> GetInstalledAsync(CancellationToken cancellationToken = default);
     Task<PluginInstallResult> InstallLocalAsync(string sourcePath, CancellationToken cancellationToken = default);
+    Task<RemotePluginCatalogResult> RefreshRemoteCatalogAsync(CancellationToken cancellationToken = default);
+    Task<PluginInstallResult> InstallRemoteAsync(string pluginId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<PluginRevocationResult>> ApplyRemoteRevocationsAsync(CancellationToken cancellationToken = default);
     Task<PluginManagementResult> EnableAsync(string pluginId, CancellationToken cancellationToken = default);
     Task<PluginManagementResult> DisableAsync(string pluginId, CancellationToken cancellationToken = default);
     Task<PluginManagementResult> RemoveAsync(string pluginId, CancellationToken cancellationToken = default);
@@ -92,6 +108,52 @@ public sealed record PluginInstallResult(
     string? QuarantinePath = null);
 
 public sealed record PluginManagementResult(bool Success, string Message, IReadOnlyList<string> Errors);
+
+public sealed record RemotePluginCatalogResult(
+    bool Success,
+    string Message,
+    IReadOnlyList<RemotePluginCatalogItem> Plugins,
+    IReadOnlyList<RemotePluginRevocation> Revocations,
+    IReadOnlyList<string> Errors,
+    string? CachePath = null);
+
+public sealed record RemotePluginCatalogItem(
+    string PluginId,
+    string Name,
+    string Description,
+    string Author,
+    string Version,
+    string MinimumWiiStudioVersion,
+    string PackageUrl,
+    string Sha256,
+    string? SignatureUrl,
+    string? SignatureAlgorithm,
+    string? SigningKeyId,
+    IReadOnlyList<PluginPermission> Permissions,
+    PluginRiskLevel RiskLevel,
+    PluginTrustLevel TrustLevel,
+    RemotePluginStatus Status);
+
+public sealed record RemotePluginRevocation(string PluginId, string Reason, DateTimeOffset RevokedAt);
+
+public sealed record PluginRevocationResult(string PluginId, bool Applied, string Message, string? QuarantinePath = null);
+
+public enum PluginTrustLevel
+{
+    Official,
+    Verified,
+    Community,
+    Unknown,
+    Blocked,
+    Revoked
+}
+
+public enum RemotePluginStatus
+{
+    Active,
+    Blocked,
+    Revoked
+}
 
 public sealed class JsonPluginManifestReader : IPluginManifestReader
 {
@@ -206,6 +268,14 @@ public sealed class PluginManifestValidator : IPluginManifestValidator
 
         var root = Path.GetFullPath(pluginDirectory);
         var target = Path.GetFullPath(Path.Combine(root, entryAssembly));
+        return IsPathInside(root, target);
+    }
+
+    private static bool IsPathInside(string rootDirectory, string targetPath)
+    {
+        var root = Path.GetFullPath(rootDirectory)
+            .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) + Path.DirectorySeparatorChar;
+        var target = Path.GetFullPath(targetPath);
         return target.StartsWith(root, StringComparison.Ordinal);
     }
 
@@ -486,6 +556,13 @@ public sealed class PluginLoaderService : IPluginLoaderService
 
 public sealed class FileSystemPluginManagementService : IPluginManagementService
 {
+    private static readonly JsonSerializerOptions RemoteCatalogJsonOptions = new()
+    {
+        PropertyNameCaseInsensitive = true,
+        ReadCommentHandling = JsonCommentHandling.Skip,
+        AllowTrailingCommas = true
+    };
+
     private readonly PluginHostOptions options;
     private readonly IPluginDiscoveryService discovery;
     private readonly IPluginManifestReader reader;
@@ -494,6 +571,7 @@ public sealed class FileSystemPluginManagementService : IPluginManagementService
     private readonly IPluginDiagnosticService diagnostics;
     private readonly IPluginPermissionService permissions;
     private readonly IPluginPermissionPolicy permissionPolicy;
+    private readonly HttpClient httpClient;
 
     public FileSystemPluginManagementService(
         PluginHostOptions options,
@@ -503,7 +581,8 @@ public sealed class FileSystemPluginManagementService : IPluginManagementService
         IPluginLoaderService loader,
         IPluginDiagnosticService diagnostics,
         IPluginPermissionService permissions,
-        IPluginPermissionPolicy permissionPolicy)
+        IPluginPermissionPolicy permissionPolicy,
+        HttpClient? httpClient = null)
     {
         this.options = options;
         this.discovery = discovery;
@@ -513,6 +592,7 @@ public sealed class FileSystemPluginManagementService : IPluginManagementService
         this.diagnostics = diagnostics;
         this.permissions = permissions;
         this.permissionPolicy = permissionPolicy;
+        this.httpClient = httpClient ?? new HttpClient();
     }
 
     public async Task<IReadOnlyList<PluginManagementItem>> GetInstalledAsync(CancellationToken cancellationToken = default)
@@ -552,7 +632,7 @@ public sealed class FileSystemPluginManagementService : IPluginManagementService
                 }
 
                 Directory.CreateDirectory(tempDirectory);
-                ZipFile.ExtractToDirectory(sourcePath, tempDirectory);
+                SafeExtractZip(sourcePath, tempDirectory);
                 preparedDirectory = FindPluginDirectory(tempDirectory) ?? tempDirectory;
             }
             else
@@ -607,6 +687,246 @@ public sealed class FileSystemPluginManagementService : IPluginManagementService
                 Directory.Delete(tempDirectory, recursive: true);
             }
         }
+    }
+
+    public async Task<RemotePluginCatalogResult> RefreshRemoteCatalogAsync(CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            string json;
+            if (TryCreateTrustedHttpsUri(options.RemoteCatalogUrl, out var catalogUri))
+            {
+                json = await GetTrustedStringAsync(catalogUri, cancellationToken);
+                await WriteCatalogCacheAsync(json, cancellationToken);
+            }
+            else if (File.Exists(options.CatalogCachePath))
+            {
+                json = await File.ReadAllTextAsync(options.CatalogCachePath, cancellationToken);
+            }
+            else
+            {
+                return new RemotePluginCatalogResult(false, "Catálogo remoto não configurado.", [], [], ["RemoteCatalogUrl ausente ou host não confiável."]);
+            }
+
+            var catalog = JsonSerializer.Deserialize<RemotePluginCatalogDto>(json, RemoteCatalogJsonOptions);
+            if (catalog is null || catalog.SchemaVersion != 1)
+            {
+                return new RemotePluginCatalogResult(false, "Catálogo de plugins inválido.", [], [], ["schemaVersion inválido."]);
+            }
+
+            var plugins = catalog.Plugins.Select(MapCatalogItem).ToArray();
+            var revocations = catalog.Revocations.Select(item => new RemotePluginRevocation(
+                item.PluginId ?? string.Empty,
+                item.Reason ?? string.Empty,
+                item.RevokedAt ?? DateTimeOffset.UtcNow)).ToArray();
+
+            var errors = ValidateCatalog(plugins);
+            if (errors.Count > 0)
+            {
+                return new RemotePluginCatalogResult(false, "Catálogo de plugins contém entradas inseguras.", plugins, revocations, errors, options.CatalogCachePath);
+            }
+
+            return new RemotePluginCatalogResult(true, "Catálogo de plugins atualizado.", plugins, revocations, [], options.CatalogCachePath);
+        }
+        catch (Exception ex) when (ex is IOException or JsonException or HttpRequestException or InvalidOperationException)
+        {
+            if (File.Exists(options.CatalogCachePath))
+            {
+                var json = await File.ReadAllTextAsync(options.CatalogCachePath, cancellationToken);
+                var cachedCatalog = JsonSerializer.Deserialize<RemotePluginCatalogDto>(json, RemoteCatalogJsonOptions);
+                if (cachedCatalog is not null && cachedCatalog.SchemaVersion == 1)
+                {
+                    return new RemotePluginCatalogResult(
+                        true,
+                        "Usando catálogo de plugins em cache.",
+                        cachedCatalog.Plugins.Select(MapCatalogItem).ToArray(),
+                        cachedCatalog.Revocations.Select(item => new RemotePluginRevocation(
+                            item.PluginId ?? string.Empty,
+                            item.Reason ?? string.Empty,
+                            item.RevokedAt ?? DateTimeOffset.UtcNow)).ToArray(),
+                        [ex.Message],
+                        options.CatalogCachePath);
+                }
+            }
+
+            return new RemotePluginCatalogResult(false, "Falha ao atualizar catálogo de plugins.", [], [], [ex.Message]);
+        }
+    }
+
+    public async Task<PluginInstallResult> InstallRemoteAsync(string pluginId, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(pluginId))
+        {
+            return new PluginInstallResult(false, null, "Informe o plugin remoto.", ["PluginId vazio."]);
+        }
+
+        var catalog = await RefreshRemoteCatalogAsync(cancellationToken);
+        if (!catalog.Success)
+        {
+            return new PluginInstallResult(false, null, catalog.Message, catalog.Errors);
+        }
+
+        var item = catalog.Plugins.FirstOrDefault(plugin => string.Equals(plugin.PluginId, pluginId, StringComparison.OrdinalIgnoreCase));
+        if (item is null)
+        {
+            return new PluginInstallResult(false, null, "Plugin remoto não encontrado.", [$"Plugin não listado: {pluginId}."]);
+        }
+
+        if (item.Status is RemotePluginStatus.Blocked or RemotePluginStatus.Revoked ||
+            item.TrustLevel is PluginTrustLevel.Blocked or PluginTrustLevel.Revoked)
+        {
+            return new PluginInstallResult(false, null, "Plugin remoto bloqueado ou revogado.", [$"Estado remoto: {item.Status}; confiança: {item.TrustLevel}."]);
+        }
+
+        if (item.Permissions.Contains(PluginPermission.ExecuteProcess))
+        {
+            return new PluginInstallResult(false, null, "Plugin remoto solicita permissão proibida.", ["ExecuteProcess não é permitido para plugins remotos."]);
+        }
+
+        if (!TryCreateTrustedHttpsUri(item.PackageUrl, out var packageUri))
+        {
+            return new PluginInstallResult(false, null, "Pacote remoto deve usar HTTPS e host confiável.", [$"URL inválida: {item.PackageUrl}."]);
+        }
+
+        if (string.IsNullOrWhiteSpace(item.Sha256))
+        {
+            return new PluginInstallResult(false, null, "Pacote remoto sem checksum.", ["sha256 obrigatório."]);
+        }
+
+        if (options.RequireRemoteSignatureForTrustedPlugins &&
+            item.TrustLevel is PluginTrustLevel.Official or PluginTrustLevel.Verified &&
+            string.IsNullOrWhiteSpace(item.SignatureUrl))
+        {
+            return new PluginInstallResult(false, null, "Plugin oficial/verificado exige assinatura.", ["signatureUrl obrigatório."]);
+        }
+
+        Directory.CreateDirectory(options.DownloadDirectory);
+        var packagePath = Path.Combine(options.DownloadDirectory, $"{SanitizePluginId(item.PluginId)}-{item.Version}.zip");
+        try
+        {
+            await using (var stream = await GetTrustedStreamAsync(packageUri, cancellationToken))
+            await using (var target = File.Create(packagePath))
+            {
+                await stream.CopyToAsync(target, cancellationToken);
+            }
+
+            var checksum = await ComputeSha256Async(packagePath, cancellationToken);
+            if (!string.Equals(checksum, item.Sha256, StringComparison.OrdinalIgnoreCase))
+            {
+                var quarantinePath = await QuarantineDownloadedPackageAsync(packagePath, item.PluginId, "checksum-invalid", cancellationToken);
+                return new PluginInstallResult(false, null, "Checksum do plugin remoto não confere.", ["sha256 inválido."], quarantinePath);
+            }
+
+            if (!string.IsNullOrWhiteSpace(item.SignatureUrl))
+            {
+                if (!TryCreateTrustedHttpsUri(item.SignatureUrl, out var signatureUri))
+                {
+                    var quarantinePath = await QuarantineDownloadedPackageAsync(packagePath, item.PluginId, "signature-url-invalid", cancellationToken);
+                    return new PluginInstallResult(false, null, "Assinatura usa host não confiável.", ["signatureUrl inválido."], quarantinePath);
+                }
+
+                var signature = await GetTrustedStringAsync(signatureUri, cancellationToken);
+                await File.WriteAllTextAsync(packagePath + ".sig", signature, cancellationToken);
+            }
+
+            var tempDirectory = Path.Combine(Path.GetTempPath(), "wiistudio-plugin-remote", Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(tempDirectory);
+            try
+            {
+                SafeExtractZip(packagePath, tempDirectory);
+                var preparedDirectory = FindPluginDirectory(tempDirectory) ?? tempDirectory;
+                var manifestPath = Path.Combine(preparedDirectory, "plugin.json");
+                if (!File.Exists(manifestPath))
+                {
+                    var quarantinePath = await QuarantineAsync(preparedDirectory, item.PluginId, cancellationToken);
+                    return new PluginInstallResult(false, null, "plugin.json não encontrado no pacote remoto.", ["Manifest ausente."], quarantinePath);
+                }
+
+                var manifest = await reader.ReadAsync(manifestPath, cancellationToken);
+                if (!string.Equals(manifest.Id, item.PluginId, StringComparison.OrdinalIgnoreCase))
+                {
+                    var quarantinePath = await QuarantineAsync(preparedDirectory, item.PluginId, cancellationToken);
+                    return new PluginInstallResult(false, null, "Manifest não corresponde ao catálogo remoto.", [$"Esperado {item.PluginId}; obtido {manifest.Id}."], quarantinePath);
+                }
+
+                if (!string.Equals(manifest.Version, item.Version, StringComparison.OrdinalIgnoreCase))
+                {
+                    var quarantinePath = await QuarantineAsync(preparedDirectory, item.PluginId, cancellationToken);
+                    return new PluginInstallResult(false, null, "Versão do manifest não corresponde ao catálogo remoto.", [$"Esperado {item.Version}; obtido {manifest.Version}."], quarantinePath);
+                }
+
+                if (!item.Permissions.OrderBy(permission => permission).SequenceEqual(manifest.Permissions.OrderBy(permission => permission)))
+                {
+                    var quarantinePath = await QuarantineAsync(preparedDirectory, item.PluginId, cancellationToken);
+                    return new PluginInstallResult(false, null, "Permissões do manifest diferem do catálogo remoto.", ["Permissões devem ser explícitas e iguais ao catálogo."], quarantinePath);
+                }
+
+                var validation = validator.Validate(manifest, preparedDirectory);
+                if (!validation.IsValid)
+                {
+                    var quarantinePath = await QuarantineAsync(preparedDirectory, manifest.Id, cancellationToken);
+                    return new PluginInstallResult(false, null, "Plugin remoto inválido enviado para quarentena.", validation.Errors, quarantinePath);
+                }
+
+                var destination = Path.Combine(options.DisabledDirectory, SanitizePluginId(manifest.Id));
+                if (Directory.Exists(destination) || Directory.Exists(Path.Combine(options.InstalledDirectory, SanitizePluginId(manifest.Id))))
+                {
+                    return new PluginInstallResult(false, null, "Já existe um plugin com esse identificador.", [$"Plugin duplicado: {manifest.Id}."]);
+                }
+
+                CopyDirectory(preparedDirectory, destination);
+                var descriptor = new PluginDescriptor(
+                    manifest.Id,
+                    manifest.Name,
+                    manifest.Version,
+                    destination,
+                    Path.Combine(destination, "plugin.json"),
+                    manifest,
+                    PluginDiscoveryState.Disabled,
+                    validation.Warnings.Concat([$"TrustLevel={item.TrustLevel}; RiskLevel={item.RiskLevel}; CatalogSource={options.RemoteCatalogUrl ?? options.CatalogCachePath}"]).ToArray(),
+                    validation.Errors);
+
+                diagnostics.Record(CreateDiagnostic(manifest.Id, "management.remote-installed", DiagnosticSeverity.Information, "plugin.management.remote-installed"));
+                return new PluginInstallResult(true, await ToManagementItemAsync(descriptor, cancellationToken), "Plugin remoto instalado desabilitado para revisão.", []);
+            }
+            finally
+            {
+                if (Directory.Exists(tempDirectory))
+                {
+                    Directory.Delete(tempDirectory, recursive: true);
+                }
+            }
+        }
+        catch (Exception ex) when (ex is IOException or InvalidDataException or UnauthorizedAccessException or JsonException or HttpRequestException or InvalidOperationException)
+        {
+            return new PluginInstallResult(false, null, "Falha ao instalar plugin remoto.", [ex.Message]);
+        }
+    }
+
+    public async Task<IReadOnlyList<PluginRevocationResult>> ApplyRemoteRevocationsAsync(CancellationToken cancellationToken = default)
+    {
+        var catalog = await RefreshRemoteCatalogAsync(cancellationToken);
+        if (!catalog.Success)
+        {
+            return [new PluginRevocationResult(string.Empty, false, catalog.Message)];
+        }
+
+        var results = new List<PluginRevocationResult>();
+        foreach (var revocation in catalog.Revocations.Where(item => !string.IsNullOrWhiteSpace(item.PluginId)))
+        {
+            var descriptor = await FindDescriptorAsync(revocation.PluginId, cancellationToken);
+            if (descriptor is null)
+            {
+                continue;
+            }
+
+            await loader.UnloadAsync(revocation.PluginId, cancellationToken);
+            var quarantinePath = await MoveToQuarantineAsync(descriptor.DirectoryPath, revocation.PluginId, revocation.Reason, cancellationToken);
+            diagnostics.Record(CreateDiagnostic(revocation.PluginId, "management.revoked", DiagnosticSeverity.Critical, "plugin.management.revoked"));
+            results.Add(new PluginRevocationResult(revocation.PluginId, true, $"Plugin revogado: {revocation.Reason}", quarantinePath));
+        }
+
+        return results;
     }
 
     public async Task<PluginManagementResult> EnableAsync(string pluginId, CancellationToken cancellationToken = default)
@@ -708,6 +1028,156 @@ public sealed class FileSystemPluginManagementService : IPluginManagementService
         return destination;
     }
 
+    private async Task<string> QuarantineDownloadedPackageAsync(string packagePath, string pluginId, string reason, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        var destination = Path.Combine(options.QuarantineDirectory, $"{SanitizePluginId(pluginId)}-{DateTimeOffset.UtcNow:yyyyMMddHHmmss}");
+        Directory.CreateDirectory(destination);
+        File.Copy(packagePath, Path.Combine(destination, Path.GetFileName(packagePath)), overwrite: true);
+        await File.WriteAllTextAsync(Path.Combine(destination, "quarantine-reason.txt"), reason, cancellationToken);
+        diagnostics.Record(CreateDiagnostic(pluginId, "management.quarantined", DiagnosticSeverity.Error, "plugin.management.quarantined"));
+        return destination;
+    }
+
+    private async Task<string> MoveToQuarantineAsync(string sourceDirectory, string pluginId, string reason, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        var destination = Path.Combine(options.QuarantineDirectory, $"{SanitizePluginId(pluginId)}-{DateTimeOffset.UtcNow:yyyyMMddHHmmss}");
+        MoveDirectory(sourceDirectory, destination);
+        await File.WriteAllTextAsync(Path.Combine(destination, "revocation.txt"), reason, cancellationToken);
+        return destination;
+    }
+
+    private async Task WriteCatalogCacheAsync(string json, CancellationToken cancellationToken)
+    {
+        var directory = Path.GetDirectoryName(options.CatalogCachePath);
+        if (!string.IsNullOrWhiteSpace(directory))
+        {
+            Directory.CreateDirectory(directory);
+        }
+
+        await File.WriteAllTextAsync(options.CatalogCachePath, json, cancellationToken);
+    }
+
+    private async Task<string> GetTrustedStringAsync(Uri uri, CancellationToken cancellationToken)
+    {
+        using var response = await httpClient.GetAsync(uri, cancellationToken);
+        response.EnsureSuccessStatusCode();
+        ValidateTrustedHttpsUri(response.RequestMessage?.RequestUri ?? uri);
+        return await response.Content.ReadAsStringAsync(cancellationToken);
+    }
+
+    private async Task<Stream> GetTrustedStreamAsync(Uri uri, CancellationToken cancellationToken)
+    {
+        using var response = await httpClient.GetAsync(uri, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+        response.EnsureSuccessStatusCode();
+        ValidateTrustedHttpsUri(response.RequestMessage?.RequestUri ?? uri);
+        var memory = new MemoryStream();
+        await response.Content.CopyToAsync(memory, cancellationToken);
+        memory.Position = 0;
+        return memory;
+    }
+
+    private async Task<string> ComputeSha256Async(string path, CancellationToken cancellationToken)
+    {
+        await using var stream = File.OpenRead(path);
+        var hash = await SHA256.HashDataAsync(stream, cancellationToken);
+        return Convert.ToHexString(hash).ToLowerInvariant();
+    }
+
+    private List<string> ValidateCatalog(IReadOnlyList<RemotePluginCatalogItem> plugins)
+    {
+        var errors = new List<string>();
+        foreach (var plugin in plugins)
+        {
+            if (string.IsNullOrWhiteSpace(plugin.PluginId))
+            {
+                errors.Add("pluginId obrigatório.");
+            }
+
+            if (string.IsNullOrWhiteSpace(plugin.Sha256))
+            {
+                errors.Add($"{plugin.PluginId}: sha256 obrigatório.");
+            }
+
+            if (!TryCreateTrustedHttpsUri(plugin.PackageUrl, out _))
+            {
+                errors.Add($"{plugin.PluginId}: packageUrl deve usar HTTPS e host confiável.");
+            }
+
+            if (!string.IsNullOrWhiteSpace(plugin.SignatureUrl) && !TryCreateTrustedHttpsUri(plugin.SignatureUrl, out _))
+            {
+                errors.Add($"{plugin.PluginId}: signatureUrl deve usar HTTPS e host confiável.");
+            }
+
+            if (plugin.Permissions.Contains(PluginPermission.ExecuteProcess))
+            {
+                errors.Add($"{plugin.PluginId}: ExecuteProcess não é permitido para plugin remoto.");
+            }
+
+            if (options.RequireRemoteSignatureForTrustedPlugins &&
+                plugin.TrustLevel is PluginTrustLevel.Official or PluginTrustLevel.Verified &&
+                string.IsNullOrWhiteSpace(plugin.SignatureUrl))
+            {
+                errors.Add($"{plugin.PluginId}: assinatura obrigatória para plugin {plugin.TrustLevel}.");
+            }
+        }
+
+        return errors;
+    }
+
+    private RemotePluginCatalogItem MapCatalogItem(RemotePluginCatalogItemDto item)
+    {
+        var trustLevel = ParseEnum(item.TrustLevel, PluginTrustLevel.Unknown);
+        var status = ParseEnum(item.Status, RemotePluginStatus.Active);
+        if (status == RemotePluginStatus.Blocked)
+        {
+            trustLevel = PluginTrustLevel.Blocked;
+        }
+        else if (status == RemotePluginStatus.Revoked)
+        {
+            trustLevel = PluginTrustLevel.Revoked;
+        }
+
+        return new RemotePluginCatalogItem(
+            item.PluginId ?? string.Empty,
+            item.Name ?? string.Empty,
+            item.Description ?? string.Empty,
+            item.Author ?? string.Empty,
+            item.Version ?? string.Empty,
+            item.MinWiiStudioVersion ?? string.Empty,
+            item.PackageUrl ?? string.Empty,
+            item.Sha256 ?? string.Empty,
+            item.SignatureUrl,
+            item.SignatureAlgorithm,
+            item.SigningKeyId,
+            (item.Permissions ?? []).Select(permission => ParsePluginPermission(permission)).ToArray(),
+            ParseEnum(item.RiskLevel, PluginRiskLevel.Unknown),
+            trustLevel,
+            status);
+    }
+
+    private bool TryCreateTrustedHttpsUri(string? value, out Uri uri)
+    {
+        if (Uri.TryCreate(value, UriKind.Absolute, out uri!) &&
+            uri.Scheme == Uri.UriSchemeHttps &&
+            options.TrustedCatalogHosts.Contains(uri.Host))
+        {
+            return true;
+        }
+
+        uri = null!;
+        return false;
+    }
+
+    private void ValidateTrustedHttpsUri(Uri uri)
+    {
+        if (uri.Scheme != Uri.UriSchemeHttps || !options.TrustedCatalogHosts.Contains(uri.Host))
+        {
+            throw new InvalidOperationException($"Plugin endpoint '{uri.Host}' is not trusted.");
+        }
+    }
+
     private static string? FindPluginDirectory(string rootDirectory)
     {
         if (File.Exists(Path.Combine(rootDirectory, "plugin.json")))
@@ -718,6 +1188,30 @@ public sealed class FileSystemPluginManagementService : IPluginManagementService
         return Directory.EnumerateFiles(rootDirectory, "plugin.json", SearchOption.AllDirectories)
             .Select(Path.GetDirectoryName)
             .FirstOrDefault(path => !string.IsNullOrWhiteSpace(path));
+    }
+
+    private static void SafeExtractZip(string zipPath, string destinationDirectory)
+    {
+        var root = Path.GetFullPath(destinationDirectory);
+        Directory.CreateDirectory(root);
+        using var archive = ZipFile.OpenRead(zipPath);
+        foreach (var entry in archive.Entries)
+        {
+            var destination = Path.GetFullPath(Path.Combine(root, entry.FullName));
+            if (!IsPathInside(root, destination))
+            {
+                throw new InvalidDataException("Pacote de plugin contém caminho inseguro.");
+            }
+
+            if (string.IsNullOrWhiteSpace(entry.Name))
+            {
+                Directory.CreateDirectory(destination);
+                continue;
+            }
+
+            Directory.CreateDirectory(Path.GetDirectoryName(destination) ?? root);
+            entry.ExtractToFile(destination, overwrite: false);
+        }
     }
 
     private static void CopyDirectory(string sourceDirectory, string destinationDirectory)
@@ -757,9 +1251,70 @@ public sealed class FileSystemPluginManagementService : IPluginManagementService
         return pluginId;
     }
 
+    private static TEnum ParseEnum<TEnum>(string? value, TEnum fallback)
+        where TEnum : struct, Enum
+    {
+        return Enum.TryParse<TEnum>(value, ignoreCase: true, out var parsed)
+            ? parsed
+            : fallback;
+    }
+
+    private static bool IsPathInside(string rootDirectory, string targetPath)
+    {
+        var root = Path.GetFullPath(rootDirectory)
+            .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) + Path.DirectorySeparatorChar;
+        var target = Path.GetFullPath(targetPath);
+        return target.StartsWith(root, StringComparison.Ordinal);
+    }
+
+    private static PluginPermission ParsePluginPermission(string value)
+    {
+        return value switch
+        {
+            "FileSystemRead" or "file-system-read" or "filesystem-read" => PluginPermission.FileSystemRead,
+            "FileSystemWrite" or "file-system-write" or "filesystem-write" => PluginPermission.FileSystemWrite,
+            "NetworkAccess" or "network-access" => PluginPermission.NetworkAccess,
+            "MetadataProvider" or "AccessMetadata" or "access-metadata" => PluginPermission.AccessMetadata,
+            "ConversionProvider" or "ExecuteProcess" or "execute-process" => PluginPermission.ExecuteProcess,
+            "UIExtension" or "UiExtension" or "ui-extension" => PluginPermission.UiExtension,
+            "DiagnosticsAccess" or "AccessDiagnostics" or "access-diagnostics" => PluginPermission.AccessDiagnostics,
+            _ => ParseEnum(value, PluginPermission.FileSystemRead)
+        };
+    }
+
     private static PluginDiagnosticEvent CreateDiagnostic(string pluginId, string eventType, DiagnosticSeverity severity, string messageKey) =>
         new(pluginId, eventType, severity, messageKey, DateTimeOffset.UtcNow, new Dictionary<string, string>());
 }
+
+internal sealed record RemotePluginCatalogDto(
+    int SchemaVersion,
+    DateTimeOffset? PublishedAt,
+    string? CatalogVersion,
+    IReadOnlyList<RemotePluginCatalogItemDto> Plugins,
+    IReadOnlyList<RemotePluginRevocationDto> Revocations)
+{
+    public IReadOnlyList<RemotePluginCatalogItemDto> Plugins { get; init; } = Plugins ?? [];
+    public IReadOnlyList<RemotePluginRevocationDto> Revocations { get; init; } = Revocations ?? [];
+}
+
+internal sealed record RemotePluginCatalogItemDto(
+    string? PluginId,
+    string? Name,
+    string? Description,
+    string? Author,
+    string? Version,
+    string? MinWiiStudioVersion,
+    string? PackageUrl,
+    string? Sha256,
+    string? SignatureUrl,
+    string? SignatureAlgorithm,
+    string? SigningKeyId,
+    IReadOnlyList<string>? Permissions,
+    string? RiskLevel,
+    string? TrustLevel,
+    string? Status);
+
+internal sealed record RemotePluginRevocationDto(string? PluginId, string? Reason, DateTimeOffset? RevokedAt);
 
 public sealed class PluginRegistry : IPluginRegistry
 {
@@ -887,7 +1442,7 @@ public sealed class FileSystemPluginStorage : IPluginStorage
 
         var root = Path.GetFullPath(await GetRootPathAsync(pluginId, cancellationToken));
         var target = Path.GetFullPath(Path.Combine(root, relativePath));
-        if (!target.StartsWith(root, StringComparison.Ordinal))
+        if (!IsPathInside(root, target))
         {
             throw new InvalidOperationException("Plugin storage bloqueou path traversal.");
         }
@@ -903,6 +1458,14 @@ public sealed class FileSystemPluginStorage : IPluginStorage
         }
 
         return pluginId;
+    }
+
+    private static bool IsPathInside(string rootDirectory, string targetPath)
+    {
+        var root = Path.GetFullPath(rootDirectory)
+            .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) + Path.DirectorySeparatorChar;
+        var target = Path.GetFullPath(targetPath);
+        return target.StartsWith(root, StringComparison.Ordinal);
     }
 }
 
