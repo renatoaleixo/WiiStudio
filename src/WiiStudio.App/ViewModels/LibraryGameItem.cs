@@ -16,7 +16,7 @@ public sealed partial class LibraryGameItem : ObservableObject
         CoverImage = LoadCover(coverPath);
     }
 
-    public GameDto Game { get; }
+    public GameDto Game { get; private set; }
 
     public GameMetadataDto? Metadata { get; }
 
@@ -65,6 +65,8 @@ public sealed partial class LibraryGameItem : ObservableObject
 
     public string FavoriteStatusText => IsFavorite ? "Favorito" : "Não favorito";
 
+    public string FavoriteActionText => IsFavorite ? "Remover dos favoritos" : "Marcar como favorito";
+
     public string Developer => ValueOrFallback(Metadata?.Developer);
 
     public string Publisher => ValueOrFallback(Metadata?.Publisher);
@@ -104,6 +106,20 @@ public sealed partial class LibraryGameItem : ObservableObject
     }
 
     public string Size => FormatSize(Game.SizeInBytes);
+
+    public void SetFavorite(bool isFavorite)
+    {
+        if (Game.IsFavorite == isFavorite)
+        {
+            return;
+        }
+
+        Game = Game with { IsFavorite = isFavorite };
+        OnPropertyChanged(nameof(IsFavorite));
+        OnPropertyChanged(nameof(Favorite));
+        OnPropertyChanged(nameof(FavoriteStatusText));
+        OnPropertyChanged(nameof(FavoriteActionText));
+    }
 
     private static string FormatSize(long sizeInBytes)
     {

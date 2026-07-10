@@ -34,6 +34,7 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly ILoggingCenter _loggingCenter;
     private readonly IImportWizardService _importWizardService;
     private readonly IKeyboardShortcutService _keyboardShortcutService;
+    private readonly IFavoriteGameService _favoriteGameService;
     private readonly IGameLibraryService _gameLibraryService;
     private readonly ILibraryViewService _libraryViewService;
     private readonly IMainWindowService _mainWindowService;
@@ -262,6 +263,7 @@ public sealed partial class MainViewModel : ObservableObject
         ILoggingCenter loggingCenter,
         IImportWizardService importWizardService,
         IKeyboardShortcutService keyboardShortcutService,
+        IFavoriteGameService favoriteGameService,
         IGameLibraryService gameLibraryService,
         ILibraryViewService libraryViewService,
         IMainWindowService mainWindowService,
@@ -296,6 +298,7 @@ public sealed partial class MainViewModel : ObservableObject
         _loggingCenter = loggingCenter;
         _importWizardService = importWizardService;
         _keyboardShortcutService = keyboardShortcutService;
+        _favoriteGameService = favoriteGameService;
         _gameLibraryService = gameLibraryService;
         _libraryViewService = libraryViewService;
         _mainWindowService = mainWindowService;
@@ -457,6 +460,22 @@ public sealed partial class MainViewModel : ObservableObject
         : SelectedGameCount == 1
             ? "1 jogo selecionado"
             : $"{SelectedGameCount} jogos selecionados";
+
+    public string SelectedFavoriteActionText
+    {
+        get
+        {
+            var gameIds = GetSelectedGameIds();
+            if (gameIds.Count == 0)
+            {
+                return "Favoritar";
+            }
+
+            return gameIds.Any(id => Games.Any(game => string.Equals(game.Id, id, StringComparison.OrdinalIgnoreCase) && !game.IsFavorite))
+                ? "Favoritar"
+                : "Desfavoritar";
+        }
+    }
 
     public string AssetSelectionSummary => SelectedGameCount == 0
         ? "Selecione jogos na Biblioteca para acompanhar capas, assets e metadados."
@@ -825,6 +844,64 @@ public sealed partial class MainViewModel : ObservableObject
         await ApplyLibrarySnapshotAsync(snapshot, cancellationToken, refreshGames: false);
         SelectedGame = game;
         await RefreshSelectedAssetGalleryAsync(cancellationToken);
+    }
+
+    [RelayCommand]
+    private async Task ToggleFavoriteAsync(LibraryGameItem? game, CancellationToken cancellationToken)
+    {
+        if (game is null)
+        {
+            return;
+        }
+
+        var shouldFavorite = !game.IsFavorite;
+        if (shouldFavorite)
+        {
+            await _favoriteGameService.AddAsync(game.Id, cancellationToken);
+        }
+        else
+        {
+            await _favoriteGameService.RemoveAsync(game.Id, cancellationToken);
+        }
+
+        ApplyFavoriteState(game.Id, shouldFavorite);
+        StatusMessage = shouldFavorite
+            ? $"{game.Title} adicionado aos favoritos."
+            : $"{game.Title} removido dos favoritos.";
+        await RecordLogAsync(LogLevel.Information, "Library", StatusMessage, cancellationToken);
+    }
+
+    [RelayCommand]
+    private async Task ToggleSelectedFavoritesAsync(CancellationToken cancellationToken)
+    {
+        var gameIds = GetSelectedGameIds();
+        if (gameIds.Count == 0)
+        {
+            StatusMessage = "Selecione um ou mais jogos para favoritar.";
+            return;
+        }
+
+        var shouldFavorite = gameIds.Any(id =>
+            Games.Any(game => string.Equals(game.Id, id, StringComparison.OrdinalIgnoreCase) && !game.IsFavorite));
+
+        foreach (var gameId in gameIds)
+        {
+            if (shouldFavorite)
+            {
+                await _favoriteGameService.AddAsync(gameId, cancellationToken);
+            }
+            else
+            {
+                await _favoriteGameService.RemoveAsync(gameId, cancellationToken);
+            }
+
+            ApplyFavoriteState(gameId, shouldFavorite);
+        }
+
+        StatusMessage = shouldFavorite
+            ? $"{gameIds.Count} jogo(s) adicionado(s) aos favoritos."
+            : $"{gameIds.Count} jogo(s) removido(s) dos favoritos.";
+        await RecordLogAsync(LogLevel.Information, "Library", StatusMessage, cancellationToken);
     }
 
     [RelayCommand]
@@ -1845,6 +1922,8 @@ public sealed partial class MainViewModel : ObservableObject
 
     partial void OnSelectedGameChanged(LibraryGameItem? value)
     {
+        OnPropertyChanged(nameof(SelectedFavoriteActionText));
+
         if (value is not null && _selectedGameIds.Contains(value.Id))
         {
             SelectedAssetGame = value;
@@ -2036,6 +2115,7 @@ public sealed partial class MainViewModel : ObservableObject
         RefreshAssetSelectedGames();
         OnPropertyChanged(nameof(LibrarySummary));
         OnPropertyChanged(nameof(SelectionSummary));
+        OnPropertyChanged(nameof(SelectedFavoriteActionText));
         OnDashboardIndicatorsChanged();
     }
 
@@ -2076,6 +2156,20 @@ public sealed partial class MainViewModel : ObservableObject
         {
             game.IsSelected = _selectedGameIds.Contains(game.Id);
         }
+
+        OnPropertyChanged(nameof(SelectedFavoriteActionText));
+    }
+
+    private void ApplyFavoriteState(string gameId, bool isFavorite)
+    {
+        foreach (var game in Games.Where(game => string.Equals(game.Id, gameId, StringComparison.OrdinalIgnoreCase)))
+        {
+            game.SetFavorite(isFavorite);
+        }
+
+        OnPropertyChanged(nameof(SelectedFavoriteActionText));
+        OnAssetPanelChanged();
+        OnDashboardIndicatorsChanged();
     }
 
     private void RefreshAssetSelectedGames()
