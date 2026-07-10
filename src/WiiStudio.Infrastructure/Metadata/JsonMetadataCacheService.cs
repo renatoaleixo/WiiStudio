@@ -13,18 +13,26 @@ public sealed class JsonMetadataCacheService : IMetadataCacheService
     };
 
     private readonly MetadataCacheOptions _options;
+    private readonly IGameMetadataRepository? _gameMetadataRepository;
 
-    public JsonMetadataCacheService(MetadataCacheOptions options)
+    public JsonMetadataCacheService(MetadataCacheOptions options, IGameMetadataRepository? gameMetadataRepository = null)
     {
         _options = options;
+        _gameMetadataRepository = gameMetadataRepository;
     }
 
     public async Task<GameMetadataDto?> GetAsync(string gameId, CancellationToken cancellationToken)
     {
         var normalizedGameId = GameIdValidation.Normalize(gameId);
         var entries = await LoadEntriesAsync(cancellationToken);
+        if (entries.TryGetValue(normalizedGameId, out var entry))
+        {
+            return entry.Metadata;
+        }
 
-        return entries.TryGetValue(normalizedGameId, out var entry) ? entry.Metadata : null;
+        return _gameMetadataRepository is null
+            ? null
+            : await _gameMetadataRepository.GetAsync(normalizedGameId, cancellationToken);
     }
 
     public async Task SaveAsync(GameMetadataDto metadata, CancellationToken cancellationToken)
@@ -41,6 +49,10 @@ public sealed class JsonMetadataCacheService : IMetadataCacheService
         entries[normalizedMetadata.GameId] = new MetadataCacheEntry(normalizedMetadata, DateTimeOffset.UtcNow);
 
         await SaveEntriesAsync(entries, cancellationToken);
+        if (_gameMetadataRepository is not null)
+        {
+            await _gameMetadataRepository.UpsertAsync(normalizedMetadata, cancellationToken);
+        }
     }
 
     public async Task InvalidateAsync(string gameId, CancellationToken cancellationToken)
@@ -50,6 +62,11 @@ public sealed class JsonMetadataCacheService : IMetadataCacheService
         if (entries.Remove(normalizedGameId))
         {
             await SaveEntriesAsync(entries, cancellationToken);
+        }
+
+        if (_gameMetadataRepository is not null)
+        {
+            await _gameMetadataRepository.DeleteAsync(normalizedGameId, cancellationToken);
         }
     }
 

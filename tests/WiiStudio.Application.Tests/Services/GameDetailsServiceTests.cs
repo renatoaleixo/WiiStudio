@@ -15,7 +15,9 @@ public sealed class GameDetailsServiceTests
         var game = CreateGame("RMCP01", "Mario Kart Wii");
         var service = new GameDetailsService(
             new FakeGameLibraryService([game]),
-            new FakeFavoriteGameService([]));
+            new FakeFavoriteGameService([]),
+            new FakeMetadataCacheService(),
+            new FakeGameAssetRepository());
 
         var details = await service.GetAsync("RMCP01", CancellationToken.None);
 
@@ -32,7 +34,9 @@ public sealed class GameDetailsServiceTests
         var game = CreateGame("RMCP01", "Mario Kart Wii");
         var service = new GameDetailsService(
             new FakeGameLibraryService([game]),
-            new FakeFavoriteGameService(["RMCP01"]));
+            new FakeFavoriteGameService(["RMCP01"]),
+            new FakeMetadataCacheService(),
+            new FakeGameAssetRepository());
 
         var details = await service.GetAsync("rmcp01", CancellationToken.None);
 
@@ -44,7 +48,9 @@ public sealed class GameDetailsServiceTests
     {
         var service = new GameDetailsService(
             new FakeGameLibraryService([]),
-            new FakeFavoriteGameService([]));
+            new FakeFavoriteGameService([]),
+            new FakeMetadataCacheService(),
+            new FakeGameAssetRepository());
 
         var act = () => service.GetAsync("RMCP01", CancellationToken.None);
 
@@ -57,7 +63,9 @@ public sealed class GameDetailsServiceTests
     {
         var service = new GameDetailsService(
             new FakeGameLibraryService([]),
-            new FakeFavoriteGameService([]));
+            new FakeFavoriteGameService([]),
+            new FakeMetadataCacheService(),
+            new FakeGameAssetRepository());
 
         var act = () => service.GetAsync("invalid", CancellationToken.None);
 
@@ -70,11 +78,36 @@ public sealed class GameDetailsServiceTests
         var game = CreateGame("RMCP01", "Mario Kart Wii");
         var service = new GameDetailsService(
             new FakeGameLibraryService([game]),
-            new FakeFavoriteGameService([]));
+            new FakeFavoriteGameService([]),
+            new FakeMetadataCacheService(),
+            new FakeGameAssetRepository());
 
         var act = () => service.RefreshAsync("RMCP01", CancellationToken.None);
 
         await act.Should().NotThrowAsync();
+    }
+
+    [Fact]
+    public async Task GetAsync_ShouldReturnMetadataAndAssetGallery()
+    {
+        var game = CreateGame("RMCP01", "Mario Kart Wii");
+        var metadataCache = new FakeMetadataCacheService
+        {
+            Metadata = new GameMetadataDto("RMCP01", "Mario Kart Wii", Region.Pal, Developer: "Nintendo")
+        };
+        var assets = new FakeGameAssetRepository();
+        assets.Assets.Add(new AssetInfo(new AssetKey("RMCP01", CoverAssetKind.FrontCover), "/tmp/RMCP01.png", 128, DateTimeOffset.UtcNow, CoverAssetSource.Cache));
+        var service = new GameDetailsService(
+            new FakeGameLibraryService([game]),
+            new FakeFavoriteGameService([]),
+            metadataCache,
+            assets);
+
+        var details = await service.GetAsync("RMCP01", CancellationToken.None);
+
+        details.Metadata!.Developer.Should().Be("Nintendo");
+        details.Assets.Should().NotBeNull();
+        details.Assets!.Should().Contain(asset => asset.Kind == CoverAssetKind.FrontCover);
     }
 
     private static GameDto CreateGame(string id, string title)
@@ -155,6 +188,49 @@ public sealed class GameDetailsServiceTests
             cancellationToken.ThrowIfCancellationRequested();
 
             return Task.FromResult<IReadOnlyList<GameDto>>([]);
+        }
+    }
+
+    private sealed class FakeMetadataCacheService : IMetadataCacheService
+    {
+        public GameMetadataDto? Metadata { get; init; }
+
+        public Task<GameMetadataDto?> GetAsync(string gameId, CancellationToken cancellationToken)
+        {
+            return Task.FromResult(Metadata);
+        }
+
+        public Task SaveAsync(GameMetadataDto metadata, CancellationToken cancellationToken) => Task.CompletedTask;
+
+        public Task InvalidateAsync(string gameId, CancellationToken cancellationToken) => Task.CompletedTask;
+
+        public Task<MetadataCacheStatistics> GetStatisticsAsync(CancellationToken cancellationToken)
+        {
+            return Task.FromResult(new MetadataCacheStatistics(Metadata is null ? 0 : 1, 0, Metadata?.UpdatedAt));
+        }
+
+        public Task CleanupAsync(MetadataCleanupOptions options, CancellationToken cancellationToken) => Task.CompletedTask;
+    }
+
+    private sealed class FakeGameAssetRepository : IGameAssetRepository
+    {
+        public List<AssetInfo> Assets { get; } = [];
+
+        public Task UpsertAsync(AssetInfo asset, CancellationToken cancellationToken)
+        {
+            Assets.Add(asset);
+            return Task.CompletedTask;
+        }
+
+        public Task DeleteAsync(AssetKey key, CancellationToken cancellationToken)
+        {
+            Assets.RemoveAll(asset => asset.Key == key);
+            return Task.CompletedTask;
+        }
+
+        public Task<IReadOnlyList<AssetInfo>> GetByGameIdAsync(string gameId, CancellationToken cancellationToken)
+        {
+            return Task.FromResult<IReadOnlyList<AssetInfo>>(Assets.Where(asset => asset.Key.GameId == gameId).ToArray());
         }
     }
 }

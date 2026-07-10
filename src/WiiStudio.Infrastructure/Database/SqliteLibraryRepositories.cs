@@ -1,0 +1,315 @@
+using System.Text.Json;
+using Microsoft.Data.Sqlite;
+using WiiStudio.Application.DTOs;
+using WiiStudio.Application.Interfaces;
+using WiiStudio.Application.Validators;
+using WiiStudio.Domain.Enums;
+
+namespace WiiStudio.Infrastructure.Database;
+
+public sealed class SqliteGameLibraryRepository : IGameLibraryRepository, ILibraryFileRepository
+{
+    private readonly SqliteLibraryUnitOfWork _unitOfWork;
+
+    public SqliteGameLibraryRepository(SqliteLibraryUnitOfWork unitOfWork)
+    {
+        _unitOfWork = unitOfWork;
+    }
+
+    public async Task UpsertGamesAsync(IReadOnlyList<GameDto> games, CancellationToken cancellationToken)
+    {
+        await _unitOfWork.InitializeAsync(cancellationToken);
+        await using var connection = _unitOfWork.CreateConnection();
+        await connection.OpenAsync(cancellationToken);
+        await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+
+        foreach (var game in games)
+        {
+            await UpsertGameAsync(connection, game, cancellationToken);
+            await UpsertFileAsync(connection, game, cancellationToken);
+        }
+
+        await transaction.CommitAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<GameDto>> GetGamesAsync(CancellationToken cancellationToken)
+    {
+        await _unitOfWork.InitializeAsync(cancellationToken);
+        await using var connection = _unitOfWork.CreateConnection();
+        await connection.OpenAsync(cancellationToken);
+        await using var command = connection.CreateCommand();
+        command.CommandText = "SELECT Id, Title, Region, DiscType, Format, FilePath, FileSizeBytes, ImportedAt, IsFavorite FROM Games ORDER BY Title COLLATE NOCASE;";
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        var games = new List<GameDto>();
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            games.Add(ReadGame(reader));
+        }
+
+        return games;
+    }
+
+    public async Task<GameDto?> GetByGameIdAsync(string gameId, CancellationToken cancellationToken)
+    {
+        await _unitOfWork.InitializeAsync(cancellationToken);
+        await using var connection = _unitOfWork.CreateConnection();
+        await connection.OpenAsync(cancellationToken);
+        await using var command = connection.CreateCommand();
+        command.CommandText = "SELECT Id, Title, Region, DiscType, Format, FilePath, FileSizeBytes, ImportedAt, IsFavorite FROM Games WHERE GameId = $gameId LIMIT 1;";
+        command.Parameters.AddWithValue("$gameId", GameIdValidation.Normalize(gameId));
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        return await reader.ReadAsync(cancellationToken) ? ReadGame(reader) : null;
+    }
+
+    public async Task UpsertAsync(GameDto game, CancellationToken cancellationToken)
+    {
+        await _unitOfWork.InitializeAsync(cancellationToken);
+        await using var connection = _unitOfWork.CreateConnection();
+        await connection.OpenAsync(cancellationToken);
+        await UpsertFileAsync(connection, game, cancellationToken);
+    }
+
+    private static async Task UpsertGameAsync(SqliteConnection connection, GameDto game, CancellationToken cancellationToken)
+    {
+        await using var command = connection.CreateCommand();
+        command.CommandText = """
+            INSERT INTO Games (Id, GameId, Title, Region, DiscType, Format, FilePath, FileSizeBytes, ImportedAt, UpdatedAt, IsFavorite)
+            VALUES ($id, $gameId, $title, $region, $discType, $format, $filePath, $size, $importedAt, $updatedAt, $favorite)
+            ON CONFLICT(Id) DO UPDATE SET
+                GameId = excluded.GameId,
+                Title = excluded.Title,
+                Region = excluded.Region,
+                DiscType = excluded.DiscType,
+                Format = excluded.Format,
+                FilePath = excluded.FilePath,
+                FileSizeBytes = excluded.FileSizeBytes,
+                UpdatedAt = excluded.UpdatedAt;
+            """;
+        command.Parameters.AddWithValue("$id", game.Id);
+        command.Parameters.AddWithValue("$gameId", game.Id);
+        command.Parameters.AddWithValue("$title", game.Title);
+        command.Parameters.AddWithValue("$region", game.Region.ToString());
+        command.Parameters.AddWithValue("$discType", game.DiscType.ToString());
+        command.Parameters.AddWithValue("$format", game.Format.ToString());
+        command.Parameters.AddWithValue("$filePath", (object?)game.FilePath ?? DBNull.Value);
+        command.Parameters.AddWithValue("$size", game.SizeInBytes);
+        command.Parameters.AddWithValue("$importedAt", game.AddedAt.ToString("O"));
+        command.Parameters.AddWithValue("$updatedAt", DateTimeOffset.UtcNow.ToString("O"));
+        command.Parameters.AddWithValue("$favorite", game.IsFavorite ? 1 : 0);
+        await command.ExecuteNonQueryAsync(cancellationToken);
+    }
+
+    private static async Task UpsertFileAsync(SqliteConnection connection, GameDto game, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(game.FilePath))
+        {
+            return;
+        }
+
+        await using var command = connection.CreateCommand();
+        command.CommandText = """
+            INSERT INTO LibraryFiles (Id, GameId, Path, Format, SizeBytes, LastSeenAt)
+            VALUES ($id, $gameId, $path, $format, $size, $lastSeenAt)
+            ON CONFLICT(Path) DO UPDATE SET
+                GameId = excluded.GameId,
+                Format = excluded.Format,
+                SizeBytes = excluded.SizeBytes,
+                LastSeenAt = excluded.LastSeenAt;
+            """;
+        command.Parameters.AddWithValue("$id", Guid.NewGuid().ToString("N"));
+        command.Parameters.AddWithValue("$gameId", game.Id);
+        command.Parameters.AddWithValue("$path", game.FilePath);
+        command.Parameters.AddWithValue("$format", game.Format.ToString());
+        command.Parameters.AddWithValue("$size", game.SizeInBytes);
+        command.Parameters.AddWithValue("$lastSeenAt", DateTimeOffset.UtcNow.ToString("O"));
+        await command.ExecuteNonQueryAsync(cancellationToken);
+    }
+
+    private static GameDto ReadGame(SqliteDataReader reader)
+    {
+        return new GameDto(
+            reader.GetString(0),
+            reader.GetString(1),
+            Enum.Parse<Region>(reader.GetString(2)),
+            Enum.Parse<DiscType>(reader.GetString(3)),
+            Enum.Parse<FileFormat>(reader.GetString(4)),
+            reader.IsDBNull(5) ? null : reader.GetString(5),
+            reader.IsDBNull(6) ? 0 : reader.GetInt64(6),
+            DateTimeOffset.Parse(reader.GetString(7)),
+            reader.GetInt32(8) == 1);
+    }
+}
+
+public sealed class SqliteGameMetadataRepository : IGameMetadataRepository
+{
+    private readonly SqliteLibraryUnitOfWork _unitOfWork;
+
+    public SqliteGameMetadataRepository(SqliteLibraryUnitOfWork unitOfWork)
+    {
+        _unitOfWork = unitOfWork;
+    }
+
+    public async Task<GameMetadataDto?> GetAsync(string gameId, CancellationToken cancellationToken)
+    {
+        await _unitOfWork.InitializeAsync(cancellationToken);
+        await using var connection = _unitOfWork.CreateConnection();
+        await connection.OpenAsync(cancellationToken);
+        await using var command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT GameId, Title, Region, Subtitle, Developer, Publisher, Year, Description, Players, Rating,
+                   LanguagesJson, GenresJson, OnlineFeatures, Compatibility, GameTdbVersion, UpdatedAt
+            FROM GameMetadata WHERE GameId = $gameId LIMIT 1;
+            """;
+        command.Parameters.AddWithValue("$gameId", GameIdValidation.Normalize(gameId));
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        if (!await reader.ReadAsync(cancellationToken))
+        {
+            return null;
+        }
+
+        return new GameMetadataDto(
+            reader.GetString(0),
+            reader.IsDBNull(1) ? reader.GetString(0) : reader.GetString(1),
+            reader.IsDBNull(2) ? Region.Unknown : Enum.Parse<Region>(reader.GetString(2)),
+            Subtitle: reader.IsDBNull(3) ? null : reader.GetString(3),
+            Developer: reader.IsDBNull(4) ? null : reader.GetString(4),
+            Publisher: reader.IsDBNull(5) ? null : reader.GetString(5),
+            Year: reader.IsDBNull(6) ? null : reader.GetInt32(6),
+            Description: reader.IsDBNull(7) ? null : reader.GetString(7),
+            Players: reader.IsDBNull(8) ? null : reader.GetInt32(8),
+            Rating: reader.IsDBNull(9) ? null : reader.GetString(9),
+            Languages: reader.IsDBNull(10) ? null : JsonSerializer.Deserialize<IReadOnlyList<string>>(reader.GetString(10)),
+            Genres: reader.IsDBNull(11) ? null : JsonSerializer.Deserialize<IReadOnlyList<string>>(reader.GetString(11)),
+            OnlineFeatures: reader.IsDBNull(12) ? null : reader.GetString(12),
+            Compatibility: reader.IsDBNull(13) ? null : reader.GetString(13),
+            GameTdbVersion: reader.IsDBNull(14) ? null : reader.GetString(14),
+            UpdatedAt: reader.IsDBNull(15) ? null : DateTimeOffset.Parse(reader.GetString(15)));
+    }
+
+    public async Task UpsertAsync(GameMetadataDto metadata, CancellationToken cancellationToken)
+    {
+        await _unitOfWork.InitializeAsync(cancellationToken);
+        await using var connection = _unitOfWork.CreateConnection();
+        await connection.OpenAsync(cancellationToken);
+        await using var command = connection.CreateCommand();
+        command.CommandText = """
+            INSERT INTO GameMetadata (GameId, Title, Region, Subtitle, Developer, Publisher, Year, Description, Players, Rating, LanguagesJson, GenresJson, OnlineFeatures, Compatibility, GameTdbVersion, UpdatedAt)
+            VALUES ($gameId, $title, $region, $subtitle, $developer, $publisher, $year, $description, $players, $rating, $languages, $genres, $online, $compatibility, $version, $updatedAt)
+            ON CONFLICT(GameId) DO UPDATE SET
+                Title = excluded.Title,
+                Region = excluded.Region,
+                Subtitle = excluded.Subtitle,
+                Developer = excluded.Developer,
+                Publisher = excluded.Publisher,
+                Year = excluded.Year,
+                Description = excluded.Description,
+                Players = excluded.Players,
+                Rating = excluded.Rating,
+                LanguagesJson = excluded.LanguagesJson,
+                GenresJson = excluded.GenresJson,
+                OnlineFeatures = excluded.OnlineFeatures,
+                Compatibility = excluded.Compatibility,
+                GameTdbVersion = excluded.GameTdbVersion,
+                UpdatedAt = excluded.UpdatedAt;
+            """;
+        command.Parameters.AddWithValue("$gameId", GameIdValidation.Normalize(metadata.GameId));
+        command.Parameters.AddWithValue("$title", metadata.Title);
+        command.Parameters.AddWithValue("$region", metadata.Region.ToString());
+        command.Parameters.AddWithValue("$subtitle", (object?)metadata.Subtitle ?? DBNull.Value);
+        command.Parameters.AddWithValue("$developer", (object?)metadata.Developer ?? DBNull.Value);
+        command.Parameters.AddWithValue("$publisher", (object?)metadata.Publisher ?? DBNull.Value);
+        command.Parameters.AddWithValue("$year", (object?)metadata.Year ?? DBNull.Value);
+        command.Parameters.AddWithValue("$description", (object?)metadata.Description ?? DBNull.Value);
+        command.Parameters.AddWithValue("$players", (object?)metadata.Players ?? DBNull.Value);
+        command.Parameters.AddWithValue("$rating", (object?)metadata.Rating ?? DBNull.Value);
+        command.Parameters.AddWithValue("$languages", metadata.Languages is null ? DBNull.Value : JsonSerializer.Serialize(metadata.Languages));
+        command.Parameters.AddWithValue("$genres", metadata.Genres is null ? DBNull.Value : JsonSerializer.Serialize(metadata.Genres));
+        command.Parameters.AddWithValue("$online", (object?)metadata.OnlineFeatures ?? DBNull.Value);
+        command.Parameters.AddWithValue("$compatibility", (object?)metadata.Compatibility ?? DBNull.Value);
+        command.Parameters.AddWithValue("$version", (object?)metadata.GameTdbVersion ?? DBNull.Value);
+        command.Parameters.AddWithValue("$updatedAt", (metadata.UpdatedAt ?? DateTimeOffset.UtcNow).ToString("O"));
+        await command.ExecuteNonQueryAsync(cancellationToken);
+    }
+
+    public async Task DeleteAsync(string gameId, CancellationToken cancellationToken)
+    {
+        await _unitOfWork.InitializeAsync(cancellationToken);
+        await using var connection = _unitOfWork.CreateConnection();
+        await connection.OpenAsync(cancellationToken);
+        await using var command = connection.CreateCommand();
+        command.CommandText = "DELETE FROM GameMetadata WHERE GameId = $gameId;";
+        command.Parameters.AddWithValue("$gameId", GameIdValidation.Normalize(gameId));
+        await command.ExecuteNonQueryAsync(cancellationToken);
+    }
+}
+
+public sealed class SqliteGameAssetRepository : IGameAssetRepository
+{
+    private readonly SqliteLibraryUnitOfWork _unitOfWork;
+
+    public SqliteGameAssetRepository(SqliteLibraryUnitOfWork unitOfWork)
+    {
+        _unitOfWork = unitOfWork;
+    }
+
+    public async Task UpsertAsync(AssetInfo asset, CancellationToken cancellationToken)
+    {
+        await _unitOfWork.InitializeAsync(cancellationToken);
+        await using var connection = _unitOfWork.CreateConnection();
+        await connection.OpenAsync(cancellationToken);
+        await using var command = connection.CreateCommand();
+        command.CommandText = """
+            INSERT INTO GameAssets (Id, GameId, AssetKind, FilePath, Source, SizeBytes, UpdatedAt)
+            VALUES ($id, $gameId, $kind, $path, $source, $size, $updatedAt)
+            ON CONFLICT(GameId, AssetKind) DO UPDATE SET
+                FilePath = excluded.FilePath,
+                Source = excluded.Source,
+                SizeBytes = excluded.SizeBytes,
+                UpdatedAt = excluded.UpdatedAt;
+            """;
+        command.Parameters.AddWithValue("$id", Guid.NewGuid().ToString("N"));
+        command.Parameters.AddWithValue("$gameId", GameIdValidation.Normalize(asset.Key.GameId));
+        command.Parameters.AddWithValue("$kind", asset.Key.Kind.ToString());
+        command.Parameters.AddWithValue("$path", asset.LocalPath);
+        command.Parameters.AddWithValue("$source", asset.Source.ToString());
+        command.Parameters.AddWithValue("$size", asset.SizeInBytes);
+        command.Parameters.AddWithValue("$updatedAt", DateTimeOffset.UtcNow.ToString("O"));
+        await command.ExecuteNonQueryAsync(cancellationToken);
+    }
+
+    public async Task DeleteAsync(AssetKey key, CancellationToken cancellationToken)
+    {
+        await _unitOfWork.InitializeAsync(cancellationToken);
+        await using var connection = _unitOfWork.CreateConnection();
+        await connection.OpenAsync(cancellationToken);
+        await using var command = connection.CreateCommand();
+        command.CommandText = "DELETE FROM GameAssets WHERE GameId = $gameId AND AssetKind = $kind;";
+        command.Parameters.AddWithValue("$gameId", GameIdValidation.Normalize(key.GameId));
+        command.Parameters.AddWithValue("$kind", key.Kind.ToString());
+        await command.ExecuteNonQueryAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<AssetInfo>> GetByGameIdAsync(string gameId, CancellationToken cancellationToken)
+    {
+        await _unitOfWork.InitializeAsync(cancellationToken);
+        await using var connection = _unitOfWork.CreateConnection();
+        await connection.OpenAsync(cancellationToken);
+        await using var command = connection.CreateCommand();
+        command.CommandText = "SELECT AssetKind, FilePath, Source, SizeBytes, UpdatedAt FROM GameAssets WHERE GameId = $gameId;";
+        command.Parameters.AddWithValue("$gameId", GameIdValidation.Normalize(gameId));
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        var assets = new List<AssetInfo>();
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            var kind = Enum.Parse<CoverAssetKind>(reader.GetString(0));
+            assets.Add(new AssetInfo(
+                new AssetKey(GameIdValidation.Normalize(gameId), kind),
+                reader.GetString(1),
+                reader.GetInt64(3),
+                DateTimeOffset.Parse(reader.GetString(4)),
+                Enum.Parse<CoverAssetSource>(reader.GetString(2))));
+        }
+
+        return assets;
+    }
+}

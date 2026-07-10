@@ -20,6 +20,7 @@ public sealed partial class MainViewModel : ObservableObject
 {
     private readonly ICommandPaletteService _commandPaletteService;
     private readonly IBatchCoverDownloadService _batchCoverDownloadService;
+    private readonly ICoverAssetBulkActionService _coverAssetBulkActionService;
     private readonly DetectUsbDrivesUseCase _detectUsbDrivesUseCase;
     private readonly IConversionWizardService _conversionWizardService;
     private readonly ICoverCache _coverCache;
@@ -214,6 +215,7 @@ public sealed partial class MainViewModel : ObservableObject
     public MainViewModel(
         ICommandPaletteService commandPaletteService,
         IBatchCoverDownloadService batchCoverDownloadService,
+        ICoverAssetBulkActionService coverAssetBulkActionService,
         DetectUsbDrivesUseCase detectUsbDrivesUseCase,
         IConversionWizardService conversionWizardService,
         ICoverCache coverCache,
@@ -241,6 +243,7 @@ public sealed partial class MainViewModel : ObservableObject
     {
         _commandPaletteService = commandPaletteService;
         _batchCoverDownloadService = batchCoverDownloadService;
+        _coverAssetBulkActionService = coverAssetBulkActionService;
         _detectUsbDrivesUseCase = detectUsbDrivesUseCase;
         _conversionWizardService = conversionWizardService;
         _coverCache = coverCache;
@@ -940,6 +943,92 @@ public sealed partial class MainViewModel : ObservableObject
             CoverBatchStatus = summary.Cancelled
                 ? $"Download cancelado: {summary.ProcessedGames}/{summary.Requested} jogo(s), {summary.Downloaded} baixada(s)."
                 : $"Download concluído: {summary.Downloaded} baixada(s), {summary.FromCache} em cache, {summary.Missing} ausente(s), {summary.Failed} falha(s).";
+            StatusMessage = CoverBatchStatus;
+        }
+        finally
+        {
+            IsCoverBatchRunning = false;
+            IsBusy = false;
+        }
+    }
+
+    [RelayCommand]
+    private Task ForceRefreshSelectedAssetsAsync(CancellationToken cancellationToken)
+    {
+        return ExecuteCoverAssetBulkActionAsync(
+            CoverAssetBulkActionMode.ForceRefresh,
+            forceRefresh: true,
+            clearBeforeDownload: false,
+            "Forçando atualização de assets...",
+            cancellationToken);
+    }
+
+    [RelayCommand]
+    private Task ClearSelectedAssetCacheAsync(CancellationToken cancellationToken)
+    {
+        return ExecuteCoverAssetBulkActionAsync(
+            CoverAssetBulkActionMode.ClearCache,
+            forceRefresh: false,
+            clearBeforeDownload: false,
+            "Limpando cache de assets...",
+            cancellationToken);
+    }
+
+    [RelayCommand]
+    private Task ValidateSelectedAssetsAsync(CancellationToken cancellationToken)
+    {
+        return ExecuteCoverAssetBulkActionAsync(
+            CoverAssetBulkActionMode.ValidateCache,
+            forceRefresh: false,
+            clearBeforeDownload: false,
+            "Validando assets em cache...",
+            cancellationToken);
+    }
+
+    private async Task ExecuteCoverAssetBulkActionAsync(
+        CoverAssetBulkActionMode mode,
+        bool forceRefresh,
+        bool clearBeforeDownload,
+        string startMessage,
+        CancellationToken cancellationToken)
+    {
+        var gameIds = GetSelectedGameIds();
+        if (gameIds.Count == 0)
+        {
+            StatusMessage = "Selecione ao menos um jogo para operar assets.";
+            return;
+        }
+
+        IsBusy = true;
+        IsCoverBatchRunning = true;
+        CoverBatchStatus = startMessage;
+        StatusMessage = startMessage;
+        _coverBatchCancellation?.Dispose();
+        _coverBatchCancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+
+        try
+        {
+            var progress = new Progress<CoverAssetBulkActionProgress>(item =>
+            {
+                var current = string.IsNullOrWhiteSpace(item.CurrentGameId) ? "-" : item.CurrentGameId;
+                CoverBatchStatus = $"Assets {item.ProcessedGames}/{item.TotalGames} - atual: {current}";
+                StatusMessage = CoverBatchStatus;
+            });
+            var result = await _coverAssetBulkActionService.ExecuteAsync(
+                new CoverAssetBulkActionRequest(
+                    gameIds,
+                    [],
+                    "PT",
+                    forceRefresh,
+                    clearBeforeDownload,
+                    mode),
+                progress,
+                _coverBatchCancellation.Token);
+            await RefreshLibraryAsync(cancellationToken);
+            await RefreshSelectedAssetGalleryAsync(cancellationToken);
+            CoverBatchStatus = result.Cancelled
+                ? $"Operação cancelada: {result.Downloaded} baixado(s), {result.Cleared} removido(s)."
+                : $"Operação concluída: {result.Downloaded} baixado(s), {result.FromCache} em cache, {result.Cleared} removido(s), {result.Invalid} inválido(s), {result.Failed} falha(s).";
             StatusMessage = CoverBatchStatus;
         }
         finally

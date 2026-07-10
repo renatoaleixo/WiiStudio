@@ -9,12 +9,17 @@ public sealed class GameLibraryService : IGameLibraryService
 {
     private readonly IUsbDriveService _usbDriveService;
     private readonly IGameLibraryScanner _gameLibraryScanner;
+    private readonly IGameLibraryRepository? _gameLibraryRepository;
     private readonly ConcurrentDictionary<Guid, LibraryScanResult> _cache = new();
 
-    public GameLibraryService(IUsbDriveService usbDriveService, IGameLibraryScanner gameLibraryScanner)
+    public GameLibraryService(
+        IUsbDriveService usbDriveService,
+        IGameLibraryScanner gameLibraryScanner,
+        IGameLibraryRepository? gameLibraryRepository = null)
     {
         _usbDriveService = usbDriveService;
         _gameLibraryScanner = gameLibraryScanner;
+        _gameLibraryRepository = gameLibraryRepository;
     }
 
     public Task<IReadOnlyList<GameDto>> GetGamesAsync(Guid? usbDriveId, CancellationToken cancellationToken)
@@ -34,6 +39,10 @@ public sealed class GameLibraryService : IGameLibraryService
             .OrderBy(entry => entry.Key)
             .SelectMany(entry => entry.Value.Games)
             .ToArray();
+        if (allGames.Length == 0 && _gameLibraryRepository is not null)
+        {
+            return _gameLibraryRepository.GetGamesAsync(cancellationToken);
+        }
 
         return Task.FromResult<IReadOnlyList<GameDto>>(allGames);
     }
@@ -44,6 +53,10 @@ public sealed class GameLibraryService : IGameLibraryService
         var result = await _gameLibraryScanner.ScanAsync(drive, cancellationToken);
 
         _cache[usbDriveId] = result;
+        if (_gameLibraryRepository is not null)
+        {
+            await _gameLibraryRepository.UpsertGamesAsync(result.Games, cancellationToken);
+        }
     }
 
     private async Task<Domain.Entities.UsbDrive> FindDriveAsync(Guid driveId, CancellationToken cancellationToken)

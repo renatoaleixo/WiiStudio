@@ -20,11 +20,19 @@ public sealed class GameDetailsService : IGameDetailsService
 
     private readonly IGameLibraryService _gameLibraryService;
     private readonly IFavoriteGameService _favoriteGameService;
+    private readonly IMetadataCacheService _metadataCacheService;
+    private readonly IGameAssetRepository _gameAssetRepository;
 
-    public GameDetailsService(IGameLibraryService gameLibraryService, IFavoriteGameService favoriteGameService)
+    public GameDetailsService(
+        IGameLibraryService gameLibraryService,
+        IFavoriteGameService favoriteGameService,
+        IMetadataCacheService metadataCacheService,
+        IGameAssetRepository gameAssetRepository)
     {
         _gameLibraryService = gameLibraryService;
         _favoriteGameService = favoriteGameService;
+        _metadataCacheService = metadataCacheService;
+        _gameAssetRepository = gameAssetRepository;
     }
 
     public async Task<GameDetailsDto> GetAsync(string gameId, CancellationToken cancellationToken)
@@ -37,6 +45,20 @@ public sealed class GameDetailsService : IGameDetailsService
         var game = games.FirstOrDefault(candidate => string.Equals(candidate.Id, normalizedGameId, StringComparison.OrdinalIgnoreCase))
             ?? throw new GameNotFoundException(normalizedGameId);
         var isFavorite = await _favoriteGameService.IsFavoriteAsync(normalizedGameId, cancellationToken);
+        var metadata = await _metadataCacheService.GetAsync(normalizedGameId, cancellationToken);
+        var assets = await _gameAssetRepository.GetByGameIdAsync(normalizedGameId, cancellationToken);
+        var gallery = Enum.GetValues<CoverAssetKind>()
+            .Select(kind =>
+            {
+                var asset = assets.FirstOrDefault(candidate => candidate.Key.Kind == kind);
+                return new GameDetailAssetDto(
+                    kind,
+                    GetAssetDisplayName(kind),
+                    asset?.LocalPath,
+                    asset is not null && File.Exists(asset.LocalPath),
+                    asset?.SizeInBytes ?? 0);
+            })
+            .ToArray();
 
         return new GameDetailsDto(
             game.Id,
@@ -48,7 +70,10 @@ public sealed class GameDetailsService : IGameDetailsService
             game.SizeInBytes,
             game.AddedAt,
             isFavorite,
-            DefaultActions);
+            DefaultActions,
+            metadata,
+            gallery,
+            string.IsNullOrWhiteSpace(game.FilePath) || File.Exists(game.FilePath));
     }
 
     public async Task RefreshAsync(string gameId, CancellationToken cancellationToken)
@@ -62,5 +87,18 @@ public sealed class GameDetailsService : IGameDetailsService
         {
             throw new ArgumentException("GameId must contain exactly 6 letters or digits.", nameof(gameId));
         }
+    }
+
+    private static string GetAssetDisplayName(CoverAssetKind kind)
+    {
+        return kind switch
+        {
+            CoverAssetKind.FrontCover => "Capa frontal",
+            CoverAssetKind.BackCover => "Capa verso",
+            CoverAssetKind.DiscArt => "Disco",
+            CoverAssetKind.Banner => "Banner",
+            CoverAssetKind.Icon => "Icone",
+            _ => kind.ToString()
+        };
     }
 }

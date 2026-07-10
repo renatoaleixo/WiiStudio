@@ -12,4 +12,7 @@ public sealed record GameDetailsDto(
     long SizeInBytes,
     DateTimeOffset AddedAt,
     bool IsFavorite,
-    IReadOnlyList<GameDetailsAction> AvailableActions);
+    IReadOnlyList<GameDetailsAction> AvailableActions,
+    GameMetadataDto? Metadata = null,
+    IReadOnlyList<GameDetailAssetDto>? Assets = null,
+    bool FileExists = false);

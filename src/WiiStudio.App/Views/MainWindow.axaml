@@ -763,14 +763,19 @@
           <Grid IsVisible="{Binding IsAssetsModuleSelected}" RowDefinitions="Auto,*" RowSpacing="12">
             <Border Classes="contentBlock">
               <Grid RowDefinitions="Auto,Auto" RowSpacing="12">
-                <Grid ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="8">
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
                   <StackPanel>
                     <TextBlock Text="Capas e Assets" FontSize="{StaticResource WiiFontSizeSubtitle}" FontWeight="SemiBold" Foreground="{DynamicResource WiiBrushTextPrimary}" />
                     <TextBlock Text="{Binding AssetSelectionSummary}" Foreground="{DynamicResource WiiBrushTextSecondary}" TextWrapping="Wrap" />
                   </StackPanel>
-                  <Button Grid.Column="1" Command="{Binding DownloadSelectedCoversCommand}" Classes="primary small" VerticalAlignment="Center"><TextBlock Text="Baixar capas" /></Button>
-                  <Button Grid.Column="2" Command="{Binding SynchronizeSelectedMetadataCommand}" Classes="secondary small" VerticalAlignment="Center"><TextBlock Text="Sincronizar metadados" /></Button>
-                  <Button Grid.Column="3" Command="{Binding CancelBatchOperationCommand}" IsVisible="{Binding IsCoverBatchRunning}" Classes="danger small" VerticalAlignment="Center"><TextBlock Text="Cancelar" /></Button>
+                  <WrapPanel Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <Button Command="{Binding DownloadSelectedCoversCommand}" Classes="primary small" VerticalAlignment="Center"><TextBlock Text="Baixar capas" /></Button>
+                    <Button Command="{Binding SynchronizeSelectedMetadataCommand}" Classes="secondary small" VerticalAlignment="Center"><TextBlock Text="Sincronizar metadados" /></Button>
+                    <Button Command="{Binding ForceRefreshSelectedAssetsCommand}" Classes="secondary small" VerticalAlignment="Center"><TextBlock Text="Forçar assets" /></Button>
+                    <Button Command="{Binding ValidateSelectedAssetsCommand}" Classes="secondary small" VerticalAlignment="Center"><TextBlock Text="Validar" /></Button>
+                    <Button Command="{Binding ClearSelectedAssetCacheCommand}" Classes="tertiary small" VerticalAlignment="Center"><TextBlock Text="Limpar cache" /></Button>
+                    <Button Command="{Binding CancelBatchOperationCommand}" IsVisible="{Binding IsCoverBatchRunning}" Classes="danger small" VerticalAlignment="Center"><TextBlock Text="Cancelar" /></Button>
+                  </WrapPanel>
                 </Grid>
                 <Border Grid.Row="1" Background="{DynamicResource WiiBrushSurfaceAlt}" BorderBrush="{DynamicResource WiiBrushBorder}" BorderThickness="1" CornerRadius="{StaticResource WiiRadiusMedium}" Padding="{StaticResource WiiInsetSm}">
                   <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">

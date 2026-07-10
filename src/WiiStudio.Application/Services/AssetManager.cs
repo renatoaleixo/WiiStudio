@@ -8,11 +8,13 @@ public sealed class AssetManager : IAssetManager
 {
     private readonly ICoverCache _coverCache;
     private readonly ICoverProvider _coverProvider;
+    private readonly IGameAssetRepository? _gameAssetRepository;
 
-    public AssetManager(ICoverCache coverCache, ICoverProvider coverProvider)
+    public AssetManager(ICoverCache coverCache, ICoverProvider coverProvider, IGameAssetRepository? gameAssetRepository = null)
     {
         _coverCache = coverCache;
         _coverProvider = coverProvider;
+        _gameAssetRepository = gameAssetRepository;
     }
 
     public async Task<AssetInfo?> GetAsync(AssetRequest request, CancellationToken cancellationToken)
@@ -42,8 +44,13 @@ public sealed class AssetManager : IAssetManager
         }
 
         var localPath = await _coverCache.SaveAsync(key.GameId, key.Kind, content, cancellationToken);
+        var info = CreateInfo(key, localPath, CoverAssetSource.Provider);
+        if (_gameAssetRepository is not null)
+        {
+            await _gameAssetRepository.UpsertAsync(info, cancellationToken);
+        }
 
-        return CreateInfo(key, localPath, CoverAssetSource.Provider);
+        return info;
     }
 
     public async Task SaveAsync(AssetSaveRequest request, CancellationToken cancellationToken)
@@ -53,14 +60,18 @@ public sealed class AssetManager : IAssetManager
         cancellationToken.ThrowIfCancellationRequested();
 
         var key = NormalizeKey(request.Key);
-        await _coverCache.SaveAsync(key.GameId, key.Kind, request.Content, cancellationToken);
+        var localPath = await _coverCache.SaveAsync(key.GameId, key.Kind, request.Content, cancellationToken);
+        if (_gameAssetRepository is not null)
+        {
+            await _gameAssetRepository.UpsertAsync(CreateInfo(key, localPath, CoverAssetSource.Provider), cancellationToken);
+        }
     }
 
     public Task<bool> RemoveAsync(AssetKey key, CancellationToken cancellationToken)
     {
         var normalizedKey = NormalizeKey(key);
 
-        return _coverCache.RemoveAsync(normalizedKey.GameId, normalizedKey.Kind, cancellationToken);
+        return RemoveCoreAsync(normalizedKey, cancellationToken);
     }
 
     public Task RebuildIndexAsync(CancellationToken cancellationToken)
@@ -78,6 +89,17 @@ public sealed class AssetManager : IAssetManager
         var localPath = await _coverCache.GetAsync(key.GameId, key.Kind, cancellationToken);
 
         return localPath is null ? null : CreateInfo(key, localPath, CoverAssetSource.Cache);
+    }
+
+    private async Task<bool> RemoveCoreAsync(AssetKey key, CancellationToken cancellationToken)
+    {
+        var removed = await _coverCache.RemoveAsync(key.GameId, key.Kind, cancellationToken);
+        if (removed && _gameAssetRepository is not null)
+        {
+            await _gameAssetRepository.DeleteAsync(key, cancellationToken);
+        }
+
+        return removed;
     }
 
     private static AssetInfo CreateInfo(AssetKey key, string localPath, CoverAssetSource source)
