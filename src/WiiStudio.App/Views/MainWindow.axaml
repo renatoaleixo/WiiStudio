@@ -745,17 +745,23 @@
           <ScrollViewer IsVisible="{Binding IsDiagnosticsModuleSelected}" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
             <Grid RowDefinitions="Auto,*" RowSpacing="12">
               <Border Classes="contentBlock">
-                <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10">
+                <Grid RowDefinitions="Auto,Auto" RowSpacing="10">
                   <StackPanel>
                     <TextBlock Text="Diagnóstico" FontSize="{StaticResource WiiFontSizeSubtitle}" FontWeight="SemiBold" Foreground="{DynamicResource WiiBrushTextPrimary}" />
                     <TextBlock Text="{Binding DiagnosticsSummary}" Foreground="{DynamicResource WiiBrushTextSecondary}" TextWrapping="Wrap" />
+                    <TextBlock Text="{Binding DiagnosticsExportPath}" Foreground="{DynamicResource WiiBrushTextMuted}" TextWrapping="Wrap" FontSize="{StaticResource WiiFontSizeMicro}" />
                   </StackPanel>
-                  <Button Grid.Column="1" Command="{Binding RunDiagnosticsCommand}" Classes="primary small" VerticalAlignment="Center">
-                    <TextBlock Text="Executar" />
-                  </Button>
-                  <Button Grid.Column="2" Command="{Binding RunWiiUsbReadinessCheckCommand}" Classes="secondary small" VerticalAlignment="Center">
-                    <TextBlock Text="Verificar Wii USB" />
-                  </Button>
+                  <WrapPanel Grid.Row="1" HorizontalAlignment="Left">
+                    <Button Command="{Binding RunDiagnosticsCommand}" Classes="primary small" MinWidth="110">
+                      <TextBlock Text="Executar" />
+                    </Button>
+                    <Button Command="{Binding RunWiiUsbReadinessCheckCommand}" Classes="secondary small" MinWidth="150">
+                      <TextBlock Text="Verificar Wii USB" />
+                    </Button>
+                    <Button Command="{Binding ExportDiagnosticsCommand}" Classes="secondary small" MinWidth="140">
+                      <TextBlock Text="Exportar TXT" />
+                    </Button>
+                  </WrapPanel>
                 </Grid>
               </Border>
               <ListBox Grid.Row="1" ItemsSource="{Binding DiagnosticsChecks}" Background="{DynamicResource WiiBrushSurfaceAlt}" BorderThickness="0" MinHeight="260">
@@ -1052,12 +1058,43 @@
             </Grid>
           </Border>
 
-          <Border IsVisible="{Binding IsLogsModuleSelected}" Classes="contentBlock">
-            <Grid RowDefinitions="Auto,Auto" RowSpacing="8">
-              <TextBlock Text="Logs" FontSize="{StaticResource WiiFontSizeSubtitle}" FontWeight="SemiBold" Foreground="{DynamicResource WiiBrushTextPrimary}" />
-              <TextBlock Grid.Row="1" Text="{Binding StatusMessage}" Foreground="{DynamicResource WiiBrushTextSecondary}" TextWrapping="Wrap" />
-            </Grid>
-          </Border>
+          <Grid IsVisible="{Binding IsLogsModuleSelected}" RowDefinitions="Auto,*" RowSpacing="12">
+            <Border Classes="contentBlock">
+              <Grid RowDefinitions="Auto,Auto" RowSpacing="10">
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                  <StackPanel>
+                    <TextBlock Text="Logs" FontSize="{StaticResource WiiFontSizeSubtitle}" FontWeight="SemiBold" Foreground="{DynamicResource WiiBrushTextPrimary}" />
+                    <TextBlock Text="{Binding LogsSummary}" Foreground="{DynamicResource WiiBrushTextSecondary}" TextWrapping="Wrap" />
+                    <TextBlock Text="{Binding LogsExportPath}" Foreground="{DynamicResource WiiBrushTextMuted}" TextWrapping="Wrap" FontSize="{StaticResource WiiFontSizeMicro}" />
+                  </StackPanel>
+                  <WrapPanel Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <Button Command="{Binding RefreshLogsCommand}" Classes="secondary small" MinWidth="100">
+                      <TextBlock Text="Atualizar" />
+                    </Button>
+                    <Button Command="{Binding ExportLogsCommand}" Classes="primary small" MinWidth="120">
+                      <TextBlock Text="Exportar TXT" />
+                    </Button>
+                  </WrapPanel>
+                </Grid>
+              </Grid>
+            </Border>
+            <ListBox Grid.Row="1" ItemsSource="{Binding Logs}" Background="{DynamicResource WiiBrushSurfaceAlt}" BorderThickness="0" MinHeight="260">
+              <ListBox.ItemTemplate>
+                <DataTemplate DataType="vm:LogEntryViewModel">
+                  <Grid RowDefinitions="Auto,Auto,Auto" Margin="{StaticResource WiiInsetSm}" RowSpacing="4">
+                    <Grid ColumnDefinitions="Auto,Auto,*,Auto" ColumnSpacing="8">
+                      <TextBlock Text="{Binding Timestamp}" Foreground="{DynamicResource WiiBrushTextMuted}" FontSize="{StaticResource WiiFontSizeMicro}" />
+                      <Border Grid.Column="1" Classes="badge"><TextBlock Classes="badgeText" Text="{Binding Level}" /></Border>
+                      <TextBlock Grid.Column="2" Text="{Binding Category}" Foreground="{DynamicResource WiiBrushTextPrimary}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                      <TextBlock Grid.Column="3" Text="{Binding Source}" Foreground="{DynamicResource WiiBrushTextMuted}" FontSize="{StaticResource WiiFontSizeMicro}" />
+                    </Grid>
+                    <TextBlock Grid.Row="1" Text="{Binding Message}" Foreground="{DynamicResource WiiBrushTextSecondary}" TextWrapping="Wrap" />
+                    <TextBlock Grid.Row="2" Text="{Binding Exception}" Foreground="{DynamicResource WiiBrushDanger}" TextWrapping="Wrap" IsVisible="{Binding HasException}" />
+                  </Grid>
+                </DataTemplate>
+              </ListBox.ItemTemplate>
+            </ListBox>
+          </Grid>
         </Grid>
       </Grid>
 
@@ -1092,19 +1129,22 @@
 
           <Border Grid.Row="5" Background="{DynamicResource WiiBrushSurfaceAlt}" Padding="{StaticResource WiiInsetMd}">
             <Grid RowDefinitions="Auto,Auto,*" RowSpacing="8">
-              <Grid ColumnDefinitions="*,Auto">
+              <Grid RowDefinitions="Auto,Auto" RowSpacing="8">
                 <TextBlock Text="Diagnóstico"
                            FontWeight="SemiBold"
                            Foreground="{DynamicResource WiiBrushTextPrimary}"
                            VerticalAlignment="Center" />
-                <WrapPanel Grid.Column="1" HorizontalAlignment="Right">
-                  <Button Command="{Binding CompleteFirstRunSetupCommand}" Classes="secondary small">
+                <StackPanel Grid.Row="1" Spacing="6">
+                  <Button Command="{Binding CompleteFirstRunSetupCommand}" Classes="secondary small" HorizontalAlignment="Stretch" MinHeight="32">
                     <TextBlock Text="Assistente inicial" />
                   </Button>
-                  <Button Command="{Binding RunDiagnosticsCommand}" Classes="secondary small">
+                  <Button Command="{Binding RunDiagnosticsCommand}" Classes="secondary small" HorizontalAlignment="Stretch" MinHeight="32">
                     <TextBlock Text="Executar" />
                   </Button>
-                </WrapPanel>
+                  <Button Command="{Binding ExportDiagnosticsCommand}" Classes="secondary small" HorizontalAlignment="Stretch" MinHeight="32">
+                    <TextBlock Text="Exportar TXT" />
+                  </Button>
+                </StackPanel>
               </Grid>
               <TextBlock Grid.Row="1"
                          Text="{Binding DiagnosticsSummary}"

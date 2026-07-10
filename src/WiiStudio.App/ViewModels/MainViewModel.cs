@@ -31,6 +31,7 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly IDiagnosticsRepairService _diagnosticsRepairService;
     private readonly IDockService _dockService;
     private readonly IExportGameService _exportGameService;
+    private readonly ILoggingCenter _loggingCenter;
     private readonly IImportWizardService _importWizardService;
     private readonly IKeyboardShortcutService _keyboardShortcutService;
     private readonly IGameLibraryService _gameLibraryService;
@@ -212,6 +213,15 @@ public sealed partial class MainViewModel : ObservableObject
     private string _diagnosticsSummary = "Diagnóstico não executado.";
 
     [ObservableProperty]
+    private string _diagnosticsExportPath = "Nenhum relatório exportado.";
+
+    [ObservableProperty]
+    private string _logsSummary = "Nenhum log carregado.";
+
+    [ObservableProperty]
+    private string _logsExportPath = "Nenhum log exportado.";
+
+    [ObservableProperty]
     private string _coverBatchStatus = "Nenhum download em andamento.";
 
     [ObservableProperty]
@@ -249,6 +259,7 @@ public sealed partial class MainViewModel : ObservableObject
         IDiagnosticsRepairService diagnosticsRepairService,
         IDockService dockService,
         IExportGameService exportGameService,
+        ILoggingCenter loggingCenter,
         IImportWizardService importWizardService,
         IKeyboardShortcutService keyboardShortcutService,
         IGameLibraryService gameLibraryService,
@@ -282,6 +293,7 @@ public sealed partial class MainViewModel : ObservableObject
         _diagnosticsRepairService = diagnosticsRepairService;
         _dockService = dockService;
         _exportGameService = exportGameService;
+        _loggingCenter = loggingCenter;
         _importWizardService = importWizardService;
         _keyboardShortcutService = keyboardShortcutService;
         _gameLibraryService = gameLibraryService;
@@ -341,6 +353,8 @@ public sealed partial class MainViewModel : ObservableObject
     public ObservableCollection<DiagnosticsCheckItemViewModel> DiagnosticsChecks { get; } = new();
 
     public ObservableCollection<PluginManagementItemViewModel> Plugins { get; } = new();
+
+    public ObservableCollection<LogEntryViewModel> Logs { get; } = new();
 
     public IReadOnlyList<ImportWizardStep> ImportSteps { get; } =
     [
@@ -908,12 +922,51 @@ public sealed partial class MainViewModel : ObservableObject
                 ? $"Diagnóstico concluído: {report.Checks.Count} verificação(ões), nenhum erro crítico."
                 : $"Diagnóstico concluído: {unhealthyCount} erro(s), {warningCount} aviso(s).";
             StatusMessage = DiagnosticsSummary;
+            await RecordLogAsync(LogLevel.Information, "Diagnostics", DiagnosticsSummary, cancellationToken);
             await RefreshStatusBarAsync(cancellationToken);
         }
         finally
         {
             IsBusy = false;
         }
+    }
+
+    [RelayCommand]
+    private async Task ExportDiagnosticsAsync(CancellationToken cancellationToken)
+    {
+        var path = CreateExportPath("diagnostico", "txt");
+        var lines = new List<string>
+        {
+            "WiiStudio - Relatorio de Diagnostico",
+            $"Gerado em: {DateTimeOffset.Now:yyyy-MM-dd HH:mm:ss zzz}",
+            $"Resumo: {DiagnosticsSummary}",
+            string.Empty
+        };
+
+        if (DiagnosticsChecks.Count == 0)
+        {
+            lines.Add("Nenhuma verificacao carregada. Execute o diagnostico antes de exportar.");
+        }
+        else
+        {
+            foreach (var check in DiagnosticsChecks)
+            {
+                lines.Add($"[{check.Status}] {check.Name}");
+                lines.Add(check.Message);
+                if (!string.IsNullOrWhiteSpace(check.RepairActionTitle))
+                {
+                    lines.Add($"Acao sugerida: {check.RepairActionTitle}");
+                }
+
+                lines.Add(string.Empty);
+            }
+        }
+
+        Directory.CreateDirectory(Path.GetDirectoryName(path) ?? ".");
+        await File.WriteAllLinesAsync(path, lines, cancellationToken);
+        DiagnosticsExportPath = path;
+        StatusMessage = $"Diagnostico exportado para {path}.";
+        await RecordLogAsync(LogLevel.Information, "Diagnostics", $"Diagnostico exportado para {path}.", cancellationToken);
     }
 
     [RelayCommand]
@@ -938,6 +991,7 @@ public sealed partial class MainViewModel : ObservableObject
             }
 
             StatusMessage = result.Message;
+            await RecordLogAsync(LogLevel.Information, "Diagnostics", result.Message, cancellationToken);
         }
         finally
         {
@@ -978,11 +1032,60 @@ public sealed partial class MainViewModel : ObservableObject
             }
 
             StatusMessage = DiagnosticsSummary;
+            await RecordLogAsync(LogLevel.Information, "Diagnostics", DiagnosticsSummary, cancellationToken);
         }
         finally
         {
             IsBusy = false;
         }
+    }
+
+    [RelayCommand]
+    private async Task RefreshLogsAsync(CancellationToken cancellationToken)
+    {
+        var entries = await _loggingCenter.QueryAsync(new LogQuery(Limit: 200), cancellationToken);
+        Logs.Clear();
+        foreach (var entry in entries)
+        {
+            Logs.Add(new LogEntryViewModel(entry));
+        }
+
+        LogsSummary = Logs.Count == 0
+            ? "Nenhum log registrado ainda."
+            : $"{Logs.Count} log(s) carregado(s).";
+        StatusMessage = LogsSummary;
+    }
+
+    [RelayCommand]
+    private async Task ExportLogsAsync(CancellationToken cancellationToken)
+    {
+        var entries = await _loggingCenter.QueryAsync(new LogQuery(Limit: 1000), cancellationToken);
+        var path = CreateExportPath("logs", "txt");
+        var lines = new List<string>
+        {
+            "WiiStudio - Logs do Sistema",
+            $"Gerado em: {DateTimeOffset.Now:yyyy-MM-dd HH:mm:ss zzz}",
+            $"Total exportado: {entries.Count}",
+            string.Empty
+        };
+
+        foreach (var entry in entries.OrderBy(entry => entry.Timestamp))
+        {
+            lines.Add($"[{entry.Timestamp:yyyy-MM-dd HH:mm:ss zzz}] [{entry.Level}] {entry.Source}/{entry.Category}");
+            lines.Add(entry.Message);
+            if (!string.IsNullOrWhiteSpace(entry.Exception))
+            {
+                lines.Add(entry.Exception);
+            }
+
+            lines.Add(string.Empty);
+        }
+
+        Directory.CreateDirectory(Path.GetDirectoryName(path) ?? ".");
+        await File.WriteAllLinesAsync(path, lines, cancellationToken);
+        LogsExportPath = path;
+        StatusMessage = $"Logs exportados para {path}.";
+        await RefreshLogsAsync(cancellationToken);
     }
 
     [RelayCommand]
@@ -1860,7 +1963,7 @@ public sealed partial class MainViewModel : ObservableObject
                     await RefreshPluginsAsync(CancellationToken.None);
                     break;
                 case ShellModuleId.Logs:
-                    StatusMessage = "Logs recentes aparecem na barra de status e no console da aplicação.";
+                    await RefreshLogsAsync(CancellationToken.None);
                     break;
                 case ShellModuleId.Conversion:
                     StatusMessage = "Fluxo de conversão pronto.";
@@ -2111,6 +2214,39 @@ public sealed partial class MainViewModel : ObservableObject
             var actions = await _diagnosticsRepairService.GetAvailableActionsAsync(check, cancellationToken);
             DiagnosticsChecks.Add(new DiagnosticsCheckItemViewModel(check, actions.FirstOrDefault()));
         }
+    }
+
+    private async Task RecordLogAsync(LogLevel level, string category, string message, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _loggingCenter.RecordAsync(
+                new LogEntry(
+                    Guid.NewGuid(),
+                    DateTimeOffset.UtcNow,
+                    level,
+                    "WiiStudio.App",
+                    category,
+                    message),
+                cancellationToken);
+        }
+        catch
+        {
+            // Logging must never block the user workflow.
+        }
+    }
+
+    private static string CreateExportPath(string prefix, string extension)
+    {
+        var documents = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+        if (string.IsNullOrWhiteSpace(documents))
+        {
+            documents = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+        }
+
+        var directory = Path.Combine(documents, "WiiStudio", "exports");
+        var fileName = $"{prefix}-{DateTimeOffset.Now:yyyyMMdd-HHmmss}.{extension}";
+        return Path.Combine(directory, fileName);
     }
 
     private IReadOnlyList<string> GetSelectedGameIds()
