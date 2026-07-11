@@ -33,6 +33,7 @@ integração GameTDB, operações Wiimms e fluxos de prontidão USB do WiiStudio
 - `F125-HardwareValidationAndReleaseAcceptance.md`
 - `F126-DesktopExecutableBrandingAndPackaging.md`
 - `EXTERNAL_TOOLS_REFERENCE.md`
+- `MELHORAMENTOS-ROADMAP.md`
 
 # Ordem Recomendada
 
@@ -72,6 +73,31 @@ estiverem estáveis.
 `F123` complementa `F117` com catálogo remoto, confiança, revogação e quarentena
 de plugins.
 `F126` complementa `F124` com branding final do executável Windows e bundle macOS.
+
+# Melhoramentos
+
+As propostas de melhoramento adicionadas após a implementação base ficam nesta mesma
+pasta com o sufixo `-Melhoramento.md`. Elas não substituem os documentos principais;
+servem como camada de refinamento para robustez, UX operacional, segurança e release.
+
+Ordem sugerida para execução da fase de melhoramentos:
+
+1. `F118-DiagnosticsRepairActions-Melhoramento.md`
+2. `F108-ExternalToolNetworkDownloader-Melhoramento.md`
+3. `F109-WiimmsOperationProgress-Melhoramento.md`
+4. `F110-SafeUsbWriteWorkflow-Melhoramento.md`
+5. `F120-EndToEndWiiUsbReadinessCheck-Melhoramento.md`
+6. `F110-1-UsbFormatAndWbfsPreparation-Melhoramento.md`
+7. `F114-LibraryPersistenceWithSQLite-Melhoramento.md`
+8. `F115-AdvancedGameDetailsPanel-Melhoramento.md`
+9. `F116-CoverAssetBulkActions-Melhoramento.md`
+10. `F119-FirstRunSetupWizard-Melhoramento.md`
+11. `F124-PackagingInstallerAndCiCd-Melhoramento.md`
+12. `F125-HardwareValidationAndReleaseAcceptance-Melhoramento.md`
+
+Racional resumido: primeiro corrigir diagnóstico e suporte operacional, depois
+ferramentas/progresso, em seguida escrita/preparação USB, persistência e UX de
+biblioteca, fechando com onboarding, empacotamento e validação real.
 
 # Pacotes Locais
 

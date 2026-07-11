@@ -198,6 +198,19 @@ design system, application shell, plugin SDK, segurança, testes e documentaçã
 - `F125-HardwareValidationAndReleaseAcceptance.md`
 - `F126-DesktopExecutableBrandingAndPackaging.md`
 - `EXTERNAL_TOOLS_REFERENCE.md`
+- `MELHORAMENTOS-ROADMAP.md`
+- `F108-ExternalToolNetworkDownloader-Melhoramento.md`
+- `F109-WiimmsOperationProgress-Melhoramento.md`
+- `F110-SafeUsbWriteWorkflow-Melhoramento.md`
+- `F110-1-UsbFormatAndWbfsPreparation-Melhoramento.md`
+- `F114-LibraryPersistenceWithSQLite-Melhoramento.md`
+- `F115-AdvancedGameDetailsPanel-Melhoramento.md`
+- `F116-CoverAssetBulkActions-Melhoramento.md`
+- `F118-DiagnosticsRepairActions-Melhoramento.md`
+- `F119-FirstRunSetupWizard-Melhoramento.md`
+- `F120-EndToEndWiiUsbReadinessCheck-Melhoramento.md`
+- `F124-PackagingInstallerAndCiCd-Melhoramento.md`
+- `F125-HardwareValidationAndReleaseAcceptance-Melhoramento.md`
 
 ---
 
