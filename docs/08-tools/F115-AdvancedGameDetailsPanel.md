@@ -7,6 +7,18 @@
 > Area: UI, Metadata, Assets, Library, Operations  
 > Depends on: F104 - Cover Asset Gallery and Batch Selection
 
+# Revisão Estruturada do Projetista
+
+Revisão recebida em `docs/08-tools-1` consolidada neste documento sem substituir os detalhes técnicos existentes.
+
+- Prioridade revisada: 3.
+- Arquitetura alvo: .NET 10, Avalonia, Application / Infrastructure / Domain.
+- Relacionadas: F013, F102, F103, F104, F110, F114.
+- Reforço de escopo: painel avançado, capa grande, galeria de assets, metadados completos, dados técnicos, informações de arquivo, ações contextuais, estados vazio/loading/error e integração com SQLite quando F114 estiver ativo.
+- Fora de escopo reforçado: edição avançada de imagens, edição massiva de metadados, marketplace de assets, scraping adicional fora dos providers existentes e operação direta sem Application Service.
+- Regras adicionais: sem jogo selecionado deve mostrar placeholder, dados ausentes não podem quebrar o painel, ações indisponíveis devem explicar motivo e assets devem vir de cache/repositories.
+- Impacto de UI: layout responsivo com detalhes, galeria/lightbox, ações contextuais e mensagens claras para metadados/capas ausentes.
+
 # Objetivo
 
 Melhorar a visualização do jogo selecionado na biblioteca com um painel avançado de detalhes,

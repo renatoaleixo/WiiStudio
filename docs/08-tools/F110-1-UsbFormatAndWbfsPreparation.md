@@ -7,6 +7,18 @@
 > Area: Device Manager, Wiimms Integration, Privileged Access, Task Manager, Diagnostics  
 > Depends on: F105, F106, F107, F109, F110, F113, F120
 
+# Revisão Estruturada do Projetista
+
+Revisão recebida em `docs/08-tools-1` consolidada neste documento sem substituir os detalhes técnicos existentes.
+
+- Prioridade revisada: 2.
+- Arquitetura alvo: .NET 10, Avalonia, Application / Infrastructure / Domain.
+- Relacionadas: F105, F106, F107, F109, F110, F113, F120, F121.
+- Reforço de orientação: FAT32 com pasta `/wbfs` deve ser o caminho recomendado; WBFS deve aparecer como opção avançada, destrutiva e explicitamente confirmada.
+- Reforço de segurança: bloquear disco do sistema, exigir preview, exigir frase de confirmação para WBFS, validar permissões, usar apenas ferramentas validadas, registrar tarefa/notificação e gerar relatório.
+- Fora de escopo reforçado: recuperação de dados, particionamento avançado, redimensionamento, formatação silenciosa, operação sem confirmação, formatação iniciada por plugin e promessa de rollback.
+- Impacto de UI: tela "Preparar USB" com escolha de dispositivo, escolha de modo, resumo de risco, confirmação forte, progresso e readiness check final.
+
 # Objetivo
 
 Permitir que o WiiStudio prepare HDs e pendrives para uso no Wii, incluindo a opção de

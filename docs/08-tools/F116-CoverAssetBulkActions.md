@@ -7,6 +7,18 @@
 > Area: UI, Application, Cache, GameTDB, Batch Operations  
 > Depends on: F102, F104
 
+# Revisão Estruturada do Projetista
+
+Revisão recebida em `docs/08-tools-1` consolidada neste documento sem substituir os detalhes técnicos existentes.
+
+- Prioridade revisada: 3.
+- Arquitetura alvo: .NET 10, Avalonia, Application / Infrastructure / Domain.
+- Relacionadas: F102, F104, F113, F114.
+- Reforço de escopo: menu de ações de assets, seleção de tipos de asset, ForceRefresh, limpeza de cache selecionado, troca de idioma, rebaixar assets, validar cache, progresso por lote, resumo final e atualização automática da UI.
+- Fora de escopo reforçado: edição de imagem, upload para GameTDB, geração de imagem por IA, múltiplos providers remotos além do configurado e sincronização cloud.
+- Regras adicionais: ações em lote devem respeitar seleção atual, confirmar operações destrutivas de cache, usar tarefas/notificações e não bloquear a UI.
+- Impacto de UI: menu "Ações de Assets", seleção de frente/verso/disco/banner/icon, progresso por jogo e relatório final de sucesso/falha.
+
 # Objetivo
 
 Criar ações em lote para gerenciamento de capas e assets dos jogos, permitindo que o usuário

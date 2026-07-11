@@ -7,6 +7,18 @@
 > Area: Advanced Diagnostics, External Tools, Polkit, Settings, Logs  
 > Depends on: F030, F101, F106
 
+# Revisão Estruturada do Projetista
+
+Revisão recebida em `docs/08-tools-1` consolidada neste documento sem substituir os detalhes técnicos existentes.
+
+- Prioridade revisada: 1.
+- Arquitetura alvo: .NET 10, Avalonia, Application / Infrastructure / Domain.
+- Relacionadas: F030, F101, F105, F106, F111, F113, F119.
+- Reforço de escopo: resolver ações disponíveis por item, exibir "Corrigir" quando houver ação segura, instalar/orientar Polkit, selecionar `wwt`/`wit`, validar ferramentas, atualizar GameTDB, limpar cache inválido, abrir pasta de logs e exportar relatório.
+- Fora de escopo reforçado: reparo destrutivo automático, formatação USB/WBFS, instalação sem confirmação, download sem checksum/fonte confiável, pedir ou armazenar senha e comandos arbitrários.
+- Regras adicionais: reparos devem ser tarefas rastreáveis, gerar notificações, atualizar diagnóstico após cada reparo e permitir relatório antes/depois.
+- Impacto de UI: cada item de diagnóstico deve poder exibir ação primária, ação secundária, risco, mensagem de confirmação e resultado pós-reparo.
+
 # Objetivo
 
 Adicionar ações seguras de reparo ao módulo de Diagnóstico do WiiStudio.

@@ -7,6 +7,18 @@
 > Area: Device Manager, Wiimms Integration, UX, Security, Task Manager  
 > Depends on: F107 - CrossPlatformUsbDeviceProvider
 
+# Revisão Estruturada do Projetista
+
+Revisão recebida em `docs/08-tools-1` consolidada neste documento sem substituir os detalhes técnicos existentes.
+
+- Prioridade revisada: 2.
+- Arquitetura alvo: .NET 10, Avalonia, Application / Infrastructure / Domain.
+- Relacionadas: F101, F105, F106, F107, F109, F113, F120.
+- Reforço de escopo: wizard de escrita USB, validação de filesystem, espaço livre, permissões, duplicidade, preview, confirmação final, progresso via F109, tarefa/notificação via F113, validação pós-cópia e bloqueio de disco do sistema.
+- Fora de escopo reforçado: formatar dispositivo, recuperar dados, reparar WBFS, particionar disco, escrever sem confirmação, executar comando arbitrário, permitir plugin iniciar escrita direta ou ignorar permissões.
+- Regras adicionais: operação deve ser cancelável antes do ponto sem retorno; destino FAT32 deve considerar split; destino WBFS deve usar Wiimms; resultado deve ser registrado em histórico, diagnóstico e notificações.
+- Impacto de UI: ação principal "Enviar para USB", tela de preview clara, alerta para operação sensível, progresso por etapa e resumo final.
+
 # Objetivo
 
 Criar um fluxo seguro de confirmação antes de enviar/copiar jogos para um HD USB,

@@ -7,6 +7,18 @@
 > Area: Database, Infrastructure, Game Library, Metadata, Assets  
 > Related: Roadmap SQLite, JSON/memory stores
 
+# Revisão Estruturada do Projetista
+
+Revisão recebida em `docs/08-tools-1` consolidada neste documento sem substituir os detalhes técnicos existentes.
+
+- Prioridade revisada: 3.
+- Arquitetura alvo: .NET 10, Avalonia, Application / Infrastructure / Domain.
+- Relacionadas: 009 Database, F002, F032, F096, F102, F103, F104.
+- Reforço de escopo: schema SQLite inicial, migrations versionadas, repositories, unit of work, importação de JSON legado, backup antes de migração, índices, transações, diagnóstico do banco e testes com SQLite temporário.
+- Fora de escopo reforçado: banco remoto, sincronização em nuvem, multiusuário, criptografia completa, replicação e edição avançada de metadados.
+- Regras adicionais: migration deve ser idempotente, reversão deve preservar backup, UI não deve acessar SQLite diretamente e falhas de banco devem ser diagnosticáveis/exportáveis.
+- Impacto de UI: indicador de migração, resumo de banco, diagnóstico de integridade e mensagens claras para falha de abertura/migração.
+
 # Objetivo
 
 Migrar/padronizar a persistência da biblioteca do WiiStudio para SQLite, substituindo

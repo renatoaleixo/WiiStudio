@@ -6,6 +6,18 @@
 > Epic: Onboarding / Setup  
 > Area: UI, Settings, External Tools, Permissions, GameTDB, Theme, Localization
 
+# Revisão Estruturada do Projetista
+
+Revisão recebida em `docs/08-tools-1` consolidada neste documento sem substituir os detalhes técnicos existentes.
+
+- Prioridade revisada: 1.
+- Arquitetura alvo: .NET 10, Avalonia, Application / Infrastructure / Domain.
+- Relacionadas: F023, F039, F101, F105, F106, F111, F118.
+- Reforço de escopo: primeira execução, reabrir via Configurações, idioma, tema, pasta de biblioteca/exportação/cache, Wiimms, NKit opcional, permissões USB por plataforma, policy Polkit no Linux, GameTDB, idioma de capas/metadados, diagnóstico final e estado `FirstRun.Completed`.
+- Fora de escopo reforçado: obrigatoriedade de concluir wizard, instalação/download sem confirmação/checksum, pedir ou salvar senha, formatar USB, copiar jogos, marketplace de plugins e atualização automática do app.
+- Regras adicionais: usuário pode pular com aviso, wizard deve ser idempotente, cada etapa deve salvar somente configurações validadas e o diagnóstico final deve indicar o que ainda falta.
+- Impacto de UI: fluxo de boas-vindas com etapas claras, resumo final, botões voltar/avançar/pular, progresso de configuração e link para reabrir o assistente.
+
 # Objetivo
 
 Criar um assistente inicial de configuração do WiiStudio para preparar o ambiente do usuário

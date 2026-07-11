@@ -6,6 +6,18 @@
 > Epic: Diagnostics / Device Readiness  
 > Area: Device Manager, Wiimms, GameTDB, Metadata, Assets, Permissions
 
+# Revisão Estruturada do Projetista
+
+Revisão recebida em `docs/08-tools-1` consolidada neste documento sem substituir os detalhes técnicos existentes.
+
+- Prioridade revisada: 2.
+- Arquitetura alvo: .NET 10, Avalonia, Application / Infrastructure / Domain.
+- Relacionadas: F101, F105, F106, F107, F110, F111, F113, F118.
+- Reforço de escopo: checklist por dispositivo, WBFS/FAT32/NTFS, pasta `/wbfs`, Wiimms, permissões, listagem de jogos, Game IDs, capas/metadados, ações de reparo via F118, exportação de relatório e Task/Notification para check longo.
+- Fora de escopo reforçado: formatar dispositivo, copiar jogo, reparar WBFS automaticamente, baixar todas as capas sem confirmação, operação destrutiva e substituir diagnóstico avançado.
+- Regras adicionais: resultado final deve ser "Pronto", "Atenção" ou "Não pronto"; cada item deve explicar causa, severidade e ação sugerida; checks demorados devem ser canceláveis.
+- Impacto de UI: tela "Verificar prontidão para Wii", lista de checks, resumo final, botão de exportação e atalhos para reparos seguros.
+
 # Objetivo
 
 Criar um checklist final para responder:
