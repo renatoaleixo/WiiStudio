@@ -30,6 +30,8 @@ public sealed partial class LibraryGameItem : ObservableObject
 
     public bool IsFavorite => Game.IsFavorite;
 
+    public bool IsNotFavorite => !IsFavorite;
+
     [ObservableProperty]
     private bool _isSelected;
 
@@ -116,6 +118,7 @@ public sealed partial class LibraryGameItem : ObservableObject
 
         Game = Game with { IsFavorite = isFavorite };
         OnPropertyChanged(nameof(IsFavorite));
+        OnPropertyChanged(nameof(IsNotFavorite));
         OnPropertyChanged(nameof(Favorite));
         OnPropertyChanged(nameof(FavoriteStatusText));
         OnPropertyChanged(nameof(FavoriteActionText));

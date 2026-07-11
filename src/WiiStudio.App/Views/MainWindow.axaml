@@ -443,7 +443,10 @@
                                       HorizontalAlignment="Right"
                                       VerticalAlignment="Top"
                                       Margin="{StaticResource WiiInsetXs}">
-                                <PathIcon Classes="small" Data="{StaticResource WiiIcon.Favorite}" Foreground="{DynamicResource WiiBrushWarning}" />
+                                <Grid>
+                                  <PathIcon Classes="small" Data="{StaticResource WiiIcon.Favorite}" Foreground="{DynamicResource WiiBrushWarning}" IsVisible="{Binding IsFavorite}" />
+                                  <PathIcon Classes="small" Data="{StaticResource WiiIcon.Favorite}" Foreground="{DynamicResource WiiBrushTextMuted}" IsVisible="{Binding IsNotFavorite}" />
+                                </Grid>
                               </Button>
                             </Grid>
                           </Border>
@@ -482,7 +485,10 @@
                           <PathIcon Classes="small" Data="{StaticResource WiiIcon.Success}" Foreground="{DynamicResource WiiBrushSuccess}" ToolTip.Tip="{Binding MetadataStatusText}" IsVisible="{Binding HasMetadata}" />
                           <PathIcon Classes="small" Data="{StaticResource WiiIcon.Settings}" Foreground="{DynamicResource WiiBrushWarning}" ToolTip.Tip="{Binding MetadataStatusText}" IsVisible="{Binding !HasMetadata}" />
                           <Button Command="{Binding DataContext.ToggleFavoriteCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" Classes="icon small" ToolTip.Tip="{Binding FavoriteActionText}">
-                            <PathIcon Classes="small" Data="{StaticResource WiiIcon.Favorite}" Foreground="{DynamicResource WiiBrushWarning}" />
+                            <Grid>
+                              <PathIcon Classes="small" Data="{StaticResource WiiIcon.Favorite}" Foreground="{DynamicResource WiiBrushWarning}" IsVisible="{Binding IsFavorite}" />
+                              <PathIcon Classes="small" Data="{StaticResource WiiIcon.Favorite}" Foreground="{DynamicResource WiiBrushTextMuted}" IsVisible="{Binding IsNotFavorite}" />
+                            </Grid>
                           </Button>
                         </StackPanel>
                       </Grid>
@@ -502,7 +508,10 @@
                           <PathIcon Classes="small" Data="{StaticResource WiiIcon.Library}" Foreground="{DynamicResource WiiBrushSuccess}" ToolTip.Tip="{Binding CoverStatusText}" IsVisible="{Binding HasCover}" />
                           <PathIcon Classes="small" Data="{StaticResource WiiIcon.Success}" Foreground="{DynamicResource WiiBrushSuccess}" ToolTip.Tip="{Binding MetadataStatusText}" IsVisible="{Binding HasMetadata}" />
                           <Button Command="{Binding DataContext.ToggleFavoriteCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" Classes="icon small" ToolTip.Tip="{Binding FavoriteActionText}">
-                            <PathIcon Classes="small" Data="{StaticResource WiiIcon.Favorite}" Foreground="{DynamicResource WiiBrushWarning}" />
+                            <Grid>
+                              <PathIcon Classes="small" Data="{StaticResource WiiIcon.Favorite}" Foreground="{DynamicResource WiiBrushWarning}" IsVisible="{Binding IsFavorite}" />
+                              <PathIcon Classes="small" Data="{StaticResource WiiIcon.Favorite}" Foreground="{DynamicResource WiiBrushTextMuted}" IsVisible="{Binding IsNotFavorite}" />
+                            </Grid>
                           </Button>
                         </StackPanel>
                       </Grid>
@@ -542,7 +551,10 @@
                             <PathIcon Classes="small" Data="{StaticResource WiiIcon.Settings}" Foreground="{DynamicResource WiiBrushWarning}" HorizontalAlignment="Center" VerticalAlignment="Center" />
                           </Border>
                           <Button Command="{Binding DataContext.ToggleFavoriteCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" Classes="icon small" ToolTip.Tip="{Binding FavoriteActionText}">
-                            <PathIcon Classes="small" Data="{StaticResource WiiIcon.Favorite}" Foreground="{DynamicResource WiiBrushAccent}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            <Grid>
+                              <PathIcon Classes="small" Data="{StaticResource WiiIcon.Favorite}" Foreground="{DynamicResource WiiBrushWarning}" HorizontalAlignment="Center" VerticalAlignment="Center" IsVisible="{Binding IsFavorite}" />
+                              <PathIcon Classes="small" Data="{StaticResource WiiIcon.Favorite}" Foreground="{DynamicResource WiiBrushTextMuted}" HorizontalAlignment="Center" VerticalAlignment="Center" IsVisible="{Binding IsNotFavorite}" />
+                            </Grid>
                           </Button>
                         </StackPanel>
                       </Grid>
@@ -569,11 +581,11 @@
                         <TextBlock Text="{Binding SelectedGame.Title}" Foreground="{DynamicResource WiiBrushTextPrimary}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
                         <TextBlock Text="{Binding SelectedGame.Id}" Foreground="{DynamicResource WiiBrushTextMuted}" />
                       </StackPanel>
-                      <Button Grid.Column="1" Command="{Binding ToggleFavoriteCommand}" CommandParameter="{Binding SelectedGame}" Classes="secondary small" ToolTip.Tip="{Binding SelectedGame.FavoriteActionText}" VerticalAlignment="Top">
-                        <StackPanel Orientation="Horizontal" Spacing="{StaticResource WiiSpace8}">
-                          <PathIcon Classes="small" Data="{StaticResource WiiIcon.Favorite}" />
-                          <TextBlock Text="{Binding SelectedGame.FavoriteStatusText}" />
-                        </StackPanel>
+                      <Button Grid.Column="1" Command="{Binding ToggleFavoriteCommand}" CommandParameter="{Binding SelectedGame}" Classes="icon small" ToolTip.Tip="{Binding SelectedGame.FavoriteActionText}" VerticalAlignment="Top">
+                        <Grid>
+                          <PathIcon Classes="small" Data="{StaticResource WiiIcon.Favorite}" Foreground="{DynamicResource WiiBrushWarning}" IsVisible="{Binding SelectedGame.IsFavorite}" />
+                          <PathIcon Classes="small" Data="{StaticResource WiiIcon.Favorite}" Foreground="{DynamicResource WiiBrushTextMuted}" IsVisible="{Binding SelectedGame.IsNotFavorite}" />
+                        </Grid>
                       </Button>
                     </Grid>
                     <TextBlock Text="{Binding CoverBatchStatus}" Foreground="{DynamicResource WiiBrushTextSecondary}" TextWrapping="Wrap" />
@@ -1075,19 +1087,82 @@
             </Grid>
           </Grid>
 
-          <Border IsVisible="{Binding IsTasksModuleSelected}" Classes="contentBlock">
-            <Grid RowDefinitions="Auto,Auto" RowSpacing="8">
-              <TextBlock Text="Tarefas" FontSize="{StaticResource WiiFontSizeSubtitle}" FontWeight="SemiBold" Foreground="{DynamicResource WiiBrushTextPrimary}" />
-              <TextBlock Grid.Row="1" Text="{Binding TaskSummary}" Foreground="{DynamicResource WiiBrushTextSecondary}" />
-            </Grid>
-          </Border>
+          <Grid IsVisible="{Binding IsTasksModuleSelected}" RowDefinitions="Auto,*" RowSpacing="12">
+            <Border Classes="contentBlock">
+              <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                <StackPanel>
+                  <TextBlock Text="Tarefas" FontSize="{StaticResource WiiFontSizeSubtitle}" FontWeight="SemiBold" Foreground="{DynamicResource WiiBrushTextPrimary}" />
+                  <TextBlock Text="{Binding TaskSummary}" Foreground="{DynamicResource WiiBrushTextSecondary}" TextWrapping="Wrap" />
+                </StackPanel>
+                <Button Grid.Column="1" Command="{Binding RefreshTasksCommand}" Classes="secondary small" VerticalAlignment="Center">
+                  <StackPanel Orientation="Horizontal" Spacing="{StaticResource WiiSpace8}">
+                    <PathIcon Classes="small" Data="{StaticResource WiiIcon.Refresh}" />
+                    <TextBlock Text="Atualizar" />
+                  </StackPanel>
+                </Button>
+              </Grid>
+            </Border>
+            <ListBox Grid.Row="1" ItemsSource="{Binding Tasks}" Background="Transparent" BorderThickness="0" ScrollViewer.VerticalScrollBarVisibility="Auto">
+              <ListBox.ItemTemplate>
+                <DataTemplate DataType="vm:TaskItemViewModel">
+                  <Grid Classes="dataGridRow" RowDefinitions="Auto,Auto,Auto,Auto,Auto" ColumnDefinitions="*,Auto" ColumnSpacing="12" RowSpacing="6" Margin="{StaticResource WiiLibraryRowMargin}" MinHeight="96">
+                    <TextBlock Text="{Binding Title}" Foreground="{DynamicResource WiiBrushTextPrimary}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                    <Border Grid.Column="1" Classes="badge" HorizontalAlignment="Right">
+                      <TextBlock Classes="badgeText" Text="{Binding Status}" />
+                    </Border>
+                    <TextBlock Grid.Row="1" Grid.ColumnSpan="2" Text="{Binding Description}" Foreground="{DynamicResource WiiBrushTextSecondary}" TextWrapping="Wrap" />
+                    <ProgressBar Grid.Row="2" Grid.ColumnSpan="2" Minimum="0" Maximum="100" Value="{Binding Progress}" />
+                    <Grid Grid.Row="3" Grid.ColumnSpan="2" ColumnDefinitions="*,Auto">
+                      <TextBlock Text="{Binding Priority}" Foreground="{DynamicResource WiiBrushTextMuted}" FontSize="{StaticResource WiiFontSizeMicro}" />
+                      <TextBlock Grid.Column="1" Text="{Binding UpdatedAt}" Foreground="{DynamicResource WiiBrushTextMuted}" FontSize="{StaticResource WiiFontSizeMicro}" />
+                    </Grid>
+                    <TextBlock Grid.Row="4" Grid.ColumnSpan="2" Text="{Binding ErrorMessage}" Foreground="{DynamicResource WiiBrushDanger}" TextWrapping="Wrap" IsVisible="{Binding HasError}" />
+                  </Grid>
+                </DataTemplate>
+              </ListBox.ItemTemplate>
+            </ListBox>
+          </Grid>
 
-          <Border IsVisible="{Binding IsNotificationsModuleSelected}" Classes="contentBlock">
-            <Grid RowDefinitions="Auto,Auto" RowSpacing="8">
-              <TextBlock Text="Notificações" FontSize="{StaticResource WiiFontSizeSubtitle}" FontWeight="SemiBold" Foreground="{DynamicResource WiiBrushTextPrimary}" />
-              <TextBlock Grid.Row="1" Text="{Binding NotificationSummary}" Foreground="{DynamicResource WiiBrushTextSecondary}" />
-            </Grid>
-          </Border>
+          <Grid IsVisible="{Binding IsNotificationsModuleSelected}" RowDefinitions="Auto,*" RowSpacing="12">
+            <Border Classes="contentBlock">
+              <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                <StackPanel>
+                  <TextBlock Text="Notificações" FontSize="{StaticResource WiiFontSizeSubtitle}" FontWeight="SemiBold" Foreground="{DynamicResource WiiBrushTextPrimary}" />
+                  <TextBlock Text="{Binding NotificationSummary}" Foreground="{DynamicResource WiiBrushTextSecondary}" TextWrapping="Wrap" />
+                </StackPanel>
+                <Button Grid.Column="1" Command="{Binding RefreshNotificationsCommand}" Classes="secondary small" VerticalAlignment="Center">
+                  <StackPanel Orientation="Horizontal" Spacing="{StaticResource WiiSpace8}">
+                    <PathIcon Classes="small" Data="{StaticResource WiiIcon.Refresh}" />
+                    <TextBlock Text="Atualizar" />
+                  </StackPanel>
+                </Button>
+              </Grid>
+            </Border>
+            <ListBox Grid.Row="1" ItemsSource="{Binding Notifications}" Background="Transparent" BorderThickness="0" ScrollViewer.VerticalScrollBarVisibility="Auto">
+              <ListBox.ItemTemplate>
+                <DataTemplate DataType="vm:NotificationItemViewModel">
+                  <Grid Classes="dataGridRow" RowDefinitions="Auto,Auto,Auto,Auto" ColumnDefinitions="*,Auto" ColumnSpacing="12" RowSpacing="6" Margin="{StaticResource WiiLibraryRowMargin}" MinHeight="86">
+                    <TextBlock Text="{Binding Title}" Foreground="{DynamicResource WiiBrushTextPrimary}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                    <Border Grid.Column="1" Classes="badge" HorizontalAlignment="Right">
+                      <TextBlock Classes="badgeText" Text="{Binding Type}" />
+                    </Border>
+                    <TextBlock Grid.Row="1" Grid.ColumnSpan="2" Text="{Binding Message}" Foreground="{DynamicResource WiiBrushTextSecondary}" TextWrapping="Wrap" />
+                    <ProgressBar Grid.Row="2" Grid.ColumnSpan="2" Minimum="0" Maximum="100" Value="{Binding Progress}" IsVisible="{Binding HasProgress}" />
+                    <Grid Grid.Row="3" Grid.ColumnSpan="2" ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                      <TextBlock Text="{Binding CreatedAt}" Foreground="{DynamicResource WiiBrushTextMuted}" FontSize="{StaticResource WiiFontSizeMicro}" />
+                      <Button Grid.Column="1"
+                              Command="{Binding DataContext.DismissNotificationCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                              CommandParameter="{Binding}"
+                              Classes="secondary small"
+                              IsVisible="{Binding !IsDismissed}">
+                        <TextBlock Text="Dispensar" />
+                      </Button>
+                    </Grid>
+                  </Grid>
+                </DataTemplate>
+              </ListBox.ItemTemplate>
+            </ListBox>
+          </Grid>
 
           <Grid IsVisible="{Binding IsLogsModuleSelected}" RowDefinitions="Auto,*" RowSpacing="12">
             <Border Classes="contentBlock">

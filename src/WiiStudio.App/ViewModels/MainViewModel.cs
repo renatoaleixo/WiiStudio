@@ -47,6 +47,8 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly RemoveGameUseCase _removeGameUseCase;
     private readonly ISettingsService _settingsService;
     private readonly IStatusBarService _statusBarService;
+    private readonly ITaskManager _taskManager;
+    private readonly INotificationService _notificationService;
     private readonly IThemeService _themeService;
     private readonly IFirstRunSetupService _firstRunSetupService;
     private readonly IWiiUsbReadinessService _wiiUsbReadinessService;
@@ -276,6 +278,8 @@ public sealed partial class MainViewModel : ObservableObject
         RemoveGameUseCase removeGameUseCase,
         ISettingsService settingsService,
         IStatusBarService statusBarService,
+        ITaskManager taskManager,
+        INotificationService notificationService,
         ShellCommandExecutor shellCommandExecutor,
         IThemeService themeService,
         IFirstRunSetupService firstRunSetupService,
@@ -311,6 +315,8 @@ public sealed partial class MainViewModel : ObservableObject
         _removeGameUseCase = removeGameUseCase;
         _settingsService = settingsService;
         _statusBarService = statusBarService;
+        _taskManager = taskManager;
+        _notificationService = notificationService;
         _themeService = themeService;
         _firstRunSetupService = firstRunSetupService;
         _wiiUsbReadinessService = wiiUsbReadinessService;
@@ -358,6 +364,10 @@ public sealed partial class MainViewModel : ObservableObject
     public ObservableCollection<PluginManagementItemViewModel> Plugins { get; } = new();
 
     public ObservableCollection<LogEntryViewModel> Logs { get; } = new();
+
+    public ObservableCollection<TaskItemViewModel> Tasks { get; } = new();
+
+    public ObservableCollection<NotificationItemViewModel> Notifications { get; } = new();
 
     public IReadOnlyList<ImportWizardStep> ImportSteps { get; } =
     [
@@ -493,9 +503,13 @@ public sealed partial class MainViewModel : ObservableObject
 
     private LibraryGameItem? AssetPreviewGame => SelectedAssetGame ?? SelectedGame;
 
-    public string TaskSummary => "0 tarefas ativas";
+    public string TaskSummary => Tasks.Count == 0
+        ? "Nenhuma tarefa registrada."
+        : $"{Tasks.Count(task => task.IsActive)} ativa(s), {Tasks.Count} no histórico.";
 
-    public string NotificationSummary => "0 notificações";
+    public string NotificationSummary => Notifications.Count == 0
+        ? "Nenhuma notificação registrada."
+        : $"{Notifications.Count(notification => !notification.IsDismissed)} pendente(s), {Notifications.Count} no histórico.";
 
     public string DeviceSummary => Drives.Count == 0 ? "Nenhum dispositivo" : $"{Drives.Count} dispositivo(s)";
 
@@ -1131,6 +1145,58 @@ public sealed partial class MainViewModel : ObservableObject
             ? "Nenhum log registrado ainda."
             : $"{Logs.Count} log(s) carregado(s).";
         StatusMessage = LogsSummary;
+    }
+
+    [RelayCommand]
+    private async Task RefreshTasksAsync(CancellationToken cancellationToken)
+    {
+        var active = await _taskManager.GetActiveTasksAsync(cancellationToken);
+        var history = await _taskManager.GetHistoryAsync(cancellationToken);
+        var tasks = active
+            .Concat(history)
+            .GroupBy(task => task.Id)
+            .Select(group => group.OrderByDescending(task => task.UpdatedAt).First())
+            .OrderByDescending(task => task.UpdatedAt)
+            .Take(100)
+            .Select(task => new TaskItemViewModel(task))
+            .ToArray();
+
+        Tasks.Clear();
+        foreach (var task in tasks)
+        {
+            Tasks.Add(task);
+        }
+
+        OnPropertyChanged(nameof(TaskSummary));
+        StatusMessage = TaskSummary;
+        await RefreshStatusBarAsync(cancellationToken);
+    }
+
+    [RelayCommand]
+    private async Task RefreshNotificationsAsync(CancellationToken cancellationToken)
+    {
+        var notifications = await _notificationService.GetHistoryAsync(cancellationToken);
+        Notifications.Clear();
+        foreach (var notification in notifications.OrderByDescending(notification => notification.CreatedAt).Take(100))
+        {
+            Notifications.Add(new NotificationItemViewModel(notification));
+        }
+
+        OnPropertyChanged(nameof(NotificationSummary));
+        StatusMessage = NotificationSummary;
+        await RefreshStatusBarAsync(cancellationToken);
+    }
+
+    [RelayCommand]
+    private async Task DismissNotificationAsync(NotificationItemViewModel? notification, CancellationToken cancellationToken)
+    {
+        if (notification is null || notification.IsDismissed)
+        {
+            return;
+        }
+
+        await _notificationService.DismissAsync(notification.Id, cancellationToken);
+        await RefreshNotificationsAsync(cancellationToken);
     }
 
     [RelayCommand]
@@ -2031,11 +2097,11 @@ public sealed partial class MainViewModel : ObservableObject
                     StatusMessage = "Selecione jogos na biblioteca para baixar capas ou sincronizar metadados.";
                     break;
                 case ShellModuleId.Tasks:
-                    await RefreshStatusBarAsync(CancellationToken.None);
+                    await RefreshTasksAsync(CancellationToken.None);
                     StatusMessage = TaskSummary;
                     break;
                 case ShellModuleId.Notifications:
-                    await RefreshStatusBarAsync(CancellationToken.None);
+                    await RefreshNotificationsAsync(CancellationToken.None);
                     StatusMessage = NotificationSummary;
                     break;
                 case ShellModuleId.Plugins:
