@@ -31,6 +31,7 @@ integração GameTDB, operações Wiimms e fluxos de prontidão USB do WiiStudio
 - `F123-RemotePluginMarketplaceAndTrustPolicy.md`
 - `F124-PackagingInstallerAndCiCd.md`
 - `F125-HardwareValidationAndReleaseAcceptance.md`
+- `F126-DesktopExecutableBrandingAndPackaging.md`
 - `EXTERNAL_TOOLS_REFERENCE.md`
 
 # Ordem Recomendada
@@ -58,6 +59,7 @@ Para desenvolvimento incremental, seguir esta ordem:
 19. `F123-RemotePluginMarketplaceAndTrustPolicy.md`
 20. `F124-PackagingInstallerAndCiCd.md`
 21. `F125-HardwareValidationAndReleaseAcceptance.md`
+22. `F126-DesktopExecutableBrandingAndPackaging.md`
 
 `F112` e `F117` podem ser desenvolvidas em paralelo depois que `F108` e `F113`
 estiverem estáveis.
@@ -69,6 +71,7 @@ estiverem estáveis.
 `F122`, `F124` e `F125` compõem a preparação de distribuição e homologação.
 `F123` complementa `F117` com catálogo remoto, confiança, revogação e quarentena
 de plugins.
+`F126` complementa `F124` com branding final do executável Windows e bundle macOS.
 
 # Pacotes Locais
 

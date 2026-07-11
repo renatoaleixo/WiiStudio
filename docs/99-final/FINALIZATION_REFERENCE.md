@@ -3,7 +3,7 @@
 # Objetivo
 
 Registrar a finalização organizacional do repositório WiiStudio após a implementação
-das features documentadas de `F001` até `F125`.
+das features documentadas de `F001` até `F126`.
 
 ---
 
@@ -15,7 +15,7 @@ das features documentadas de `F001` até `F125`.
 - Plugin SDK: `F071` até `F080` implementadas.
 - Security: `F081` até `F090` implementadas.
 - Testing & Quality: `F091` até `F100` implementadas.
-- Tools, Readiness & Release Engineering: `F101` até `F125` implementadas.
+- Tools, Readiness & Release Engineering: `F101` até `F126` implementadas.
 
 ---
 
@@ -117,7 +117,8 @@ e prontidão de release:
 - `F122`: distribuição e manifesto de atualização do app;
 - `F123`: marketplace remoto de plugins e política de confiança;
 - `F124`: scripts/pipeline de empacotamento e release;
-- `F125`: evidências de homologação de hardware e aceite de release.
+- `F125`: evidências de homologação de hardware e aceite de release;
+- `F126`: branding final do executável Windows e bundle macOS.
 
 ---
 

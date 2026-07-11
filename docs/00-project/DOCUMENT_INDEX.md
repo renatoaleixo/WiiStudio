@@ -191,6 +191,12 @@ design system, application shell, plugin SDK, segurança, testes e documentaçã
 - `F118-DiagnosticsRepairActions.md`
 - `F119-FirstRunSetupWizard.md`
 - `F120-EndToEndWiiUsbReadinessCheck.md`
+- `F121-WBFSFormatCommandCatalog.md`
+- `F122-ApplicationReleaseAndUpdateDistribution.md`
+- `F123-RemotePluginMarketplaceAndTrustPolicy.md`
+- `F124-PackagingInstallerAndCiCd.md`
+- `F125-HardwareValidationAndReleaseAcceptance.md`
+- `F126-DesktopExecutableBrandingAndPackaging.md`
 - `EXTERNAL_TOOLS_REFERENCE.md`
 
 ---
