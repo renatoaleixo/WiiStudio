@@ -3,6 +3,11 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 PROJECT_PATH="$ROOT_DIR/src/WiiStudio.App/WiiStudio.App.csproj"
+WINDOWS_ICON_PATH="$ROOT_DIR/src/WiiStudio.App/Assets/wiistudio.ico"
+MAC_ICON_SOURCE_PATH="$ROOT_DIR/src/WiiStudio.App/Assets/wiistudio-icon.png"
+APP_ASSEMBLY_NAME="WiiStudio.App"
+APP_DISPLAY_NAME="WiiStudio"
+MAC_BUNDLE_IDENTIFIER="app.wiistudio.desktop"
 VERSION="${1:-${WIISTUDIO_VERSION:-}}"
 CHANNEL="${WIISTUDIO_CHANNEL:-stable}"
 REPOSITORY="${WIISTUDIO_REPOSITORY:-renatoaleixo/WiiStudio}"
@@ -24,7 +29,7 @@ if [[ "$CHANNEL" != "stable" && "$CHANNEL" != "beta" && "$CHANNEL" != "dev" ]]; 
 fi
 
 rm -rf "$OUTPUT_ROOT"
-mkdir -p "$OUTPUT_ROOT/publish"
+mkdir -p "$OUTPUT_ROOT/publish" "$OUTPUT_ROOT/package"
 
 publish_runtime() {
   local rid="$1"
@@ -40,15 +45,141 @@ publish_runtime() {
     -o "$publish_dir"
 }
 
+copy_publish_to_package() {
+  local rid="$1"
+  local publish_dir="$OUTPUT_ROOT/publish/$rid"
+  local package_dir="$OUTPUT_ROOT/package/$rid"
+
+  rm -rf "$package_dir"
+  mkdir -p "$package_dir"
+  cp -a "$publish_dir"/. "$package_dir"/
+}
+
+prepare_windows_package() {
+  local rid="win-x64"
+  local package_dir="$OUTPUT_ROOT/package/$rid"
+  local source_exe="$package_dir/$APP_ASSEMBLY_NAME.exe"
+  local target_exe="$package_dir/$APP_DISPLAY_NAME.exe"
+
+  copy_publish_to_package "$rid"
+
+  if [[ ! -f "$WINDOWS_ICON_PATH" ]]; then
+    echo "Missing Windows icon: $WINDOWS_ICON_PATH" >&2
+    exit 1
+  fi
+
+  if [[ ! -f "$source_exe" ]]; then
+    echo "Missing Windows executable: $source_exe" >&2
+    exit 1
+  fi
+
+  cp "$source_exe" "$target_exe"
+  rm "$source_exe"
+}
+
+create_macos_icns() {
+  local destination="$1"
+
+  if [[ ! -f "$MAC_ICON_SOURCE_PATH" ]]; then
+    echo "Missing macOS icon source: $MAC_ICON_SOURCE_PATH" >&2
+    exit 1
+  fi
+
+  python3 - "$MAC_ICON_SOURCE_PATH" "$destination" <<'PY'
+import pathlib
+import struct
+import sys
+
+source = pathlib.Path(sys.argv[1])
+destination = pathlib.Path(sys.argv[2])
+png = source.read_bytes()
+if not png.startswith(b"\x89PNG\r\n\x1a\n"):
+    raise SystemExit(f"macOS icon source is not a PNG: {source}")
+
+# ICNS supports PNG payloads in modern icon entries. The ic10 entry carries
+# the 1024x1024 representation used by Finder/Dock on current macOS releases.
+entry_type = b"ic10"
+entry_size = 8 + len(png)
+total_size = 8 + entry_size
+destination.write_bytes(
+    b"icns"
+    + struct.pack(">I", total_size)
+    + entry_type
+    + struct.pack(">I", entry_size)
+    + png)
+PY
+}
+
+prepare_macos_package() {
+  local rid="$1"
+  local publish_dir="$OUTPUT_ROOT/publish/$rid"
+  local package_dir="$OUTPUT_ROOT/package/$rid"
+  local bundle_dir="$package_dir/$APP_DISPLAY_NAME.app"
+  local macos_dir="$bundle_dir/Contents/MacOS"
+  local resources_dir="$bundle_dir/Contents/Resources"
+  local source_executable="$macos_dir/$APP_ASSEMBLY_NAME"
+  local target_executable="$macos_dir/$APP_DISPLAY_NAME"
+
+  rm -rf "$package_dir"
+  mkdir -p "$macos_dir" "$resources_dir"
+  cp -a "$publish_dir"/. "$macos_dir"/
+
+  if [[ ! -f "$source_executable" ]]; then
+    echo "Missing macOS executable: $source_executable" >&2
+    exit 1
+  fi
+
+  cp "$source_executable" "$target_executable"
+  rm "$source_executable"
+  chmod +x "$target_executable"
+
+  create_macos_icns "$resources_dir/$APP_DISPLAY_NAME.icns"
+
+  cat > "$bundle_dir/Contents/Info.plist" <<PLIST
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+ "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>CFBundleName</key>
+  <string>$APP_DISPLAY_NAME</string>
+  <key>CFBundleDisplayName</key>
+  <string>$APP_DISPLAY_NAME</string>
+  <key>CFBundleIdentifier</key>
+  <string>$MAC_BUNDLE_IDENTIFIER</string>
+  <key>CFBundleExecutable</key>
+  <string>$APP_DISPLAY_NAME</string>
+  <key>CFBundleIconFile</key>
+  <string>$APP_DISPLAY_NAME</string>
+  <key>CFBundleShortVersionString</key>
+  <string>$VERSION</string>
+  <key>CFBundleVersion</key>
+  <string>$VERSION</string>
+  <key>LSMinimumSystemVersion</key>
+  <string>12.0</string>
+  <key>NSHighResolutionCapable</key>
+  <true/>
+</dict>
+</plist>
+PLIST
+}
+
+prepare_packages() {
+  copy_publish_to_package linux-x64
+  prepare_windows_package
+  prepare_macos_package osx-x64
+  prepare_macos_package osx-arm64
+}
+
 archive_runtime() {
   local rid="$1"
   local kind="$2"
-  local publish_dir="$OUTPUT_ROOT/publish/$rid"
+  local package_dir="$OUTPUT_ROOT/package/$rid"
   local artifact_name
 
   if [[ "$kind" == "zip" ]]; then
     artifact_name="WiiStudio-${VERSION}-${rid}.zip"
-    python3 - "$publish_dir" "$OUTPUT_ROOT/$artifact_name" <<'PY'
+    python3 - "$package_dir" "$OUTPUT_ROOT/$artifact_name" <<'PY'
 import pathlib
 import sys
 import zipfile
@@ -62,7 +193,7 @@ with zipfile.ZipFile(destination, "w", compression=zipfile.ZIP_DEFLATED) as arch
 PY
   else
     artifact_name="WiiStudio-${VERSION}-${rid}.tar.gz"
-    tar -C "$publish_dir" -czf "$OUTPUT_ROOT/$artifact_name" .
+    tar -C "$package_dir" -czf "$OUTPUT_ROOT/$artifact_name" .
   fi
 }
 
@@ -70,6 +201,8 @@ rids=(linux-x64 win-x64 osx-x64 osx-arm64)
 for rid in "${rids[@]}"; do
   publish_runtime "$rid"
 done
+
+prepare_packages
 
 archive_runtime linux-x64 tar
 archive_runtime win-x64 zip
@@ -111,7 +244,7 @@ for artifact in sorted(output_root.glob("WiiStudio-*")):
     else:
         continue
 
-    packages.append({
+    package = {
         "platform": platform,
         "kind": kind,
         "fileName": name,
@@ -121,7 +254,14 @@ for artifact in sorted(output_root.glob("WiiStudio-*")):
         "signatureAlgorithm": "pending",
         "signingKeyId": "pending",
         "sizeBytes": artifact.stat().st_size
-    })
+    }
+    if platform == "win-x64":
+        package["mainExecutable"] = "WiiStudio.exe"
+    elif platform.startswith("osx-"):
+        package["bundleName"] = "WiiStudio.app"
+        package["bundleIdentifier"] = "app.wiistudio.desktop"
+
+    packages.append(package)
 
 manifest = {
     "schemaVersion": 1,
