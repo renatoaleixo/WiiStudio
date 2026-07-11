@@ -1,7 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <ApplicationIcon>Assets\wiistudio.ico</ApplicationIcon>
+    <Product>WiiStudio</Product>
+    <FileDescription>WiiStudio</FileDescription>
+    <ApplicationIcon>Assets/wiistudio.ico</ApplicationIcon>
+    <UseAppHost>true</UseAppHost>
   </PropertyGroup>
   <ItemGroup>
     <AvaloniaResource Include="Assets\**" />
