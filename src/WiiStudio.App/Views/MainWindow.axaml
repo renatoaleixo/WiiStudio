@@ -802,7 +802,7 @@
                       <TextBlock Text="Verificar Wii USB" />
                     </Button>
                     <Button Command="{Binding ExportDiagnosticsCommand}" Classes="secondary small" MinWidth="140">
-                      <TextBlock Text="Exportar TXT" />
+                      <TextBlock Text="Exportar" />
                     </Button>
                   </WrapPanel>
                 </Grid>
@@ -810,7 +810,7 @@
               <ListBox Grid.Row="1" ItemsSource="{Binding DiagnosticsChecks}" Background="{DynamicResource WiiBrushSurfaceAlt}" BorderThickness="0" MinHeight="260">
                 <ListBox.ItemTemplate>
                   <DataTemplate DataType="vm:DiagnosticsCheckItemViewModel">
-                    <Grid RowDefinitions="Auto,Auto" Margin="{StaticResource WiiInsetSm}">
+                    <Grid RowDefinitions="Auto,Auto,Auto,Auto" Margin="{StaticResource WiiInsetSm}" RowSpacing="4">
                       <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
                         <TextBlock Text="{Binding Name}" Foreground="{DynamicResource WiiBrushTextPrimary}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
                         <TextBlock Grid.Column="1" Text="{Binding Status}" Foreground="{DynamicResource WiiBrushTextMuted}" />
@@ -818,11 +818,24 @@
                                 Command="{Binding DataContext.RepairDiagnosticCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                 CommandParameter="{Binding}"
                                 IsVisible="{Binding HasRepairAction}"
-                                Classes="secondary small">
+                                Classes="secondary small"
+                                ToolTip.Tip="{Binding RepairRiskText}">
                           <TextBlock Text="{Binding RepairActionTitle}" />
                         </Button>
                       </Grid>
                       <TextBlock Grid.Row="1" Text="{Binding Message}" Foreground="{DynamicResource WiiBrushTextSecondary}" TextWrapping="Wrap" />
+                      <TextBlock Grid.Row="2"
+                                 Text="{Binding RepairActionDescription}"
+                                 Foreground="{DynamicResource WiiBrushTextMuted}"
+                                 FontSize="{StaticResource WiiFontSizeMicro}"
+                                 TextWrapping="Wrap"
+                                 IsVisible="{Binding HasRepairActionDescription}" />
+                      <TextBlock Grid.Row="3"
+                                 Text="{Binding LastRepairStatusText}"
+                                 Foreground="{DynamicResource WiiBrushAccent}"
+                                 FontSize="{StaticResource WiiFontSizeMicro}"
+                                 TextWrapping="Wrap"
+                                 IsVisible="{Binding HasLastRepair}" />
                     </Grid>
                   </DataTemplate>
                 </ListBox.ItemTemplate>
@@ -1248,7 +1261,7 @@
                     <TextBlock Text="Executar" />
                   </Button>
                   <Button Command="{Binding ExportDiagnosticsCommand}" Classes="secondary small" HorizontalAlignment="Stretch" MinHeight="32">
-                    <TextBlock Text="Exportar TXT" />
+                    <TextBlock Text="Exportar" />
                   </Button>
                 </StackPanel>
               </Grid>

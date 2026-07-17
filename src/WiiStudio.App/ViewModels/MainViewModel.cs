@@ -57,6 +57,7 @@ public sealed partial class MainViewModel : ObservableObject
     private CancellationTokenSource? _coverBatchCancellation;
     private bool _isApplyingDeviceSnapshot;
     private bool _isApplyingLibraryViewMode;
+    private DiagnosticsReport? _lastDiagnosticsReport;
     private IReadOnlySet<string> _selectedGameIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
     [ObservableProperty]
@@ -1026,6 +1027,7 @@ public sealed partial class MainViewModel : ObservableObject
     private async Task ExportDiagnosticsAsync(CancellationToken cancellationToken)
     {
         var path = CreateExportPath("diagnostico", "txt");
+        var jsonPath = Path.ChangeExtension(path, ".json");
         var lines = new List<string>
         {
             "WiiStudio - Relatorio de Diagnostico",
@@ -1043,10 +1045,25 @@ public sealed partial class MainViewModel : ObservableObject
             foreach (var check in DiagnosticsChecks)
             {
                 lines.Add($"[{check.Status}] {check.Name}");
+                lines.Add($"Categoria: {check.Category} | Severidade: {check.Severity}");
                 lines.Add(check.Message);
-                if (!string.IsNullOrWhiteSpace(check.RepairActionTitle))
+                if (check.HasRepairAction)
                 {
                     lines.Add($"Acao sugerida: {check.RepairActionTitle}");
+                    if (check.HasRepairActionDescription)
+                    {
+                        lines.Add($"Descricao: {check.RepairActionDescription}");
+                    }
+
+                    if (check.HasRepairRisk)
+                    {
+                        lines.Add($"Risco: {check.RepairRiskText}");
+                    }
+                }
+
+                if (check.HasLastRepair)
+                {
+                    lines.Add(check.LastRepairStatusText);
                 }
 
                 lines.Add(string.Empty);
@@ -1055,9 +1072,18 @@ public sealed partial class MainViewModel : ObservableObject
 
         Directory.CreateDirectory(Path.GetDirectoryName(path) ?? ".");
         await File.WriteAllLinesAsync(path, lines, cancellationToken);
-        DiagnosticsExportPath = path;
-        StatusMessage = $"Diagnostico exportado para {path}.";
-        await RecordLogAsync(LogLevel.Information, "Diagnostics", $"Diagnostico exportado para {path}.", cancellationToken);
+        if (_lastDiagnosticsReport is not null)
+        {
+            await _diagnosticsService.ExportAsync(_lastDiagnosticsReport, jsonPath, cancellationToken);
+            DiagnosticsExportPath = $"{path} | {jsonPath}";
+        }
+        else
+        {
+            DiagnosticsExportPath = path;
+        }
+
+        StatusMessage = $"Diagnostico exportado para {DiagnosticsExportPath}.";
+        await RecordLogAsync(LogLevel.Information, "Diagnostics", StatusMessage, cancellationToken);
     }
 
     [RelayCommand]
@@ -1074,11 +1100,15 @@ public sealed partial class MainViewModel : ObservableObject
         try
         {
             var result = await _diagnosticsRepairService.ExecuteAsync(
-                new DiagnosticRepairRequest(item.RepairActionId, UserConfirmed: true),
+                new DiagnosticRepairRequest(item.RepairActionId, UserConfirmed: true, CheckName: item.Name),
                 cancellationToken);
             if (result.RefreshedReport is not null)
             {
                 await ApplyDiagnosticsReportAsync(result.RefreshedReport, cancellationToken);
+            }
+            else if (_lastDiagnosticsReport is not null)
+            {
+                await ApplyDiagnosticsReportAsync(_lastDiagnosticsReport, cancellationToken);
             }
 
             StatusMessage = result.Message;
@@ -2368,11 +2398,17 @@ public sealed partial class MainViewModel : ObservableObject
 
     private async Task ApplyDiagnosticsReportAsync(DiagnosticsReport report, CancellationToken cancellationToken)
     {
+        _lastDiagnosticsReport = report;
+        var history = await _diagnosticsRepairService.GetHistoryAsync(cancellationToken: cancellationToken);
         DiagnosticsChecks.Clear();
         foreach (var check in report.Checks)
         {
             var actions = await _diagnosticsRepairService.GetAvailableActionsAsync(check, cancellationToken);
-            DiagnosticsChecks.Add(new DiagnosticsCheckItemViewModel(check, actions.FirstOrDefault()));
+            var action = actions.FirstOrDefault();
+            var lastRepair = history.FirstOrDefault(entry =>
+                (!string.IsNullOrWhiteSpace(entry.CheckName) && string.Equals(entry.CheckName, check.Name, StringComparison.OrdinalIgnoreCase))
+                || (action is not null && string.Equals(entry.ActionId, action.ActionId, StringComparison.OrdinalIgnoreCase)));
+            DiagnosticsChecks.Add(new DiagnosticsCheckItemViewModel(check, action, lastRepair));
         }
     }
 

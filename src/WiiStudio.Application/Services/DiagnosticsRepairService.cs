@@ -40,6 +40,7 @@ public sealed class DiagnosticsRepairService : IDiagnosticsRepairService
     private readonly IDiagnosticsService _diagnosticsService;
     private readonly ITaskManager _taskManager;
     private readonly INotificationService _notificationService;
+    private readonly IDiagnosticsRepairHistoryStore _historyStore;
 
     public DiagnosticsRepairService(
         IPolkitPolicyInstaller polkitPolicyInstaller,
@@ -47,7 +48,8 @@ public sealed class DiagnosticsRepairService : IDiagnosticsRepairService
         IGameTdbUpdateService gameTdbUpdateService,
         IDiagnosticsService diagnosticsService,
         ITaskManager taskManager,
-        INotificationService notificationService)
+        INotificationService notificationService,
+        IDiagnosticsRepairHistoryStore historyStore)
     {
         _polkitPolicyInstaller = polkitPolicyInstaller;
         _externalToolManager = externalToolManager;
@@ -55,6 +57,7 @@ public sealed class DiagnosticsRepairService : IDiagnosticsRepairService
         _diagnosticsService = diagnosticsService;
         _taskManager = taskManager;
         _notificationService = notificationService;
+        _historyStore = historyStore;
     }
 
     public Task<IReadOnlyList<DiagnosticRepairAction>> GetAvailableActionsAsync(
@@ -63,6 +66,11 @@ public sealed class DiagnosticsRepairService : IDiagnosticsRepairService
     {
         ArgumentNullException.ThrowIfNull(item);
         cancellationToken.ThrowIfCancellationRequested();
+
+        if (item.Status == DiagnosticsStatus.Healthy)
+        {
+            return Task.FromResult<IReadOnlyList<DiagnosticRepairAction>>([]);
+        }
 
         var name = item.Name.ToLowerInvariant();
         var actions = new List<DiagnosticRepairAction>();
@@ -88,6 +96,13 @@ public sealed class DiagnosticsRepairService : IDiagnosticsRepairService
         return Task.FromResult<IReadOnlyList<DiagnosticRepairAction>>(actions);
     }
 
+    public Task<IReadOnlyList<DiagnosticRepairHistoryEntry>> GetHistoryAsync(
+        int limit = 100,
+        CancellationToken cancellationToken = default)
+    {
+        return _historyStore.GetRecentAsync(limit, cancellationToken);
+    }
+
     public async Task<DiagnosticRepairResult> ExecuteAsync(
         DiagnosticRepairRequest request,
         CancellationToken cancellationToken = default)
@@ -104,6 +119,7 @@ public sealed class DiagnosticsRepairService : IDiagnosticsRepairService
         var taskId = await _taskManager.EnqueueAsync(
             new TaskRequest(ManagedTaskType.Repair, action.Title, action.Description),
             cancellationToken);
+        var startedAt = DateTimeOffset.UtcNow;
 
         try
         {
@@ -115,7 +131,17 @@ public sealed class DiagnosticsRepairService : IDiagnosticsRepairService
             await _notificationService.PublishAsync(
                 NotificationMessage.Create(NotificationType.Success, "Reparo concluído", message, groupKey: request.ActionId),
                 cancellationToken);
+            await RecordHistoryAsync(action, success: true, message, startedAt, request.CheckName, cancellationToken);
             return new DiagnosticRepairResult(request.ActionId, Success: true, message, report);
+        }
+        catch (OperationCanceledException exception)
+        {
+            await _taskManager.CancelAsync(taskId, CancellationToken.None);
+            await _notificationService.PublishAsync(
+                NotificationMessage.Create(NotificationType.Warning, "Reparo cancelado", "Correção cancelada pelo usuário.", groupKey: request.ActionId),
+                CancellationToken.None);
+            await RecordHistoryAsync(action, success: false, exception.Message, startedAt, request.CheckName, CancellationToken.None);
+            return new DiagnosticRepairResult(request.ActionId, Success: false, "Correção cancelada pelo usuário.");
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
@@ -123,8 +149,30 @@ public sealed class DiagnosticsRepairService : IDiagnosticsRepairService
             await _notificationService.PublishAsync(
                 NotificationMessage.Create(NotificationType.Error, "Falha no reparo", exception.Message, isPersistent: true, groupKey: request.ActionId),
                 CancellationToken.None);
+            await RecordHistoryAsync(action, success: false, exception.Message, startedAt, request.CheckName, CancellationToken.None);
             return new DiagnosticRepairResult(request.ActionId, Success: false, exception.Message);
         }
+    }
+
+    private Task RecordHistoryAsync(
+        DiagnosticRepairAction action,
+        bool success,
+        string message,
+        DateTimeOffset startedAt,
+        string? checkName,
+        CancellationToken cancellationToken)
+    {
+        var entry = new DiagnosticRepairHistoryEntry(
+            Guid.NewGuid(),
+            action.ActionId,
+            action.Title,
+            success,
+            message,
+            startedAt,
+            DateTimeOffset.UtcNow,
+            string.IsNullOrWhiteSpace(checkName) ? null : checkName.Trim());
+
+        return _historyStore.AppendAsync(entry, cancellationToken);
     }
 
     private async Task<string> ExecuteCatalogActionAsync(string actionId, CancellationToken cancellationToken)

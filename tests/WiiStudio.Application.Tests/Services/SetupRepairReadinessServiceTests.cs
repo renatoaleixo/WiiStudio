@@ -14,17 +14,42 @@ public sealed class SetupRepairReadinessServiceTests
     [Fact]
     public async Task DiagnosticsRepairService_ShouldExposePolkitRepairAndRequireConfirmation()
     {
-        var service = CreateRepairService();
+        var history = new FakeDiagnosticsRepairHistoryStore();
+        var service = CreateRepairService(history);
         var check = new DiagnosticsCheckResult("polkit-policy", DiagnosticsStatus.Unhealthy, "missing");
 
         var actions = await service.GetAvailableActionsAsync(check, CancellationToken.None);
         var denied = await service.ExecuteAsync(new DiagnosticRepairRequest(DiagnosticsRepairService.InstallPolkitPolicyAction), CancellationToken.None);
         var executed = await service.ExecuteAsync(new DiagnosticRepairRequest(DiagnosticsRepairService.InstallPolkitPolicyAction, UserConfirmed: true), CancellationToken.None);
+        var entries = await service.GetHistoryAsync(cancellationToken: CancellationToken.None);
 
         actions.Should().ContainSingle(action => action.ActionId == DiagnosticsRepairService.InstallPolkitPolicyAction);
         denied.Success.Should().BeFalse();
         executed.Success.Should().BeTrue();
         executed.RefreshedReport.Should().NotBeNull();
+        entries.Should().ContainSingle(entry => entry.ActionId == DiagnosticsRepairService.InstallPolkitPolicyAction && entry.Success);
+    }
+
+    [Fact]
+    public async Task DiagnosticsRepairService_ShouldHideRepairForHealthyChecks()
+    {
+        var service = CreateRepairService();
+        var check = new DiagnosticsCheckResult("polkit-policy", DiagnosticsStatus.Healthy, "ok");
+
+        var actions = await service.GetAvailableActionsAsync(check, CancellationToken.None);
+
+        actions.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task DiagnosticsRepairService_ShouldBlockUnknownAction()
+    {
+        var service = CreateRepairService();
+
+        var act = () => service.ExecuteAsync(new DiagnosticRepairRequest("repair.unknown", UserConfirmed: true), CancellationToken.None);
+
+        await act.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("*desconhecida*");
     }
 
     [Fact]
@@ -100,7 +125,7 @@ public sealed class SetupRepairReadinessServiceTests
         result.Items.Should().Contain(item => item.CheckId == "wiimms" && item.RepairActionId == DiagnosticsRepairService.ValidateExternalToolsAction);
     }
 
-    private static DiagnosticsRepairService CreateRepairService()
+    private static DiagnosticsRepairService CreateRepairService(FakeDiagnosticsRepairHistoryStore? historyStore = null)
     {
         return new DiagnosticsRepairService(
             new FakePolkitPolicyInstaller(),
@@ -108,7 +133,8 @@ public sealed class SetupRepairReadinessServiceTests
             new FakeGameTdbUpdateService(),
             new FakeDiagnosticsService(),
             new FakeTaskManager(),
-            new FakeNotificationService());
+            new FakeNotificationService(),
+            historyStore ?? new FakeDiagnosticsRepairHistoryStore());
     }
 
     private static UsbDrive CreateDrive(UsbDriveFileSystem fileSystem)
@@ -261,6 +287,28 @@ public sealed class SetupRepairReadinessServiceTests
         public Task<IReadOnlyList<NotificationMessage>> GetHistoryAsync(CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<NotificationMessage>>([]);
 
         public Task ClearHistoryAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+    }
+
+    private sealed class FakeDiagnosticsRepairHistoryStore : IDiagnosticsRepairHistoryStore
+    {
+        private readonly List<DiagnosticRepairHistoryEntry> _entries = [];
+
+        public Task AppendAsync(DiagnosticRepairHistoryEntry entry, CancellationToken cancellationToken = default)
+        {
+            _entries.Add(entry);
+            return Task.CompletedTask;
+        }
+
+        public Task<IReadOnlyList<DiagnosticRepairHistoryEntry>> GetRecentAsync(
+            int limit,
+            CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult<IReadOnlyList<DiagnosticRepairHistoryEntry>>(
+                _entries
+                    .OrderByDescending(entry => entry.FinishedAt)
+                    .Take(Math.Max(1, limit))
+                    .ToArray());
+        }
     }
 
     private sealed class FakeUsbDriveService : IUsbDriveService

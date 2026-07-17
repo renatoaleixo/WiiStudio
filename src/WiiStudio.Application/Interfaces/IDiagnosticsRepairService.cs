@@ -8,6 +8,10 @@ public interface IDiagnosticsRepairService
         DiagnosticsCheckResult item,
         CancellationToken cancellationToken = default);
 
+    Task<IReadOnlyList<DiagnosticRepairHistoryEntry>> GetHistoryAsync(
+        int limit = 100,
+        CancellationToken cancellationToken = default);
+
     Task<DiagnosticRepairResult> ExecuteAsync(
         DiagnosticRepairRequest request,
         CancellationToken cancellationToken = default);

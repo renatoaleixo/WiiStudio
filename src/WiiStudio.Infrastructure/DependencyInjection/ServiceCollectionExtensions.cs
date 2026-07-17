@@ -114,6 +114,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton(new ManifestApplicationUpdateProviderOptions());
         services.AddSingleton(new BackupServiceOptions());
         services.AddSingleton(new LoggingCenterOptions());
+        services.AddSingleton(new DiagnosticsRepairHistoryStoreOptions());
         services.AddSingleton(new MainWindowStoreOptions());
         services.AddSingleton(new DockLayoutStoreOptions());
         services.AddSingleton(new ThemeStoreOptions());
@@ -142,6 +143,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<ISettingsService, JsonSettingsService>();
         services.AddSingleton<IProfileService, JsonProfileService>();
         services.AddSingleton<INotificationService, JsonNotificationService>();
+        services.AddSingleton<IDiagnosticsRepairHistoryStore, JsonDiagnosticsRepairHistoryStore>();
         services.AddSingleton<ITaskManager, JsonTaskManager>();
         services.AddSingleton<IApplicationUpdateProvider, ManifestApplicationUpdateProvider>();
         services.AddSingleton<IApplicationUpdateInstaller, StagedApplicationUpdateInstaller>();

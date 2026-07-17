@@ -18,10 +18,21 @@ public sealed record DiagnosticRepairAction(
 
 public sealed record DiagnosticRepairRequest(
     string ActionId,
-    bool UserConfirmed = false);
+    bool UserConfirmed = false,
+    string? CheckName = null);
 
 public sealed record DiagnosticRepairResult(
     string ActionId,
     bool Success,
     string Message,
     DiagnosticsReport? RefreshedReport = null);
+
+public sealed record DiagnosticRepairHistoryEntry(
+    Guid Id,
+    string ActionId,
+    string Title,
+    bool Success,
+    string Message,
+    DateTimeOffset StartedAt,
+    DateTimeOffset FinishedAt,
+    string? CheckName = null);
