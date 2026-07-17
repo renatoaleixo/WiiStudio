@@ -1,6 +1,7 @@
 using System.IO.Compression;
 using System.Security.Cryptography;
 using Microsoft.Extensions.Logging;
+using WiiStudio.Application.DTOs;
 using WiiStudio.Application.ExternalTools;
 using WiiStudio.Application.Interfaces;
 using WiiStudio.Domain.Entities;
@@ -206,6 +207,7 @@ public sealed class ExternalToolDownloader : IExternalToolDownloader
 
     public Task<DownloadedToolPackage> DownloadAsync(
         ExternalToolPackageSource source,
+        IProgress<ExternalToolDownloadProgress>? progress = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(source);
@@ -231,7 +233,7 @@ public sealed class ExternalToolDownloader : IExternalToolDownloader
             throw new NotSupportedException("Network downloads are not configured in the default pipeline.");
         }
 
-        return networkDownloader.DownloadAsync(source, progress: null, cancellationToken);
+        return networkDownloader.DownloadAsync(source, progress, cancellationToken);
     }
 }
 
@@ -257,7 +259,7 @@ public sealed class ExternalToolNetworkDownloader : IExternalToolNetworkDownload
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(source);
-        ValidateSource(source);
+        var originalUri = ValidateSource(source);
         Directory.CreateDirectory(options.TemporaryDirectory);
 
         using var timeoutSource = new CancellationTokenSource(TimeSpan.FromSeconds(options.DownloadTimeoutSeconds));
@@ -280,6 +282,12 @@ public sealed class ExternalToolNetworkDownloader : IExternalToolNetworkDownload
                 && !string.Equals(finalUri.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase))
             {
                 throw new InvalidOperationException("externalTools.download.redirectInsecure");
+            }
+
+            if (response.RequestMessage?.RequestUri is { } redirectedUri
+                && !IsTrustedHost(redirectedUri.Host, originalUri.Host))
+            {
+                throw new InvalidOperationException("externalTools.download.redirectUntrustedHost");
             }
 
             var totalBytes = response.Content.Headers.ContentLength;
@@ -338,7 +346,7 @@ public sealed class ExternalToolNetworkDownloader : IExternalToolNetworkDownload
         }
     }
 
-    private static void ValidateSource(ExternalToolPackageSource source)
+    private Uri ValidateSource(ExternalToolPackageSource source)
     {
         if (!source.AutoDownloadEnabled)
         {
@@ -361,10 +369,27 @@ public sealed class ExternalToolNetworkDownloader : IExternalToolNetworkDownload
             throw new InvalidOperationException("externalTools.download.httpsRequired");
         }
 
+        if (!IsTrustedHost(uri.Host, uri.Host))
+        {
+            throw new InvalidOperationException("externalTools.download.untrustedHost");
+        }
+
         if (string.IsNullOrWhiteSpace(source.Version))
         {
             throw new InvalidOperationException("externalTools.download.versionRequired");
         }
+
+        return uri;
+    }
+
+    private bool IsTrustedHost(string host, string sourceHost)
+    {
+        if (options.TrustedDownloadHosts.Count == 0)
+        {
+            return string.Equals(host, sourceHost, StringComparison.OrdinalIgnoreCase);
+        }
+
+        return options.TrustedDownloadHosts.Contains(host);
     }
 
     private static void DeletePartial(string path)
@@ -384,6 +409,7 @@ public sealed class ExternalToolInstaller : IExternalToolInstaller
     private readonly IArchiveExtractor archiveExtractor;
     private readonly ExternalToolOptions options;
     private readonly ILogger<ExternalToolInstaller> logger;
+    private readonly ITaskManager? taskManager;
 
     public ExternalToolInstaller(
         IExternalToolDefinitionProvider definitionProvider,
@@ -391,7 +417,8 @@ public sealed class ExternalToolInstaller : IExternalToolInstaller
         IChecksumValidator checksumValidator,
         IArchiveExtractor archiveExtractor,
         ExternalToolOptions options,
-        ILogger<ExternalToolInstaller> logger)
+        ILogger<ExternalToolInstaller> logger,
+        ITaskManager? taskManager = null)
     {
         this.definitionProvider = definitionProvider;
         this.downloader = downloader;
@@ -399,6 +426,7 @@ public sealed class ExternalToolInstaller : IExternalToolInstaller
         this.archiveExtractor = archiveExtractor;
         this.options = options;
         this.logger = logger;
+        this.taskManager = taskManager;
     }
 
     public async Task<ExternalToolInstallResult> InstallAsync(
@@ -425,15 +453,22 @@ public sealed class ExternalToolInstaller : IExternalToolInstaller
             return ExternalToolInstallResult.Failed(request.ToolId, "externalTools.install.downloadUnavailable");
         }
 
+        Guid? taskId = null;
         try
         {
-            var package = await downloader.DownloadAsync(definition.PackageSource, cancellationToken);
+            taskId = await EnqueueDownloadTaskAsync(definition, cancellationToken);
+            var package = await downloader.DownloadAsync(
+                definition.PackageSource,
+                CreateDownloadProgress(taskId, cancellationToken),
+                cancellationToken);
             var checksum = await checksumValidator.ValidateSha256Async(package.FilePath, definition.PackageSource.Sha256, cancellationToken);
             if (!checksum.Success)
             {
+                await FailDownloadTaskAsync(taskId, "externalTools.install.checksumInvalid");
                 return ExternalToolInstallResult.Failed(request.ToolId, "externalTools.install.checksumInvalid");
             }
 
+            await UpdateDownloadTaskAsync(taskId, 0.98, ManagedTaskStatus.Running, cancellationToken);
             var finalDirectory = GetInstallDirectory(request.ToolId, definition.PackageSource.Version);
             var tempDirectory = Path.Combine(options.TemporaryDirectory, $"{request.ToolId}-{Guid.NewGuid():N}");
             Directory.CreateDirectory(tempDirectory);
@@ -441,12 +476,14 @@ public sealed class ExternalToolInstaller : IExternalToolInstaller
             var extraction = await archiveExtractor.ExtractAsync(package.FilePath, tempDirectory, cancellationToken);
             if (!extraction.Success)
             {
+                await FailDownloadTaskAsync(taskId, extraction.ErrorMessageKey ?? "externalTools.install.extractFailed");
                 return ExternalToolInstallResult.Failed(request.ToolId, extraction.ErrorMessageKey ?? "externalTools.install.extractFailed");
             }
 
             var executablePath = FindExecutable(tempDirectory, definition.ExecutableNames);
             if (executablePath is null)
             {
+                await FailDownloadTaskAsync(taskId, "externalTools.install.executableMissing");
                 return ExternalToolInstallResult.Failed(request.ToolId, "externalTools.install.executableMissing");
             }
 
@@ -460,6 +497,7 @@ public sealed class ExternalToolInstaller : IExternalToolInstaller
             var finalExecutable = Path.Combine(finalDirectory, Path.GetRelativePath(tempDirectory, executablePath));
 
             logger.LogInformation("Installed external tool {ToolId} to {InstallDirectory}", request.ToolId, finalDirectory);
+            await CompleteDownloadTaskAsync(taskId, cancellationToken);
 
             return new ExternalToolInstallResult(
                 request.ToolId,
@@ -470,11 +508,104 @@ public sealed class ExternalToolInstaller : IExternalToolInstaller
                 null,
                 []);
         }
+        catch (OperationCanceledException)
+        {
+            await CancelDownloadTaskAsync(taskId);
+            throw;
+        }
         catch (Exception ex) when (ex is IOException or InvalidDataException or InvalidOperationException or NotSupportedException)
         {
             logger.LogWarning(ex, "Failed to install external tool {ToolId}", request.ToolId);
+            await FailDownloadTaskAsync(taskId, "externalTools.install.failed");
             return ExternalToolInstallResult.Failed(request.ToolId, "externalTools.install.failed");
         }
+    }
+
+    private async Task<Guid?> EnqueueDownloadTaskAsync(ExternalToolDefinition definition, CancellationToken cancellationToken)
+    {
+        if (taskManager is null)
+        {
+            return null;
+        }
+
+        return await taskManager.EnqueueAsync(
+            new TaskRequest(
+                ManagedTaskType.Download,
+                $"Baixando {definition.DisplayName}",
+                definition.PackageSource is null ? null : $"{definition.PackageSource.SourceName} {definition.PackageSource.Version}",
+                ManagedTaskPriority.High),
+            cancellationToken);
+    }
+
+    private IProgress<ExternalToolDownloadProgress>? CreateDownloadProgress(Guid? taskId, CancellationToken cancellationToken)
+    {
+        if (taskManager is null || taskId is null)
+        {
+            return null;
+        }
+
+        return new Progress<ExternalToolDownloadProgress>(progress =>
+        {
+            var value = progress.Percentage is null
+                ? 0.01
+                : Math.Clamp(progress.Percentage.Value / 100d, 0.01, 0.95);
+
+            try
+            {
+                taskManager
+                    .UpdateProgressAsync(taskId.Value, value, ManagedTaskStatus.Running, cancellationToken)
+                    .GetAwaiter()
+                    .GetResult();
+            }
+            catch (Exception exception) when (exception is not OperationCanceledException)
+            {
+                logger.LogWarning(exception, "Failed to update external tool download progress.");
+            }
+        });
+    }
+
+    private async Task UpdateDownloadTaskAsync(
+        Guid? taskId,
+        double progress,
+        ManagedTaskStatus status,
+        CancellationToken cancellationToken)
+    {
+        if (taskManager is null || taskId is null)
+        {
+            return;
+        }
+
+        await taskManager.UpdateProgressAsync(taskId.Value, progress, status, cancellationToken);
+    }
+
+    private async Task CompleteDownloadTaskAsync(Guid? taskId, CancellationToken cancellationToken)
+    {
+        if (taskManager is null || taskId is null)
+        {
+            return;
+        }
+
+        await taskManager.CompleteAsync(taskId.Value, cancellationToken);
+    }
+
+    private async Task CancelDownloadTaskAsync(Guid? taskId)
+    {
+        if (taskManager is null || taskId is null)
+        {
+            return;
+        }
+
+        await taskManager.CancelAsync(taskId.Value, CancellationToken.None);
+    }
+
+    private async Task FailDownloadTaskAsync(Guid? taskId, string errorMessage)
+    {
+        if (taskManager is null || taskId is null)
+        {
+            return;
+        }
+
+        await taskManager.FailAsync(taskId.Value, errorMessage, CancellationToken.None);
     }
 
     private string GetInstallDirectory(string toolId, string version)

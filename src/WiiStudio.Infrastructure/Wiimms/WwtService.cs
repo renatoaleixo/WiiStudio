@@ -17,19 +17,22 @@ public sealed class WwtService : IWwtService
     private readonly ILogger<WwtService> _logger;
     private readonly IPrivilegedAccessService? _privilegedAccessService;
     private readonly IWiimmsProgressParser? _progressParser;
+    private readonly ITaskManager? _taskManager;
 
     public WwtService(
         IProcessRunner processRunner,
         IWiimmsToolLocator toolLocator,
         ILogger<WwtService> logger,
         IPrivilegedAccessService? privilegedAccessService = null,
-        IWiimmsProgressParser? progressParser = null)
+        IWiimmsProgressParser? progressParser = null,
+        ITaskManager? taskManager = null)
     {
         _processRunner = processRunner;
         _toolLocator = toolLocator;
         _logger = logger;
         _privilegedAccessService = privilegedAccessService;
         _progressParser = progressParser;
+        _taskManager = taskManager;
     }
 
     public async Task<IReadOnlyList<Game>> ListGamesAsync(UsbDrive drive, CancellationToken cancellationToken)
@@ -61,6 +64,11 @@ public sealed class WwtService : IWwtService
         cancellationToken.ThrowIfCancellationRequested();
 
         var wwtPath = await _toolLocator.FindWwtAsync(cancellationToken);
+        var taskId = await EnqueueWiimmsTaskAsync(
+            "Adicionando jogo ao USB",
+            $"{Path.GetFileName(sourcePath)} -> {drive.MountPoint}",
+            cancellationToken);
+        var progressCallback = CreateProgressCallback(taskId, cancellationToken);
         var request = new ProcessRequest(
             wwtPath,
             [
@@ -73,11 +81,26 @@ public sealed class WwtService : IWwtService
                 "--progress"
             ],
             DefaultTimeout,
-            TrackWiimmsOutput,
-            TrackWiimmsOutput);
+            progressCallback,
+            progressCallback);
 
-        await RunOrThrowAsync(request, "wwt add", cancellationToken);
-        _logger.LogInformation("Added game source {SourcePath} to USB drive {DriveId}", sourcePath, drive.Id);
+        try
+        {
+            await UpdateWiimmsTaskAsync(taskId, 0.01, ManagedTaskStatus.Running, cancellationToken);
+            await RunOrThrowAsync(request, "wwt add", cancellationToken);
+            await CompleteWiimmsTaskAsync(taskId, cancellationToken);
+            _logger.LogInformation("Added game source {SourcePath} to USB drive {DriveId}", sourcePath, drive.Id);
+        }
+        catch (OperationCanceledException)
+        {
+            await CancelWiimmsTaskAsync(taskId);
+            throw;
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            await FailWiimmsTaskAsync(taskId, exception.Message);
+            throw;
+        }
     }
 
     public async Task RemoveGameAsync(UsbDrive drive, string gameId, CancellationToken cancellationToken)
@@ -178,13 +201,41 @@ public sealed class WwtService : IWwtService
         }
     }
 
-    private void TrackWiimmsOutput(string line)
+    private Action<string> CreateProgressCallback(Guid? taskId, CancellationToken cancellationToken)
     {
-        if (_progressParser?.TryParse(line, out var progress) != true)
+        return line =>
         {
-            return;
-        }
+            if (_progressParser?.TryParse(line, out var progress) != true)
+            {
+                return;
+            }
 
+            TrackWiimmsOutput(progress);
+            if (taskId is null)
+            {
+                return;
+            }
+
+            var value = progress.Percentage is null
+                ? 0.01
+                : Math.Clamp(progress.Percentage.Value / 100d, 0.01, 0.99);
+
+            try
+            {
+                _taskManager!
+                    .UpdateProgressAsync(taskId.Value, value, ManagedTaskStatus.Running, cancellationToken)
+                    .GetAwaiter()
+                    .GetResult();
+            }
+            catch (Exception exception) when (exception is not OperationCanceledException)
+            {
+                _logger.LogWarning(exception, "Failed to update Wiimms task progress.");
+            }
+        };
+    }
+
+    private void TrackWiimmsOutput(WiimmsOperationProgress progress)
+    {
         var progressText = progress.Percentage is null
             ? "indeterminate"
             : $"{progress.Percentage:0.#}%";
@@ -192,6 +243,65 @@ public sealed class WwtService : IWwtService
             "Wiimms progress {Progress}: {Operation}",
             progressText,
             progress.CurrentOperation ?? progress.CurrentFile ?? "running");
+    }
+
+    private async Task<Guid?> EnqueueWiimmsTaskAsync(
+        string title,
+        string description,
+        CancellationToken cancellationToken)
+    {
+        if (_taskManager is null)
+        {
+            return null;
+        }
+
+        return await _taskManager.EnqueueAsync(
+            new TaskRequest(ManagedTaskType.Import, title, description, ManagedTaskPriority.High),
+            cancellationToken);
+    }
+
+    private async Task UpdateWiimmsTaskAsync(
+        Guid? taskId,
+        double progress,
+        ManagedTaskStatus status,
+        CancellationToken cancellationToken)
+    {
+        if (_taskManager is null || taskId is null)
+        {
+            return;
+        }
+
+        await _taskManager.UpdateProgressAsync(taskId.Value, progress, status, cancellationToken);
+    }
+
+    private async Task CompleteWiimmsTaskAsync(Guid? taskId, CancellationToken cancellationToken)
+    {
+        if (_taskManager is null || taskId is null)
+        {
+            return;
+        }
+
+        await _taskManager.CompleteAsync(taskId.Value, cancellationToken);
+    }
+
+    private async Task CancelWiimmsTaskAsync(Guid? taskId)
+    {
+        if (_taskManager is null || taskId is null)
+        {
+            return;
+        }
+
+        await _taskManager.CancelAsync(taskId.Value, CancellationToken.None);
+    }
+
+    private async Task FailWiimmsTaskAsync(Guid? taskId, string errorMessage)
+    {
+        if (_taskManager is null || taskId is null)
+        {
+            return;
+        }
+
+        await _taskManager.FailAsync(taskId.Value, errorMessage, CancellationToken.None);
     }
 
     private static bool HasPermissionDenied(ProcessResult result)
@@ -236,7 +346,9 @@ public sealed class WwtService : IWwtService
         elevatedRequest = new ProcessRequest(
             pkexecPath,
             [request.ExecutablePath, .. request.Arguments],
-            request.Timeout);
+            request.Timeout,
+            request.OnStandardOutputLine,
+            request.OnStandardErrorLine);
         return true;
     }
 

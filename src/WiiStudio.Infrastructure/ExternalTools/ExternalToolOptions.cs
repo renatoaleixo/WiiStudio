@@ -11,4 +11,7 @@ public sealed class ExternalToolOptions
     public long MaxDownloadBytes { get; init; } = 200L * 1024L * 1024L;
 
     public int DownloadTimeoutSeconds { get; init; } = 120;
+
+    public IReadOnlySet<string> TrustedDownloadHosts { get; init; } =
+        new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 }

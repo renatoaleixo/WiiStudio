@@ -35,6 +35,35 @@ public sealed class ExternalToolNetworkDownloaderTests : IDisposable
     }
 
     [Fact]
+    public async Task DownloadAsync_ShouldBlockUntrustedHostWhenAllowlistIsConfigured()
+    {
+        var downloader = CreateDownloader(
+            "payload",
+            trustedHosts: new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "trusted.test" });
+        var source = Source("https://example.test/tool.zip", Sha256("payload"));
+
+        var act = () => downloader.DownloadAsync(source, null, CancellationToken.None);
+
+        await act.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("*untrustedHost*");
+    }
+
+    [Fact]
+    public async Task DownloadAsync_ShouldBlockRedirectToUntrustedHost()
+    {
+        var downloader = CreateDownloader(
+            "payload",
+            trustedHosts: new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "example.test" },
+            finalRequestUri: new Uri("https://mirror.test/tool.zip"));
+        var source = Source("https://example.test/tool.zip", Sha256("payload"));
+
+        var act = () => downloader.DownloadAsync(source, null, CancellationToken.None);
+
+        await act.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("*redirectUntrustedHost*");
+    }
+
+    [Fact]
     public async Task DownloadAsync_ShouldDownloadHttpsPackageAndReportProgress()
     {
         var payload = "payload";
@@ -75,13 +104,21 @@ public sealed class ExternalToolNetworkDownloaderTests : IDisposable
         }
     }
 
-    private ExternalToolNetworkDownloader CreateDownloader(string payload)
+    private ExternalToolNetworkDownloader CreateDownloader(
+        string payload,
+        IReadOnlySet<string>? trustedHosts = null,
+        Uri? finalRequestUri = null)
     {
-        var client = new HttpClient(new FakeHttpHandler(payload));
+        var client = new HttpClient(new FakeHttpHandler(payload, finalRequestUri));
         return new ExternalToolNetworkDownloader(
             client,
             new ChecksumValidator(),
-            new ExternalToolOptions { TemporaryDirectory = root, MaxDownloadBytes = 1024 });
+            new ExternalToolOptions
+            {
+                TemporaryDirectory = root,
+                MaxDownloadBytes = 1024,
+                TrustedDownloadHosts = trustedHosts ?? new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            });
     }
 
     private static ExternalToolPackageSource Source(string url, string sha256)
@@ -104,17 +141,19 @@ public sealed class ExternalToolNetworkDownloaderTests : IDisposable
     private sealed class FakeHttpHandler : HttpMessageHandler
     {
         private readonly string payload;
+        private readonly Uri? finalRequestUri;
 
-        public FakeHttpHandler(string payload)
+        public FakeHttpHandler(string payload, Uri? finalRequestUri)
         {
             this.payload = payload;
+            this.finalRequestUri = finalRequestUri;
         }
 
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             var response = new HttpResponseMessage(HttpStatusCode.OK)
             {
-                RequestMessage = request,
+                RequestMessage = finalRequestUri is null ? request : new HttpRequestMessage(HttpMethod.Get, finalRequestUri),
                 Content = new StringContent(payload)
             };
             return Task.FromResult(response);

@@ -33,6 +33,7 @@ public interface IExternalToolDownloader
 {
     Task<DownloadedToolPackage> DownloadAsync(
         ExternalToolPackageSource source,
+        IProgress<ExternalToolDownloadProgress>? progress = null,
         CancellationToken cancellationToken = default);
 }
 
