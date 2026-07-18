@@ -51,17 +51,26 @@ public sealed class WiiUsbReadinessService : IWiiUsbReadinessService
 
         try
         {
+            await _taskManager.UpdateProgressAsync(taskId, 0.05, ManagedTaskStatus.Running, cancellationToken);
             var drives = await _usbDriveService.DetectAsync(cancellationToken);
             var drive = drives.FirstOrDefault(candidate => candidate.Id == driveId);
             if (drive is null)
             {
                 items.Add(new("device", "Dispositivo detectado", ReadinessState.NotReady, "Dispositivo não encontrado.", "Conecte ou atualize a lista de dispositivos.", null));
-                return CreateResult(driveId.ToString(), items);
+                var missingResult = CreateResult(driveId.ToString(), items);
+                await _taskManager.FailAsync(taskId, "Dispositivo não encontrado.", CancellationToken.None);
+                return missingResult;
             }
 
             items.Add(CheckDevice(drive));
-            items.Add(await CheckWiimmsAsync(cancellationToken));
-            items.Add(await CheckPermissionAsync(drive, cancellationToken));
+            await _taskManager.UpdateProgressAsync(taskId, 0.2, ManagedTaskStatus.Running, cancellationToken);
+            items.Add(await RunCheckAsync(
+                () => CheckWiimmsAsync(cancellationToken),
+                new("wiimms", "Wiimms funcionando", ReadinessState.NotReady, "Não foi possível validar Wiimms.", "Valide ou configure as ferramentas Wiimms.", DiagnosticsRepairService.ValidateExternalToolsAction)));
+            await _taskManager.UpdateProgressAsync(taskId, 0.35, ManagedTaskStatus.Running, cancellationToken);
+            items.Add(await RunCheckAsync(
+                () => CheckPermissionAsync(drive, cancellationToken),
+                new("permission", "Permissão USB", ReadinessState.Warning, "Não foi possível validar permissão USB.", "Abra o diagnóstico e corrija permissões/policy.", DiagnosticsRepairService.InstallPolkitPolicyAction)));
             items.Add(CheckFileSystem(drive));
             items.Add(CheckFreeSpace(drive));
 
@@ -78,6 +87,8 @@ public sealed class WiiUsbReadinessService : IWiiUsbReadinessService
             if (games.Count > 0)
             {
                 items.Add(new("games", "Jogos detectados", ReadinessState.Ready, $"{games.Count} jogo(s) encontrado(s).", null, null));
+                items.Add(CheckGameIds(games));
+                await _taskManager.UpdateProgressAsync(taskId, 0.7, ManagedTaskStatus.Running, cancellationToken);
                 items.Add(await CheckMetadataAndAssetsAsync(games, cancellationToken));
             }
             else if (!items.Any(item => item.CheckId == "games"))
@@ -85,6 +96,7 @@ public sealed class WiiUsbReadinessService : IWiiUsbReadinessService
                 items.Add(new("games", "Jogos detectados", ReadinessState.Warning, "Nenhum jogo encontrado.", "Carregue jogos no dispositivo ou atualize a biblioteca.", null));
             }
 
+            await _taskManager.UpdateProgressAsync(taskId, 0.95, ManagedTaskStatus.Running, cancellationToken);
             var result = CreateResult(drive.Id.ToString(), items);
             if (result.State == ReadinessState.NotReady)
             {
@@ -117,8 +129,28 @@ public sealed class WiiUsbReadinessService : IWiiUsbReadinessService
             Directory.CreateDirectory(directory);
         }
 
+        if (string.Equals(Path.GetExtension(outputFile), ".txt", StringComparison.OrdinalIgnoreCase))
+        {
+            await File.WriteAllLinesAsync(outputFile, CreateTextReport(result), cancellationToken);
+            return;
+        }
+
         await using var stream = File.Create(outputFile);
         await JsonSerializer.SerializeAsync(stream, result, JsonOptions, cancellationToken);
+    }
+
+    private static async Task<WiiUsbReadinessCheckItem> RunCheckAsync(
+        Func<Task<WiiUsbReadinessCheckItem>> check,
+        WiiUsbReadinessCheckItem fallback)
+    {
+        try
+        {
+            return await check();
+        }
+        catch
+        {
+            return fallback;
+        }
     }
 
     private static WiiUsbReadinessCheckItem CheckDevice(UsbDrive drive)
@@ -156,9 +188,19 @@ public sealed class WiiUsbReadinessService : IWiiUsbReadinessService
 
     private static WiiUsbReadinessCheckItem CheckFileSystem(UsbDrive drive)
     {
-        return drive.FileSystem is UsbDriveFileSystem.Wbfs or UsbDriveFileSystem.Fat32 or UsbDriveFileSystem.Ntfs
-            ? new("filesystem", "Filesystem suportado", ReadinessState.Ready, drive.FileSystem.ToString(), null, null)
-            : new("filesystem", "Filesystem suportado", ReadinessState.NotReady, drive.FileSystem.ToString(), "Use WBFS, FAT32 ou NTFS.", null);
+        if (drive.FileSystem is not (UsbDriveFileSystem.Wbfs or UsbDriveFileSystem.Fat32 or UsbDriveFileSystem.Ntfs))
+        {
+            return new("filesystem", "Filesystem suportado", ReadinessState.NotReady, drive.FileSystem.ToString(), "Use WBFS, FAT32 ou NTFS.", null);
+        }
+
+        if (drive.FileSystem is UsbDriveFileSystem.Fat32 or UsbDriveFileSystem.Ntfs
+            && Directory.Exists(drive.MountPoint)
+            && !Directory.Exists(Path.Combine(drive.MountPoint, "wbfs")))
+        {
+            return new("filesystem", "Filesystem suportado", ReadinessState.Warning, $"{drive.FileSystem}; pasta /wbfs ausente.", "Crie a pasta /wbfs antes de usar no Wii.", null);
+        }
+
+        return new("filesystem", "Filesystem suportado", ReadinessState.Ready, drive.FileSystem.ToString(), null, null);
     }
 
     private static WiiUsbReadinessCheckItem CheckFreeSpace(UsbDrive drive)
@@ -166,6 +208,27 @@ public sealed class WiiUsbReadinessService : IWiiUsbReadinessService
         return drive.FreeSpace > 512L * 1024L * 1024L
             ? new("space", "Espaço livre", ReadinessState.Ready, $"{drive.FreeSpace} bytes livres.", null, null)
             : new("space", "Espaço livre", ReadinessState.Warning, $"{drive.FreeSpace} bytes livres.", "Libere espaço antes de novas importações.", null);
+    }
+
+    private static WiiUsbReadinessCheckItem CheckGameIds(IReadOnlyList<GameDto> games)
+    {
+        var invalidIds = games.Count(game => !IsValidGameId(game.Id));
+        var duplicateIds = games
+            .GroupBy(game => game.Id, StringComparer.OrdinalIgnoreCase)
+            .Count(group => group.Count() > 1);
+
+        if (invalidIds == 0 && duplicateIds == 0)
+        {
+            return new("game-ids", "Game IDs válidos", ReadinessState.Ready, $"{games.Count} ID(s) validado(s).", null, null);
+        }
+
+        return new(
+            "game-ids",
+            "Game IDs válidos",
+            ReadinessState.Warning,
+            $"{invalidIds} ID(s) inválido(s); {duplicateIds} duplicidade(s).",
+            "Verifique a biblioteca e reimporte jogos com IDs inconsistentes.",
+            null);
     }
 
     private async Task<WiiUsbReadinessCheckItem> CheckMetadataAndAssetsAsync(IReadOnlyList<GameDto> games, CancellationToken cancellationToken)
@@ -201,8 +264,49 @@ public sealed class WiiUsbReadinessService : IWiiUsbReadinessService
         return new WiiUsbReadinessResult(deviceId, state, items, DateTimeOffset.UtcNow);
     }
 
+    private static IReadOnlyList<string> CreateTextReport(WiiUsbReadinessResult result)
+    {
+        var lines = new List<string>
+        {
+            "WiiStudio - Relatorio de Prontidao Wii USB",
+            $"Dispositivo: {result.DeviceId}",
+            $"Resultado: {result.State}",
+            $"Gerado em: {result.CheckedAt:yyyy-MM-dd HH:mm:ss zzz}",
+            $"Plataforma: {Environment.OSVersion}",
+            string.Empty
+        };
+
+        foreach (var item in result.Items)
+        {
+            lines.Add($"[{item.State}] {item.Title} ({item.CheckId})");
+            if (!string.IsNullOrWhiteSpace(item.Details))
+            {
+                lines.Add($"Detalhes: {item.Details}");
+            }
+
+            if (!string.IsNullOrWhiteSpace(item.RecommendedAction))
+            {
+                lines.Add($"Acao recomendada: {item.RecommendedAction}");
+            }
+
+            if (!string.IsNullOrWhiteSpace(item.RepairActionId))
+            {
+                lines.Add($"Reparo: {item.RepairActionId}");
+            }
+
+            lines.Add(string.Empty);
+        }
+
+        return lines;
+    }
+
     private static bool IsToolReady(ExternalToolStatus status)
     {
         return status.State is ExternalToolState.Installed or ExternalToolState.Configured;
+    }
+
+    private static bool IsValidGameId(string gameId)
+    {
+        return gameId.Length == 6 && gameId.All(char.IsLetterOrDigit);
     }
 }

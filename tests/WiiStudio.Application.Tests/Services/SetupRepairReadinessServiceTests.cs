@@ -125,6 +125,76 @@ public sealed class SetupRepairReadinessServiceTests
         result.Items.Should().Contain(item => item.CheckId == "wiimms" && item.RepairActionId == DiagnosticsRepairService.ValidateExternalToolsAction);
     }
 
+    [Fact]
+    public async Task WiiUsbReadinessService_ShouldWarnAboutDuplicateGameIds()
+    {
+        var drive = CreateDrive(UsbDriveFileSystem.Wbfs);
+        var service = new WiiUsbReadinessService(
+            new FakeUsbDriveService([drive]),
+            new FakeGameLibraryScanner([CreateGame("RMCP01"), CreateGame("RMCP01")]),
+            new FakeExternalToolManager(),
+            new FakeDevicePermissionService(PrivilegedAccessState.Authorized),
+            new FakeGameMetadataRepository(),
+            new FakeGameAssetRepository(),
+            new FakeTaskManager());
+
+        var result = await service.CheckAsync(drive.Id, CancellationToken.None);
+
+        result.State.Should().Be(ReadinessState.Warning);
+        result.Items.Should().Contain(item => item.CheckId == "game-ids" && item.State == ReadinessState.Warning);
+    }
+
+    [Fact]
+    public async Task WiiUsbReadinessService_ShouldKeepChecklistWhenGameScanFails()
+    {
+        var drive = CreateDrive(UsbDriveFileSystem.Wbfs);
+        var service = new WiiUsbReadinessService(
+            new FakeUsbDriveService([drive]),
+            new FakeGameLibraryScanner([], ThrowOnScan: true),
+            new FakeExternalToolManager(),
+            new FakeDevicePermissionService(PrivilegedAccessState.Authorized),
+            new FakeGameMetadataRepository(),
+            new FakeGameAssetRepository(),
+            new FakeTaskManager());
+
+        var result = await service.CheckAsync(drive.Id, CancellationToken.None);
+
+        result.State.Should().Be(ReadinessState.Warning);
+        result.Items.Should().Contain(item => item.CheckId == "games" && item.RepairActionId == DiagnosticsRepairService.ValidateExternalToolsAction);
+        result.Items.Should().Contain(item => item.CheckId == "filesystem");
+    }
+
+    [Fact]
+    public async Task WiiUsbReadinessService_ShouldExportTextReport()
+    {
+        var service = new WiiUsbReadinessService(
+            new FakeUsbDriveService([]),
+            new FakeGameLibraryScanner([]),
+            new FakeExternalToolManager(),
+            new FakeDevicePermissionService(PrivilegedAccessState.Authorized),
+            new FakeGameMetadataRepository(),
+            new FakeGameAssetRepository(),
+            new FakeTaskManager());
+        var report = new WiiUsbReadinessResult(
+            "device-1",
+            ReadinessState.Warning,
+            [new WiiUsbReadinessCheckItem("wiimms", "Wiimms funcionando", ReadinessState.Warning, "missing", "Configure Wiimms.", DiagnosticsRepairService.ValidateExternalToolsAction)],
+            DateTimeOffset.UtcNow);
+        var path = Path.Combine(Path.GetTempPath(), $"wiistudio-readiness-{Guid.NewGuid():N}.txt");
+        try
+        {
+            await service.ExportAsync(report, path, CancellationToken.None);
+
+            var text = await File.ReadAllTextAsync(path);
+            text.Should().Contain("Relatorio de Prontidao Wii USB");
+            text.Should().Contain("Wiimms funcionando");
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
     private static DiagnosticsRepairService CreateRepairService(FakeDiagnosticsRepairHistoryStore? historyStore = null)
     {
         return new DiagnosticsRepairService(
@@ -326,14 +396,21 @@ public sealed class SetupRepairReadinessServiceTests
     private sealed class FakeGameLibraryScanner : IGameLibraryScanner
     {
         private readonly IReadOnlyList<GameDto> _games;
+        private readonly bool _throwOnScan;
 
-        public FakeGameLibraryScanner(IReadOnlyList<GameDto> games)
+        public FakeGameLibraryScanner(IReadOnlyList<GameDto> games, bool ThrowOnScan = false)
         {
             _games = games;
+            _throwOnScan = ThrowOnScan;
         }
 
         public Task<LibraryScanResult> ScanAsync(UsbDrive drive, CancellationToken cancellationToken)
         {
+            if (_throwOnScan)
+            {
+                throw new InvalidOperationException("scan failed");
+            }
+
             return Task.FromResult(new LibraryScanResult(_games, [], DateTimeOffset.UtcNow));
         }
     }

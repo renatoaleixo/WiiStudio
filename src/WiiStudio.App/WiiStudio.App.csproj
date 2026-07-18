@@ -5,6 +5,7 @@
     <FileDescription>WiiStudio</FileDescription>
     <ApplicationIcon>Assets/wiistudio.ico</ApplicationIcon>
     <UseAppHost>true</UseAppHost>
+    <RuntimeIdentifier Condition="$([MSBuild]::IsOSPlatform('Linux')) and '$(RuntimeIdentifier)' == ''">linux-x64</RuntimeIdentifier>
   </PropertyGroup>
   <ItemGroup>
     <AvaloniaResource Include="Assets\**" />
