@@ -258,6 +258,24 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private string _pluginSummary = "Nenhum plugin carregado.";
 
+    [ObservableProperty]
+    private string _firstRunLanguage = "pt-BR";
+
+    [ObservableProperty]
+    private string _firstRunTheme = "System";
+
+    [ObservableProperty]
+    private string? _firstRunLibraryPath;
+
+    [ObservableProperty]
+    private string? _firstRunExportPath;
+
+    [ObservableProperty]
+    private string _firstRunWizardSummary = "Assistente inicial ainda não executado.";
+
+    [ObservableProperty]
+    private string _firstRunCurrentStep = "Boas-vindas";
+
     public MainViewModel(
         ICommandPaletteService commandPaletteService,
         IBatchCoverDownloadService batchCoverDownloadService,
@@ -393,6 +411,8 @@ public sealed partial class MainViewModel : ObservableObject
     public ObservableCollection<TaskItemViewModel> Tasks { get; } = new();
 
     public ObservableCollection<NotificationItemViewModel> Notifications { get; } = new();
+
+    public ObservableCollection<string> FirstRunSetupSummary { get; } = new();
 
     public IReadOnlyList<ImportWizardStep> ImportSteps { get; } =
     [
@@ -574,6 +594,7 @@ public sealed partial class MainViewModel : ObservableObject
         await RefreshStatusBarAsync(cancellationToken);
 
         var firstRun = await _firstRunSetupService.GetStatusAsync(cancellationToken);
+        ApplyFirstRunStatus(firstRun);
         if (!firstRun.IsCompleted)
         {
             SelectedModule = Modules.FirstOrDefault(module => module.Id == ShellModuleId.Settings) ?? SelectedModule;
@@ -1394,10 +1415,44 @@ public sealed partial class MainViewModel : ObservableObject
     [RelayCommand]
     private async Task CompleteFirstRunSetupAsync(CancellationToken cancellationToken)
     {
-        var result = await _firstRunSetupService.CompleteAsync(
-            new FirstRunSetupRequest("pt-BR", "System", null, null, UserConfirmedDownloads: false),
-            cancellationToken);
-        StatusMessage = result.Skipped ? "Assistente inicial pulado." : "Assistente inicial concluído.";
+        await RunFirstRunSetupAsync(skip: false, cancellationToken);
+    }
+
+    [RelayCommand]
+    private async Task SkipFirstRunSetupAsync(CancellationToken cancellationToken)
+    {
+        await RunFirstRunSetupAsync(skip: true, cancellationToken);
+    }
+
+    private async Task RunFirstRunSetupAsync(bool skip, CancellationToken cancellationToken)
+    {
+        IsBusy = true;
+        StatusMessage = skip ? "Pulando assistente inicial..." : "Executando assistente inicial...";
+        try
+        {
+            var result = await _firstRunSetupService.CompleteAsync(
+                new FirstRunSetupRequest(
+                    FirstRunLanguage,
+                    FirstRunTheme,
+                    FirstRunLibraryPath,
+                    FirstRunExportPath,
+                    UserConfirmedDownloads: false,
+                    skip),
+                cancellationToken);
+            ApplyFirstRunResult(result);
+            var status = await _firstRunSetupService.GetStatusAsync(cancellationToken);
+            ApplyFirstRunStatus(status);
+            StatusMessage = result.Skipped ? "Assistente inicial pulado." : "Assistente inicial concluído.";
+        }
+        catch (DirectoryNotFoundException exception)
+        {
+            FirstRunWizardSummary = exception.Message;
+            StatusMessage = "A pasta selecionada não é válida ou não pode ser acessada.";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
     }
 
     [RelayCommand]
@@ -2405,6 +2460,50 @@ public sealed partial class MainViewModel : ObservableObject
         OnPropertyChanged(nameof(AssetSelectionSummary));
         OnPropertyChanged(nameof(AssetGallerySummary));
         OnPropertyChanged(nameof(AssetMetadataSummary));
+    }
+
+    private void ApplyFirstRunStatus(FirstRunSetupStatus status)
+    {
+        FirstRunCurrentStep = GetFirstRunStepName(status.CurrentStep);
+        FirstRunWizardSummary = status.IsCompleted
+            ? $"Configuração inicial concluída em {status.CompletedAt?.ToLocalTime().ToString("dd/MM/yyyy HH:mm", CultureInfo.CurrentCulture) ?? "-"}."
+            : "Revise as opções essenciais e execute o assistente para preparar dependências.";
+        FirstRunSetupSummary.Clear();
+        foreach (var item in status.Summary)
+        {
+            FirstRunSetupSummary.Add(item);
+        }
+    }
+
+    private void ApplyFirstRunResult(FirstRunSetupResult result)
+    {
+        FirstRunSetupSummary.Clear();
+        foreach (var item in result.Summary)
+        {
+            FirstRunSetupSummary.Add(item);
+        }
+
+        FirstRunWizardSummary = result.Skipped
+            ? "Assistente pulado. Você pode executar novamente quando quiser."
+            : "Assistente concluído. Dependências e preferências essenciais foram verificadas.";
+    }
+
+    private static string GetFirstRunStepName(FirstRunSetupStep step)
+    {
+        return step switch
+        {
+            FirstRunSetupStep.Welcome => "Boas-vindas",
+            FirstRunSetupStep.Language => "Idioma",
+            FirstRunSetupStep.Theme => "Tema",
+            FirstRunSetupStep.Folders => "Pastas",
+            FirstRunSetupStep.ExternalTools => "Ferramentas",
+            FirstRunSetupStep.Permissions => "Permissões",
+            FirstRunSetupStep.GameTdb => "GameTDB",
+            FirstRunSetupStep.Summary => "Resumo",
+            FirstRunSetupStep.Completed => "Concluído",
+            FirstRunSetupStep.Skipped => "Pulado",
+            _ => step.ToString()
+        };
     }
 
     private static IReadOnlyList<(CoverAssetKind Kind, string Title)> GetGalleryAssets()

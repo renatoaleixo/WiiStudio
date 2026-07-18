@@ -55,6 +55,11 @@ public sealed class SetupRepairReadinessServiceTests
     [Fact]
     public async Task FirstRunSetupService_ShouldPersistCompletion()
     {
+        var root = Path.Combine(Path.GetTempPath(), $"wiistudio-first-run-{Guid.NewGuid():N}");
+        var library = Path.Combine(root, "library");
+        var exports = Path.Combine(root, "exports");
+        Directory.CreateDirectory(library);
+        Directory.CreateDirectory(exports);
         var settings = new FakeSettingsService();
         var service = new FirstRunSetupService(
             settings,
@@ -63,14 +68,60 @@ public sealed class SetupRepairReadinessServiceTests
             new FakeGameTdbUpdateService(),
             new FakeNotificationService());
 
+        try
+        {
+            var result = await service.CompleteAsync(
+                new FirstRunSetupRequest("pt-BR", "Dark", library, exports, UserConfirmedDownloads: false),
+                CancellationToken.None);
+
+            result.Completed.Should().BeTrue();
+            result.Summary.Should().Contain(item => item.StartsWith("Ferramentas:", StringComparison.Ordinal));
+            settings.Settings.FirstRunCompleted.Should().BeTrue();
+            settings.Settings.Theme.Should().Be("Dark");
+            settings.Settings.LibraryPath.Should().Be(library);
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task FirstRunSetupService_ShouldSkipWithoutRunningChecks()
+    {
+        var gameTdb = new FakeGameTdbUpdateService();
+        var service = new FirstRunSetupService(
+            new FakeSettingsService(),
+            new FakeExternalToolManager { ToolsReady = false },
+            new FakePolkitPolicyInstaller(),
+            gameTdb,
+            new FakeNotificationService());
+
         var result = await service.CompleteAsync(
-            new FirstRunSetupRequest("pt-BR", "Dark", "/library", "/exports", UserConfirmedDownloads: false),
+            new FirstRunSetupRequest("pt-BR", "System", null, null, UserConfirmedDownloads: false, Skip: true),
             CancellationToken.None);
 
-        result.Completed.Should().BeTrue();
-        settings.Settings.FirstRunCompleted.Should().BeTrue();
-        settings.Settings.Theme.Should().Be("Dark");
-        settings.Settings.LibraryPath.Should().Be("/library");
+        result.Skipped.Should().BeTrue();
+        gameTdb.CheckCount.Should().Be(0);
+        gameTdb.UpdateCount.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task FirstRunSetupService_ShouldRejectInvalidFolder()
+    {
+        var service = new FirstRunSetupService(
+            new FakeSettingsService(),
+            new FakeExternalToolManager(),
+            new FakePolkitPolicyInstaller(),
+            new FakeGameTdbUpdateService(),
+            new FakeNotificationService());
+
+        var act = () => service.CompleteAsync(
+            new FirstRunSetupRequest("pt-BR", "System", "/missing/wiistudio-library", null, UserConfirmedDownloads: false),
+            CancellationToken.None);
+
+        await act.Should().ThrowAsync<DirectoryNotFoundException>()
+            .WithMessage("*não é válida*");
     }
 
     [Fact]
@@ -300,13 +351,19 @@ public sealed class SetupRepairReadinessServiceTests
 
     private sealed class FakeGameTdbUpdateService : IGameTdbUpdateService
     {
+        public int CheckCount { get; private set; }
+
+        public int UpdateCount { get; private set; }
+
         public Task<UpdateCheckResult> CheckForUpdatesAsync(CancellationToken cancellationToken)
         {
+            CheckCount++;
             return Task.FromResult(new UpdateCheckResult(false, "1", new GameTdbUpdateInfo("1", DateTimeOffset.UtcNow, "test"), DateTimeOffset.UtcNow, "ok"));
         }
 
         public Task<UpdateResult> UpdateAsync(GameTdbUpdateOptions options, CancellationToken cancellationToken)
         {
+            UpdateCount++;
             return Task.FromResult(new UpdateResult(GameTdbUpdateStatus.Applied, "1", null, 1, DateTimeOffset.UtcNow, "updated"));
         }
 
