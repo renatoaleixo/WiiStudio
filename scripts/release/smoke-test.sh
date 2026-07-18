@@ -18,6 +18,13 @@ required=(
   "WiiStudio-${VERSION}-osx-arm64.tar.gz"
   "SHA256SUMS.txt"
   "wiistudio-update-manifest.${CHANNEL}.json"
+  "release-validation/version.txt"
+  "release-validation/environment-linux.md"
+  "release-validation/environment-windows.md"
+  "release-validation/environment-macos.md"
+  "release-validation/hardware-matrix.md"
+  "release-validation/release-checklist.md"
+  "release-validation/acceptance-report.md"
 )
 
 for file in "${required[@]}"; do
@@ -30,6 +37,8 @@ done
 (
   cd "$RELEASE_DIR"
   sha256sum --check SHA256SUMS.txt
+  grep -F "wiistudio-update-manifest.${CHANNEL}.json" SHA256SUMS.txt >/dev/null
+  grep -F "release-validation/acceptance-report.md" SHA256SUMS.txt >/dev/null
 )
 
 python3 - "$RELEASE_DIR/wiistudio-update-manifest.${CHANNEL}.json" "$VERSION" "$CHANNEL" <<'PY'

@@ -209,11 +209,6 @@ archive_runtime win-x64 zip
 archive_runtime osx-x64 tar
 archive_runtime osx-arm64 tar
 
-(
-  cd "$OUTPUT_ROOT"
-  sha256sum WiiStudio-* > SHA256SUMS.txt
-)
-
 python3 - "$OUTPUT_ROOT" "$VERSION" "$CHANNEL" "$REPOSITORY" <<'PY'
 import datetime
 import hashlib
@@ -277,6 +272,101 @@ manifest = {
 (output_root / f"wiistudio-update-manifest.{channel}.json").write_text(
     json.dumps(manifest, indent=2, ensure_ascii=False) + "\n",
     encoding="utf-8")
+
+validation = output_root / "release-validation"
+(validation / "screenshots").mkdir(parents=True, exist_ok=True)
+(validation / "logs").mkdir(parents=True, exist_ok=True)
+
+(validation / "version.txt").write_text(
+    "\n".join([
+        "WiiStudio release validation",
+        f"Requested version: {version}",
+        f"Generated at: {manifest['publishedAt']}",
+        "Release approved: false",
+        "",
+        "This package is evidence scaffolding only. Hardware gates remain pending until validated on dedicated devices and a real Wii.",
+        ""
+    ]),
+    encoding="utf-8")
+
+(validation / "environment-linux.md").write_text(
+    "# Linux Mint/Ubuntu\n\n"
+    "- [ ] App starts on Linux.\n"
+    "- [ ] Polkit installed/missing behavior documented.\n"
+    "- [ ] Wiimms wit/wwt versions recorded.\n"
+    "- [ ] WBFS/FAT32 detection evidence attached.\n",
+    encoding="utf-8")
+
+(validation / "environment-windows.md").write_text(
+    "# Windows 10/11\n\n"
+    "- [ ] App starts normally.\n"
+    "- [ ] Administrator and non-administrator behavior documented.\n"
+    "- [ ] Removable disk detection evidence attached.\n",
+    encoding="utf-8")
+
+(validation / "environment-macos.md").write_text(
+    "# macOS\n\n"
+    "- [ ] App bundle starts.\n"
+    "- [ ] Disk permission behavior documented.\n"
+    "- [ ] Intel/Apple Silicon runtime recorded.\n",
+    encoding="utf-8")
+
+(validation / "hardware-matrix.md").write_text(
+    "# Hardware Matrix\n\n"
+    "- [ ] External USB hard drive with WBFS partition.\n"
+    "- [ ] FAT32 device with `/wbfs`.\n"
+    "- [ ] USB flash drive 16 GB or larger.\n"
+    "- [ ] Real modified Wii with USB Loader GX or equivalent.\n\n"
+    "Formatting tests must use only dedicated test devices with no important data.\n",
+    encoding="utf-8")
+
+checklist = [
+    "Build Release aprovado",
+    "Testes unitarios aprovados",
+    "Smoke test Linux aprovado",
+    "Smoke test Windows aprovado",
+    "Smoke test macOS aprovado",
+    "HD WBFS real aprovado",
+    "FAT32 /wbfs aprovado",
+    "Pendrive aprovado",
+    "Wii real aprovado",
+    "Polkit Linux aprovado",
+    "Windows Admin aprovado",
+    "macOS permissoes documentadas/aprovadas",
+    "Wiimms operacoes principais aprovadas",
+    "GameTDB aprovado",
+    "Update manifest aprovado",
+    "Packaging aprovado",
+    "Sem operacao destrutiva sem confirmacao",
+]
+
+(validation / "release-checklist.md").write_text(
+    "# Release Acceptance Checklist\n\n"
+    + "\n".join(f"- [ ] {item}" for item in checklist)
+    + "\n",
+    encoding="utf-8")
+
+(validation / "acceptance-report.md").write_text(
+    "# WiiStudio Release Acceptance Report\n\n"
+    f"Version: {version}\n"
+    f"Generated at: {manifest['publishedAt']}\n"
+    "Release approved: false\n\n"
+    "Do not mark WiiStudio ready for release until every gate below has real evidence.\n\n"
+    "## Checklist\n\n"
+    + "\n".join(f"- [ ] {item}" for item in checklist)
+    + "\n\n"
+    "## Final Sign-off\n\n"
+    "- Operator:\n"
+    "- Date:\n"
+    "- Decision: Pending\n",
+    encoding="utf-8")
 PY
+
+(
+  cd "$OUTPUT_ROOT"
+  find . -maxdepth 2 -type f \
+    \( -name 'WiiStudio-*' -o -name 'wiistudio-update-manifest.*.json' -o -path './release-validation/*' \) \
+    -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS.txt
+)
 
 echo "Release artifacts generated in $OUTPUT_ROOT"

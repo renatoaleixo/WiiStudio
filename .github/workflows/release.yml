@@ -76,7 +76,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: wiistudio-release-${{ steps.version.outputs.version }}
-          path: artifacts/release/${{ steps.version.outputs.version }}/*
+          path: artifacts/release/${{ steps.version.outputs.version }}/
           if-no-files-found: error
 
       - name: Publish GitHub Release
