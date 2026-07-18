@@ -563,8 +563,9 @@
                 </ListBox>
               </Grid>
 
-              <Border Grid.Column="1" Classes="contentBlock">
-                <Grid RowDefinitions="Auto,160,Auto,190,Auto,Auto,*" RowSpacing="10">
+              <Border Grid.Column="1" Classes="contentBlock" MinWidth="300">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <Grid RowDefinitions="Auto,150,Auto,Auto,Auto,Auto,Auto" RowSpacing="10">
                   <TextBlock Text="Detalhes" FontSize="{StaticResource WiiFontSizeSubtitle}" FontWeight="SemiBold" Foreground="{DynamicResource WiiBrushTextPrimary}" />
                   <Border Grid.Row="1" CornerRadius="{StaticResource WiiRadiusMedium}" Background="{DynamicResource WiiBrushSurfaceAlt}" BorderBrush="{DynamicResource WiiBrushBorder}" BorderThickness="1" ClipToBounds="True">
                     <Grid>
@@ -596,7 +597,7 @@
                           BorderThickness="1"
                           CornerRadius="{StaticResource WiiRadiusMedium}"
                           Padding="{StaticResource WiiInsetSm}">
-                    <Grid RowDefinitions="Auto,Auto,Auto,*" RowSpacing="6">
+                    <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="6">
                       <Grid ColumnDefinitions="*,Auto">
                         <TextBlock Text="Metadados" Foreground="{DynamicResource WiiBrushTextPrimary}" FontWeight="SemiBold" />
                         <Border Grid.Column="1" Classes="badge success" IsVisible="{Binding SelectedGame.HasMetadata}">
@@ -616,27 +617,27 @@
                         <TextBlock Grid.Row="3" Text="Gênero" Foreground="{DynamicResource WiiBrushTextMuted}" />
                         <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding SelectedGame.Genres}" Foreground="{DynamicResource WiiBrushTextSecondary}" TextTrimming="CharacterEllipsis" />
                       </Grid>
-                      <Grid Grid.Row="2" ColumnDefinitions="*,*,*" ColumnSpacing="8">
+                      <UniformGrid Grid.Row="2" Columns="3">
                         <Border Classes="chip">
                           <StackPanel>
                             <TextBlock Text="Jogadores" Foreground="{DynamicResource WiiBrushTextMuted}" FontSize="{StaticResource WiiFontSizeMicro}" />
-                            <TextBlock Text="{Binding SelectedGame.Players}" Foreground="{DynamicResource WiiBrushTextPrimary}" />
+                            <TextBlock Text="{Binding SelectedGame.Players}" Foreground="{DynamicResource WiiBrushTextPrimary}" TextTrimming="CharacterEllipsis" />
                           </StackPanel>
                         </Border>
-                        <Border Grid.Column="1" Classes="chip">
+                        <Border Classes="chip" Margin="6,0,0,0">
                           <StackPanel>
                             <TextBlock Text="Rating" Foreground="{DynamicResource WiiBrushTextMuted}" FontSize="{StaticResource WiiFontSizeMicro}" />
-                            <TextBlock Text="{Binding SelectedGame.Rating}" Foreground="{DynamicResource WiiBrushTextPrimary}" />
+                            <TextBlock Text="{Binding SelectedGame.Rating}" Foreground="{DynamicResource WiiBrushTextPrimary}" TextTrimming="CharacterEllipsis" />
                           </StackPanel>
                         </Border>
-                        <Border Grid.Column="2" Classes="chip">
+                        <Border Classes="chip" Margin="6,0,0,0">
                           <StackPanel>
                             <TextBlock Text="Região" Foreground="{DynamicResource WiiBrushTextMuted}" FontSize="{StaticResource WiiFontSizeMicro}" />
-                            <TextBlock Text="{Binding SelectedGame.Region}" Foreground="{DynamicResource WiiBrushTextPrimary}" />
+                            <TextBlock Text="{Binding SelectedGame.Region}" Foreground="{DynamicResource WiiBrushTextPrimary}" TextTrimming="CharacterEllipsis" />
                           </StackPanel>
                         </Border>
-                      </Grid>
-                      <TextBlock Grid.Row="3" Text="{Binding SelectedGame.Description}" Foreground="{DynamicResource WiiBrushTextSecondary}" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" />
+                      </UniformGrid>
+                      <TextBlock Grid.Row="3" Text="{Binding SelectedGame.Description}" Foreground="{DynamicResource WiiBrushTextSecondary}" TextWrapping="Wrap" MaxHeight="72" />
                     </Grid>
                   </Border>
                   <Border Grid.Row="4"
@@ -687,7 +688,7 @@
                       </ItemsControl>
                     </Grid>
                   </Border>
-                  <ListBox Grid.Row="6" ItemsSource="{Binding CoverAssets}" SelectedItem="{Binding SelectedCoverAsset}" Background="Transparent" BorderThickness="0" ScrollViewer.VerticalScrollBarVisibility="Auto">
+                  <ListBox Grid.Row="6" ItemsSource="{Binding CoverAssets}" SelectedItem="{Binding SelectedCoverAsset}" Background="Transparent" BorderThickness="0" ScrollViewer.VerticalScrollBarVisibility="Disabled">
                     <ListBox.ItemTemplate>
                       <DataTemplate DataType="vm:CoverAssetViewModel">
                         <Grid ColumnDefinitions="54,*,Auto" ColumnSpacing="10" Margin="{StaticResource WiiListItemCompactMargin}" MinHeight="64">
@@ -709,6 +710,7 @@
                     </ListBox.ItemTemplate>
                   </ListBox>
                 </Grid>
+                </ScrollViewer>
               </Border>
             </Grid>
           </Grid>
