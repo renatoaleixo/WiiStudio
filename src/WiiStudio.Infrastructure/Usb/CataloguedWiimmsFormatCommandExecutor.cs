@@ -72,7 +72,16 @@ public sealed class CataloguedWiimmsFormatCommandExecutor : IWiimmsFormatCommand
         var list = await _processRunner.RunAsync(
             new ProcessRequest(wwtPath, ["--part", target, "LIST", "--long", "--no-header"], ValidateTimeout),
             cancellationToken);
-        return list.IsSuccess && !ContainsWbfsError(check) && !ContainsWbfsError(list);
+        if (!list.IsSuccess || ContainsWbfsError(list))
+        {
+            return false;
+        }
+
+        var space = await _processRunner.RunAsync(
+            new ProcessRequest(wwtPath, ["--part", target, "SPACE"], ValidateTimeout),
+            cancellationToken);
+
+        return space.IsSuccess && !ContainsWbfsError(check) && !ContainsWbfsError(space);
     }
 
     private static IReadOnlyList<string> CreateFormatArguments(string target) =>

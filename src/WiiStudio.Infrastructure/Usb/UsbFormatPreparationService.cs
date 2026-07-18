@@ -131,6 +131,12 @@ public sealed class UsbFormatPreparationService : IUsbFormatPreparationService
             return Failed(request.Preview, "usbFormat.strongConfirmationRequired");
         }
 
+        var executionBlock = await GetExecutionBlockReasonAsync(request.Preview, cancellationToken);
+        if (executionBlock is not null)
+        {
+            return Failed(request.Preview, executionBlock);
+        }
+
         var taskId = await _taskManager.EnqueueAsync(
             new TaskRequest(ManagedTaskType.Verification, "Preparando dispositivo USB", request.Preview.TargetDisplayName),
             cancellationToken);
@@ -153,6 +159,18 @@ public sealed class UsbFormatPreparationService : IUsbFormatPreparationService
 
             await _taskManager.UpdateProgressAsync(taskId, 0.9, ManagedTaskStatus.Running, cancellationToken);
             var diagnosticsPassed = await RunPostDiagnosticsAsync(request.Preview, cancellationToken);
+            if (!diagnosticsPassed)
+            {
+                await _taskManager.FailAsync(taskId, "usbFormat.postDiagnosticsFailed", CancellationToken.None);
+                await PublishAsync(NotificationType.Error, "Falha na validação pós-preparação", request.Preview.TargetDisplayName, taskId, CancellationToken.None);
+                return result with
+                {
+                    Success = false,
+                    ErrorMessageKey = "usbFormat.postDiagnosticsFailed",
+                    PostFormatDiagnosticsPassed = false
+                };
+            }
+
             await _taskManager.CompleteAsync(taskId, cancellationToken);
             await PublishAsync(NotificationType.Success, "Dispositivo USB preparado", request.Preview.TargetDisplayName, taskId, cancellationToken);
             progress?.Report(new UsbFormatProgress(100, UsbFormatWorkflowState.Completed, "Dispositivo pronto para Wii.", IsIndeterminate: false));
@@ -231,6 +249,29 @@ public sealed class UsbFormatPreparationService : IUsbFormatPreparationService
         {
             return false;
         }
+    }
+
+    private async Task<string?> GetExecutionBlockReasonAsync(
+        UsbFormatPreview preview,
+        CancellationToken cancellationToken)
+    {
+        var devices = await _usbDeviceProvider.GetDevicesAsync(cancellationToken);
+        var request = new UsbFormatPreparationRequest(preview.TargetDeviceId, preview.TargetPartitionId, preview.Mode);
+        var target = FindTarget(devices, request);
+        if (target is null)
+        {
+            return "usbFormat.targetChanged";
+        }
+
+        var (device, partition) = target.Value;
+        if (!string.Equals(preview.PhysicalPath, device.PhysicalPath, StringComparison.OrdinalIgnoreCase)
+            || !string.Equals(preview.PartitionPath, partition?.DevicePath, StringComparison.OrdinalIgnoreCase)
+            || !string.Equals(preview.CurrentFileSystem, partition?.FileSystem, StringComparison.OrdinalIgnoreCase))
+        {
+            return "usbFormat.targetChanged";
+        }
+
+        return GetTargetBlockReason(device, partition, preview.Mode);
     }
 
     private async Task<DevicePermissionStatus?> CheckPermissionAsync(

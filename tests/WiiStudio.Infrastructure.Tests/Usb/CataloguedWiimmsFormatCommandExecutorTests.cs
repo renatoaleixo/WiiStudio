@@ -29,7 +29,7 @@ public sealed class CataloguedWiimmsFormatCommandExecutorTests
     }
 
     [Fact]
-    public async Task ValidateWbfsAsync_ShouldRunCheckAndListCommands()
+    public async Task ValidateWbfsAsync_ShouldRunCheckListAndSpaceCommands()
     {
         var processRunner = new FakeProcessRunner();
         var executor = new CataloguedWiimmsFormatCommandExecutor(
@@ -40,9 +40,10 @@ public sealed class CataloguedWiimmsFormatCommandExecutorTests
         var valid = await executor.ValidateWbfsAsync(CreatePreview(), CancellationToken.None);
 
         valid.Should().BeTrue();
-        processRunner.Requests.Should().HaveCount(2);
+        processRunner.Requests.Should().HaveCount(3);
         processRunner.Requests[0].Arguments.Should().Equal("--part", "/dev/sdc1", "CHECK");
         processRunner.Requests[1].Arguments.Should().Equal("--part", "/dev/sdc1", "LIST", "--long", "--no-header");
+        processRunner.Requests[2].Arguments.Should().Equal("--part", "/dev/sdc1", "SPACE");
     }
 
     private static UsbFormatPreview CreatePreview() =>

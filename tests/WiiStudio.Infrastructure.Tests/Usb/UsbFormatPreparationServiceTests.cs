@@ -51,6 +51,25 @@ public sealed class UsbFormatPreparationServiceTests
     }
 
     [Fact]
+    public async Task ExecuteAsync_ShouldBlockWhenTargetChangedAfterPreview()
+    {
+        var executor = new FakeWiimmsFormatCommandExecutor(hasCatalog: true);
+        var device = CreateDevice(fileSystem: "FAT32");
+        var service = CreateService([device], executor: executor);
+        var preview = (await service.CreatePreviewAsync(new UsbFormatPreparationRequest(device.DeviceId, null, UsbPreparationMode.FormatAsWbfs)))
+            with
+            {
+                PartitionPath = "/dev/old"
+            };
+
+        var result = await service.ExecuteAsync(new UsbFormatExecutionRequest(preview, UsbFormatPreparationService.WbfsConfirmationPhrase, UserConfirmed: true));
+
+        result.Success.Should().BeFalse();
+        result.ErrorMessageKey.Should().Be("usbFormat.targetChanged");
+        executor.Executed.Should().BeFalse();
+    }
+
+    [Fact]
     public async Task CreatePreviewAsync_ShouldBlockWbfsWhenCommandIsNotCatalogued()
     {
         var device = CreateDevice(fileSystem: "FAT32");
@@ -87,6 +106,24 @@ public sealed class UsbFormatPreparationServiceTests
         result.Success.Should().BeTrue();
         result.ResultFileSystem.Should().Be("WBFS");
         executor.Executed.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_ShouldFailWhenPostDiagnosticsFail()
+    {
+        var fileSystem = new FakeUsbPreparationFileSystem(canWrite: true);
+        var device = CreateDevice(fileSystem: "FAT32", mountPath: "/media/wii");
+        var service = CreateService(
+            [device],
+            fileSystem: fileSystem,
+            readinessService: new FakeReadinessService(ReadinessState.NotReady));
+        var preview = await service.CreatePreviewAsync(new UsbFormatPreparationRequest(device.DeviceId, null, UsbPreparationMode.PrepareFat32WbfsFolder));
+
+        var result = await service.ExecuteAsync(new UsbFormatExecutionRequest(preview, string.Empty, UserConfirmed: true));
+
+        result.Success.Should().BeFalse();
+        result.ErrorMessageKey.Should().Be("usbFormat.postDiagnosticsFailed");
+        result.PostFormatDiagnosticsPassed.Should().BeFalse();
     }
 
     private static UsbFormatPreparationService CreateService(
@@ -127,7 +164,7 @@ public sealed class UsbFormatPreparationServiceTests
             IsWritable: true);
 
         return new UsbDeviceInfo(
-            "device-1",
+            Guid.NewGuid().ToString(),
             "Wii USB",
             "/dev/sdb",
             mountPath,
@@ -237,8 +274,15 @@ public sealed class UsbFormatPreparationServiceTests
 
     private sealed class FakeReadinessService : IWiiUsbReadinessService
     {
+        private readonly ReadinessState state;
+
+        public FakeReadinessService(ReadinessState state = ReadinessState.Ready)
+        {
+            this.state = state;
+        }
+
         public Task<WiiUsbReadinessResult> CheckAsync(Guid driveId, CancellationToken cancellationToken = default) =>
-            Task.FromResult(new WiiUsbReadinessResult(driveId.ToString(), ReadinessState.Ready, [], DateTimeOffset.UtcNow));
+            Task.FromResult(new WiiUsbReadinessResult(driveId.ToString(), state, [], DateTimeOffset.UtcNow));
 
         public Task ExportAsync(WiiUsbReadinessResult result, string outputFile, CancellationToken cancellationToken = default) =>
             Task.CompletedTask;
