@@ -54,6 +54,43 @@ public sealed class SafeUsbWriteWorkflowServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task CreatePreviewAsync_ShouldBlockSystemDiskTarget()
+    {
+        var sourcePath = CreateSource("RMCP01.iso", 1024);
+        var drive = new UsbDrive(
+            Guid.NewGuid(),
+            "/dev/sda1",
+            "/",
+            "System",
+            UsbDriveFileSystem.Fat32,
+            1024L * 1024L * 1024L,
+            128,
+            1024L * 1024L * 1024L - 128,
+            true,
+            true);
+        var service = CreateService([drive]);
+
+        var preview = await service.CreatePreviewAsync(sourcePath, drive.Id, CancellationToken.None);
+
+        preview.IsBlocked.Should().BeTrue();
+        preview.BlockReasonKey.Should().Be("usbWrite.systemDiskBlocked");
+    }
+
+    [Fact]
+    public async Task CreatePreviewAsync_ShouldBlockDuplicateGameId()
+    {
+        var sourcePath = CreateSource("RMCP01.iso", 1024);
+        var drive = CreateDrive(UsbDriveFileSystem.Fat32, freeSpace: 512L * 1024L * 1024L);
+        var wwtService = new FakeWwtService([CreateGame("RMCP01")]);
+        var service = CreateService([drive], wwtService: wwtService);
+
+        var preview = await service.CreatePreviewAsync(sourcePath, drive.Id, CancellationToken.None);
+
+        preview.IsBlocked.Should().BeTrue();
+        preview.BlockReasonKey.Should().Be("usbWrite.duplicateGame");
+    }
+
+    [Fact]
     public async Task ExecuteAsync_ShouldRequireUserConfirmation()
     {
         var sourcePath = CreateSource("RMCP01.iso", 1024);
@@ -70,20 +107,66 @@ public sealed class SafeUsbWriteWorkflowServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task ExecuteAsync_ShouldBlockWhenPreviewTargetChanged()
+    {
+        var sourcePath = CreateSource("RMCP01.iso", 1024);
+        var drive = CreateDrive(UsbDriveFileSystem.Wbfs, freeSpace: 512L * 1024L * 1024L);
+        var wwtService = new FakeWwtService();
+        var service = CreateService([drive], wwtService: wwtService);
+        var preview = (await service.CreatePreviewAsync(sourcePath, drive.Id, CancellationToken.None))
+            with
+            {
+                TargetDevicePath = "/dev/old"
+            };
+
+        var result = await service.ExecuteAsync(new UsbWriteExecutionRequest(preview, UserConfirmed: true), null, CancellationToken.None);
+
+        result.Success.Should().BeFalse();
+        result.ErrorMessageKey.Should().Be("usbWrite.targetChanged");
+        wwtService.AddedSources.Should().BeEmpty();
+    }
+
+    [Fact]
     public async Task ExecuteAsync_ShouldCallWwtWhenPreviewIsConfirmed()
     {
         var sourcePath = CreateSource("RMCP01.iso", 1024);
         var drive = CreateDrive(UsbDriveFileSystem.Wbfs, freeSpace: 512L * 1024L * 1024L);
         var wwtService = new FakeWwtService();
         var taskManager = new FakeTaskManager();
-        var service = CreateService([drive], wwtService: wwtService, taskManager: taskManager);
+        var service = CreateService(
+            [drive],
+            wwtService: wwtService,
+            taskManager: taskManager,
+            readinessService: new FakeReadinessService(ReadinessState.Ready));
         var preview = await service.CreatePreviewAsync(sourcePath, drive.Id, CancellationToken.None);
 
         var result = await service.ExecuteAsync(new UsbWriteExecutionRequest(preview, UserConfirmed: true), null, CancellationToken.None);
 
         result.Success.Should().BeTrue();
+        result.PostWriteReadinessState.Should().Be(ReadinessState.Ready);
         wwtService.AddedSources.Should().ContainSingle().Which.Should().Be(sourcePath);
         taskManager.Statuses.Should().Contain(ManagedTaskStatus.Completed);
+        taskManager.ProgressValues.Should().Contain(progress => progress > 0.49 && progress < 0.51);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_ShouldFailWhenPostWriteReadinessIsNotReady()
+    {
+        var sourcePath = CreateSource("RMCP01.iso", 1024);
+        var drive = CreateDrive(UsbDriveFileSystem.Wbfs, freeSpace: 512L * 1024L * 1024L);
+        var taskManager = new FakeTaskManager();
+        var service = CreateService(
+            [drive],
+            taskManager: taskManager,
+            readinessService: new FakeReadinessService(ReadinessState.NotReady));
+        var preview = await service.CreatePreviewAsync(sourcePath, drive.Id, CancellationToken.None);
+
+        var result = await service.ExecuteAsync(new UsbWriteExecutionRequest(preview, UserConfirmed: true), null, CancellationToken.None);
+
+        result.Success.Should().BeFalse();
+        result.ErrorMessageKey.Should().Be("usbWrite.postWriteValidationFailed");
+        result.PostWriteReadinessState.Should().Be(ReadinessState.NotReady);
+        taskManager.Statuses.Should().Contain(ManagedTaskStatus.Failed);
     }
 
     public void Dispose()
@@ -100,7 +183,8 @@ public sealed class SafeUsbWriteWorkflowServiceTests : IDisposable
         FakeExternalToolManager? externalToolManager = null,
         FakeDevicePermissionService? devicePermissionService = null,
         FakeTaskManager? taskManager = null,
-        FakeNotificationService? notificationService = null)
+        FakeNotificationService? notificationService = null,
+        IWiiUsbReadinessService? readinessService = null)
     {
         return new SafeUsbWriteWorkflowService(
             new FakeUsbDriveService(drives),
@@ -108,7 +192,8 @@ public sealed class SafeUsbWriteWorkflowServiceTests : IDisposable
             externalToolManager ?? new FakeExternalToolManager(),
             devicePermissionService ?? new FakeDevicePermissionService(),
             taskManager ?? new FakeTaskManager(),
-            notificationService ?? new FakeNotificationService());
+            notificationService ?? new FakeNotificationService(),
+            readinessService);
     }
 
     private string CreateSource(string fileName, int size)
@@ -142,16 +227,29 @@ public sealed class SafeUsbWriteWorkflowServiceTests : IDisposable
 
     private sealed class FakeWwtService : IWwtService
     {
+        private readonly IReadOnlyList<Game> games;
+
+        public FakeWwtService(IReadOnlyList<Game>? games = null)
+        {
+            this.games = games ?? [];
+        }
+
         public List<string> AddedSources { get; } = [];
 
         public Task<IReadOnlyList<Game>> ListGamesAsync(UsbDrive drive, CancellationToken cancellationToken)
         {
-            return Task.FromResult<IReadOnlyList<Game>>([]);
+            return Task.FromResult(games);
         }
 
-        public Task AddGameAsync(UsbDrive drive, string sourcePath, CancellationToken cancellationToken)
+        public Task AddGameAsync(
+            UsbDrive drive,
+            string sourcePath,
+            CancellationToken cancellationToken,
+            IProgress<WiimmsOperationProgress>? progress = null,
+            bool publishTask = true)
         {
             AddedSources.Add(sourcePath);
+            progress?.Report(new WiimmsOperationProgress(50, "Copiando", sourcePath, null, null, null, null, IsIndeterminate: false));
             return Task.CompletedTask;
         }
 
@@ -159,6 +257,19 @@ public sealed class SafeUsbWriteWorkflowServiceTests : IDisposable
         {
             return Task.CompletedTask;
         }
+    }
+
+    private static Game CreateGame(string gameId)
+    {
+        return new Game(
+            new WiiStudio.Domain.ValueObjects.GameId(gameId),
+            "Mario Kart Wii",
+            Region.Unknown,
+            DiscType.Wii,
+            FileFormat.Wbfs,
+            $"/games/{gameId}.wbfs",
+            1024,
+            DateTimeOffset.UtcNow);
     }
 
     private sealed class FakeExternalToolManager : IExternalToolManager
@@ -213,6 +324,8 @@ public sealed class SafeUsbWriteWorkflowServiceTests : IDisposable
     {
         public List<ManagedTaskStatus> Statuses { get; } = [];
 
+        public List<double> ProgressValues { get; } = [];
+
         public Task<Guid> EnqueueAsync(TaskRequest request, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -224,6 +337,7 @@ public sealed class SafeUsbWriteWorkflowServiceTests : IDisposable
         {
             cancellationToken.ThrowIfCancellationRequested();
             Statuses.Add(status);
+            ProgressValues.Add(progress);
             return Task.CompletedTask;
         }
 
@@ -264,5 +378,29 @@ public sealed class SafeUsbWriteWorkflowServiceTests : IDisposable
         public Task<IReadOnlyList<NotificationMessage>> GetHistoryAsync(CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<NotificationMessage>>([]);
 
         public Task ClearHistoryAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+    }
+
+    private sealed class FakeReadinessService : IWiiUsbReadinessService
+    {
+        private readonly ReadinessState state;
+
+        public FakeReadinessService(ReadinessState state)
+        {
+            this.state = state;
+        }
+
+        public Task<WiiUsbReadinessResult> CheckAsync(Guid driveId, CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult(new WiiUsbReadinessResult(
+                driveId.ToString(),
+                state,
+                [new WiiUsbReadinessCheckItem("post-write", "Pós-escrita", state, state.ToString(), null, null)],
+                DateTimeOffset.UtcNow));
+        }
+
+        public Task ExportAsync(WiiUsbReadinessResult result, string outputFile, CancellationToken cancellationToken = default)
+        {
+            return Task.CompletedTask;
+        }
     }
 }

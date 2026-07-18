@@ -1,4 +1,5 @@
 using FluentAssertions;
+using WiiStudio.Application.DTOs;
 using WiiStudio.Application.Interfaces;
 using WiiStudio.Application.Services;
 using WiiStudio.Application.UseCases;
@@ -162,7 +163,12 @@ public sealed class GameLibraryScannerTests
             return Task.FromResult(_games);
         }
 
-        public Task AddGameAsync(UsbDrive drive, string sourcePath, CancellationToken cancellationToken)
+        public Task AddGameAsync(
+            UsbDrive drive,
+            string sourcePath,
+            CancellationToken cancellationToken,
+            IProgress<WiimmsOperationProgress>? progress = null,
+            bool publishTask = true)
         {
             cancellationToken.ThrowIfCancellationRequested();
 

@@ -18,6 +18,7 @@ public sealed class SafeUsbWriteWorkflowService : IUsbWriteWorkflowService
     private readonly IDevicePermissionService _devicePermissionService;
     private readonly ITaskManager _taskManager;
     private readonly INotificationService _notificationService;
+    private readonly IWiiUsbReadinessService? _readinessService;
 
     public SafeUsbWriteWorkflowService(
         IUsbDriveService usbDriveService,
@@ -25,7 +26,8 @@ public sealed class SafeUsbWriteWorkflowService : IUsbWriteWorkflowService
         IExternalToolManager externalToolManager,
         IDevicePermissionService devicePermissionService,
         ITaskManager taskManager,
-        INotificationService notificationService)
+        INotificationService notificationService,
+        IWiiUsbReadinessService? readinessService = null)
     {
         _usbDriveService = usbDriveService;
         _wwtService = wwtService;
@@ -33,6 +35,7 @@ public sealed class SafeUsbWriteWorkflowService : IUsbWriteWorkflowService
         _devicePermissionService = devicePermissionService;
         _taskManager = taskManager;
         _notificationService = notificationService;
+        _readinessService = readinessService;
     }
 
     public async Task<UsbWritePreview> CreatePreviewAsync(
@@ -58,7 +61,7 @@ public sealed class SafeUsbWriteWorkflowService : IUsbWriteWorkflowService
             warnings.Add("usbWrite.fat32SplitRequired");
         }
 
-        if (drive.FileSystem == UsbDriveFileSystem.Wbfs && gameId is not null)
+        if (gameId is not null)
         {
             var duplicateWarning = await TryDetectDuplicateAsync(drive, gameId, cancellationToken);
             if (duplicateWarning is not null)
@@ -104,23 +107,57 @@ public sealed class SafeUsbWriteWorkflowService : IUsbWriteWorkflowService
             return Failed(request.Preview, request.Preview.BlockReasonKey ?? "usbWrite.blocked", TimeSpan.Zero);
         }
 
+        var drive = await FindDriveAsync(request.Preview.TargetDriveId, cancellationToken);
+        var executionBlock = GetExecutionBlockReason(request.Preview, drive);
+        if (executionBlock is not null)
+        {
+            return Failed(request.Preview, executionBlock, TimeSpan.Zero);
+        }
+
         var taskId = await _taskManager.EnqueueAsync(
             new TaskRequest(ManagedTaskType.Import, "Escrevendo jogo no USB", request.Preview.SourcePath),
             cancellationToken);
-        var drive = await FindDriveAsync(request.Preview.TargetDriveId, cancellationToken);
         var stopwatch = Stopwatch.StartNew();
         try
         {
             progress?.Report(new WiimmsOperationProgress(null, "Iniciando escrita USB", request.Preview.SourcePath, null, null, null, null, IsIndeterminate: true));
             await _taskManager.UpdateProgressAsync(taskId, 0.1, ManagedTaskStatus.Running, cancellationToken);
-            await _wwtService.AddGameAsync(drive, request.Preview.SourcePath, cancellationToken);
+            await _wwtService.AddGameAsync(
+                drive,
+                request.Preview.SourcePath,
+                cancellationToken,
+                CreateProgressReporter(taskId, progress, cancellationToken),
+                publishTask: false);
+            await _taskManager.UpdateProgressAsync(taskId, 0.9, ManagedTaskStatus.Running, cancellationToken);
+            var readiness = await CheckPostWriteReadinessAsync(drive.Id, cancellationToken);
+            if (readiness?.State == ReadinessState.NotReady)
+            {
+                stopwatch.Stop();
+                await _taskManager.FailAsync(taskId, "usbWrite.postWriteValidationFailed", CancellationToken.None);
+                await _notificationService.PublishAsync(
+                    NotificationMessage.Create(NotificationType.Error, "Falha na validação pós-escrita", request.Preview.SourcePath, isPersistent: true, groupKey: taskId.ToString("N")),
+                    CancellationToken.None);
+                return Failed(
+                    request.Preview,
+                    "usbWrite.postWriteValidationFailed",
+                    stopwatch.Elapsed,
+                    readiness);
+            }
+
             stopwatch.Stop();
             await _taskManager.CompleteAsync(taskId, cancellationToken);
             await _notificationService.PublishAsync(
                 NotificationMessage.Create(NotificationType.Success, "Escrita USB concluída", request.Preview.SourcePath, groupKey: taskId.ToString("N")),
                 cancellationToken);
             progress?.Report(new WiimmsOperationProgress(100, "Escrita USB concluída", request.Preview.SourcePath, null, null, null, TimeSpan.Zero, IsIndeterminate: false));
-            return new UsbWriteResult(true, request.Preview.GameId, drive.Id, null, stopwatch.Elapsed);
+            return new UsbWriteResult(
+                true,
+                request.Preview.GameId,
+                drive.Id,
+                null,
+                stopwatch.Elapsed,
+                readiness?.State,
+                readiness?.Items);
         }
         catch (OperationCanceledException)
         {
@@ -190,6 +227,11 @@ public sealed class SafeUsbWriteWorkflowService : IUsbWriteWorkflowService
             return "usbWrite.targetNotMounted";
         }
 
+        if (IsSystemTarget(drive))
+        {
+            return "usbWrite.systemDiskBlocked";
+        }
+
         if (!drive.IsWritable)
         {
             return "usbWrite.targetReadOnly";
@@ -221,6 +263,60 @@ public sealed class SafeUsbWriteWorkflowService : IUsbWriteWorkflowService
         }
 
         return null;
+    }
+
+    private static string? GetExecutionBlockReason(UsbWritePreview preview, UsbDrive drive)
+    {
+        if (!string.Equals(preview.TargetDevicePath, drive.DevicePath, StringComparison.OrdinalIgnoreCase)
+            || preview.TargetFileSystem != drive.FileSystem)
+        {
+            return "usbWrite.targetChanged";
+        }
+
+        if (IsSystemTarget(drive))
+        {
+            return "usbWrite.systemDiskBlocked";
+        }
+
+        return null;
+    }
+
+    private async Task<WiiUsbReadinessResult?> CheckPostWriteReadinessAsync(Guid driveId, CancellationToken cancellationToken)
+    {
+        if (_readinessService is null)
+        {
+            return null;
+        }
+
+        return await _readinessService.CheckAsync(driveId, cancellationToken);
+    }
+
+    private IProgress<WiimmsOperationProgress> CreateProgressReporter(
+        Guid taskId,
+        IProgress<WiimmsOperationProgress>? progress,
+        CancellationToken cancellationToken)
+    {
+        return new Progress<WiimmsOperationProgress>(update =>
+        {
+            progress?.Report(update);
+            if (update.Percentage is null)
+            {
+                return;
+            }
+
+            var taskProgress = Math.Clamp(update.Percentage.Value / 100d, 0.1, 0.89);
+            try
+            {
+                _taskManager
+                    .UpdateProgressAsync(taskId, taskProgress, ManagedTaskStatus.Running, cancellationToken)
+                    .GetAwaiter()
+                    .GetResult();
+            }
+            catch (Exception exception) when (exception is not OperationCanceledException)
+            {
+                Debug.WriteLine($"Failed to update USB write progress: {exception.Message}");
+            }
+        });
     }
 
     private async Task<string?> TryDetectDuplicateAsync(UsbDrive drive, string gameId, CancellationToken cancellationToken)
@@ -272,8 +368,66 @@ public sealed class SafeUsbWriteWorkflowService : IUsbWriteWorkflowService
             : null;
     }
 
-    private static UsbWriteResult Failed(UsbWritePreview preview, string errorMessageKey, TimeSpan duration)
+    private static bool IsSystemTarget(UsbDrive drive)
     {
-        return new UsbWriteResult(false, preview.GameId, preview.TargetDriveId, errorMessageKey, duration);
+        var mountPoint = NormalizePath(drive.MountPoint);
+        if (string.IsNullOrWhiteSpace(mountPoint))
+        {
+            return false;
+        }
+
+        if (mountPoint is "/" or "/boot" or "/boot/efi" or "/System/Volumes/Data")
+        {
+            return true;
+        }
+
+        var userProfile = NormalizePath(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile));
+        if (!string.IsNullOrWhiteSpace(userProfile)
+            && string.Equals(mountPoint, userProfile, StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        if (OperatingSystem.IsWindows())
+        {
+            var systemRoot = NormalizePath(Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.System)) ?? string.Empty);
+            return !string.IsNullOrWhiteSpace(systemRoot)
+                && string.Equals(NormalizePath(Path.GetPathRoot(mountPoint) ?? mountPoint), systemRoot, StringComparison.OrdinalIgnoreCase);
+        }
+
+        return false;
+    }
+
+    private static string NormalizePath(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            return string.Empty;
+        }
+
+        var trimmed = path.Trim();
+        var root = Path.GetPathRoot(trimmed);
+        if (string.Equals(trimmed, root, StringComparison.OrdinalIgnoreCase))
+        {
+            return trimmed;
+        }
+
+        return trimmed.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+    }
+
+    private static UsbWriteResult Failed(
+        UsbWritePreview preview,
+        string errorMessageKey,
+        TimeSpan duration,
+        WiiUsbReadinessResult? readiness = null)
+    {
+        return new UsbWriteResult(
+            false,
+            preview.GameId,
+            preview.TargetDriveId,
+            errorMessageKey,
+            duration,
+            readiness?.State,
+            readiness?.Items);
     }
 }

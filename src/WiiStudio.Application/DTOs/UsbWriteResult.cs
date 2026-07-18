@@ -5,4 +5,6 @@ public sealed record UsbWriteResult(
     string? GameId,
     Guid TargetDriveId,
     string? ErrorMessageKey,
-    TimeSpan Duration);
+    TimeSpan Duration,
+    ReadinessState? PostWriteReadinessState = null,
+    IReadOnlyList<WiiUsbReadinessCheckItem>? PostWriteReadinessItems = null);

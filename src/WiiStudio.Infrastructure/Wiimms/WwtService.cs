@@ -57,18 +57,25 @@ public sealed class WwtService : IWwtService
         return games;
     }
 
-    public async Task AddGameAsync(UsbDrive drive, string sourcePath, CancellationToken cancellationToken)
+    public async Task AddGameAsync(
+        UsbDrive drive,
+        string sourcePath,
+        CancellationToken cancellationToken,
+        IProgress<WiimmsOperationProgress>? progress = null,
+        bool publishTask = true)
     {
         ArgumentNullException.ThrowIfNull(drive);
         ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
         cancellationToken.ThrowIfCancellationRequested();
 
         var wwtPath = await _toolLocator.FindWwtAsync(cancellationToken);
-        var taskId = await EnqueueWiimmsTaskAsync(
-            "Adicionando jogo ao USB",
-            $"{Path.GetFileName(sourcePath)} -> {drive.MountPoint}",
-            cancellationToken);
-        var progressCallback = CreateProgressCallback(taskId, cancellationToken);
+        var taskId = publishTask
+            ? await EnqueueWiimmsTaskAsync(
+                "Adicionando jogo ao USB",
+                $"{Path.GetFileName(sourcePath)} -> {drive.MountPoint}",
+                cancellationToken)
+            : null;
+        var progressCallback = CreateProgressCallback(taskId, progress, cancellationToken);
         var request = new ProcessRequest(
             wwtPath,
             [
@@ -201,7 +208,10 @@ public sealed class WwtService : IWwtService
         }
     }
 
-    private Action<string> CreateProgressCallback(Guid? taskId, CancellationToken cancellationToken)
+    private Action<string> CreateProgressCallback(
+        Guid? taskId,
+        IProgress<WiimmsOperationProgress>? progressReporter,
+        CancellationToken cancellationToken)
     {
         return line =>
         {
@@ -211,6 +221,7 @@ public sealed class WwtService : IWwtService
             }
 
             TrackWiimmsOutput(progress);
+            progressReporter?.Report(progress);
             if (taskId is null)
             {
                 return;

@@ -109,7 +109,12 @@ public sealed class RemoveGameUseCaseTests
             return Task.FromResult<IReadOnlyList<Game>>([]);
         }
 
-        public Task AddGameAsync(UsbDrive drive, string sourcePath, CancellationToken cancellationToken)
+        public Task AddGameAsync(
+            UsbDrive drive,
+            string sourcePath,
+            CancellationToken cancellationToken,
+            IProgress<WiimmsOperationProgress>? progress = null,
+            bool publishTask = true)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
