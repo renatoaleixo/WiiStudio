@@ -110,6 +110,43 @@ public sealed class GameDetailsServiceTests
         details.Assets!.Should().Contain(asset => asset.Kind == CoverAssetKind.FrontCover);
     }
 
+    [Fact]
+    public async Task GetAsync_ShouldIncludeRecentImportHistory()
+    {
+        var game = CreateGame("RMCP01", "Mario Kart Wii");
+        var history = new FakeImportHistoryRepository();
+        history.Entries.Add(new ImportHistoryEntry(Guid.NewGuid(), "RMCP01", "/games/RMCP01.iso", "usb-1", "usb-write", true, "usbWrite.completed", DateTimeOffset.UtcNow));
+        var service = new GameDetailsService(
+            new FakeGameLibraryService([game]),
+            new FakeFavoriteGameService([]),
+            new FakeMetadataCacheService(),
+            new FakeGameAssetRepository(),
+            history);
+
+        var details = await service.GetAsync("RMCP01", CancellationToken.None);
+
+        details.History.Should().ContainSingle(item => item.Operation == "usb-write" && item.Success);
+    }
+
+    [Fact]
+    public async Task GetAsync_ShouldExplainUnavailableFileActions()
+    {
+        var game = CreateGame("RMCP01", "Mario Kart Wii") with { FilePath = "/missing/RMCP01.wbfs" };
+        var service = new GameDetailsService(
+            new FakeGameLibraryService([game]),
+            new FakeFavoriteGameService([]),
+            new FakeMetadataCacheService(),
+            new FakeGameAssetRepository());
+
+        var details = await service.GetAsync("RMCP01", CancellationToken.None);
+
+        details.FileExists.Should().BeFalse();
+        details.ActionAvailability.Should().Contain(item =>
+            item.Action == GameDetailsAction.Convert
+            && !item.IsAvailable
+            && item.UnavailableReason == "Arquivo original não encontrado.");
+    }
+
     private static GameDto CreateGame(string id, string title)
     {
         return new GameDto(id, title, Region.Pal, DiscType.Wii, FileFormat.Wbfs, $"/games/{id}.wbfs", 1024, DateTimeOffset.UtcNow);
@@ -231,6 +268,22 @@ public sealed class GameDetailsServiceTests
         public Task<IReadOnlyList<AssetInfo>> GetByGameIdAsync(string gameId, CancellationToken cancellationToken)
         {
             return Task.FromResult<IReadOnlyList<AssetInfo>>(Assets.Where(asset => asset.Key.GameId == gameId).ToArray());
+        }
+    }
+
+    private sealed class FakeImportHistoryRepository : IImportHistoryRepository
+    {
+        public List<ImportHistoryEntry> Entries { get; } = [];
+
+        public Task AppendAsync(ImportHistoryEntry entry, CancellationToken cancellationToken = default)
+        {
+            Entries.Add(entry);
+            return Task.CompletedTask;
+        }
+
+        public Task<IReadOnlyList<ImportHistoryEntry>> GetRecentAsync(int limit = 100, CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult<IReadOnlyList<ImportHistoryEntry>>(Entries.Take(limit).ToArray());
         }
     }
 }

@@ -87,7 +87,9 @@ public sealed class CoverAssetBulkActionService : ICoverAssetBulkActionService
                             or CoverAssetBulkActionMode.ReDownload
                             or CoverAssetBulkActionMode.ChangeLanguage;
                     var allowProvider = request.Mode != CoverAssetBulkActionMode.ValidateCache;
-                    var asset = await _assetManager.GetAsync(new AssetRequest(key, allowProvider, forceRefresh), cancellationToken);
+                    var asset = await _assetManager.GetAsync(
+                        new AssetRequest(key, allowProvider, forceRefresh, NormalizeLanguage(request.Language)),
+                        cancellationToken);
                     if (asset is null)
                     {
                         missing++;
@@ -161,5 +163,10 @@ public sealed class CoverAssetBulkActionService : ICoverAssetBulkActionService
     private static string CreateMessage(CoverAssetBulkActionResult result)
     {
         return $"Baixados: {result.Downloaded}; cache: {result.FromCache}; removidos: {result.Cleared}; ausentes: {result.Missing}; inválidos: {result.Invalid}; falhas: {result.Failed}.";
+    }
+
+    private static string NormalizeLanguage(string? language)
+    {
+        return string.IsNullOrWhiteSpace(language) ? "PT" : language.Trim().ToUpperInvariant();
     }
 }

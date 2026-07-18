@@ -15,4 +15,6 @@ public sealed record GameDetailsDto(
     IReadOnlyList<GameDetailsAction> AvailableActions,
     GameMetadataDto? Metadata = null,
     IReadOnlyList<GameDetailAssetDto>? Assets = null,
-    bool FileExists = false);
+    bool FileExists = false,
+    IReadOnlyList<GameDetailsActionAvailability>? ActionAvailability = null,
+    IReadOnlyList<GameDetailsHistoryItem>? History = null);

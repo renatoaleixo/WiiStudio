@@ -44,6 +44,24 @@ public sealed class CoverAssetBulkActionServiceTests : IDisposable
         assets.Requests.Should().BeEmpty();
     }
 
+    [Fact]
+    public async Task ExecuteAsync_ShouldPassForceRefreshLanguageAndSelectedKinds()
+    {
+        var assets = new FakeAssetManager();
+        assets.Results[(CoverAssetKind.DiscArt, "RMCP01")] = CreateAsset("RMCP01", CoverAssetKind.DiscArt, CoverAssetSource.Cache);
+        var service = new CoverAssetBulkActionService(assets, new FakeTaskManager(), new FakeNotificationService());
+
+        await service.ExecuteAsync(
+            new CoverAssetBulkActionRequest(["RMCP01"], [CoverAssetKind.DiscArt], "en", ForceRefresh: true, ClearBeforeDownload: false, CoverAssetBulkActionMode.ForceRefresh),
+            progress: null,
+            CancellationToken.None);
+
+        assets.Requests.Should().ContainSingle();
+        assets.Requests[0].Key.Kind.Should().Be(CoverAssetKind.DiscArt);
+        assets.Requests[0].ForceRefresh.Should().BeTrue();
+        assets.Requests[0].Language.Should().Be("EN");
+    }
+
     public void Dispose()
     {
         if (Directory.Exists(root))

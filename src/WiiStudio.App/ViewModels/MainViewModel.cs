@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Globalization;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Styling;
@@ -35,6 +36,7 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly IImportWizardService _importWizardService;
     private readonly IKeyboardShortcutService _keyboardShortcutService;
     private readonly IFavoriteGameService _favoriteGameService;
+    private readonly IGameDetailsService _gameDetailsService;
     private readonly IGameLibraryService _gameLibraryService;
     private readonly ILibraryViewService _libraryViewService;
     private readonly IMainWindowService _mainWindowService;
@@ -58,6 +60,7 @@ public sealed partial class MainViewModel : ObservableObject
     private bool _isApplyingDeviceSnapshot;
     private bool _isApplyingLibraryViewMode;
     private DiagnosticsReport? _lastDiagnosticsReport;
+    private bool _pendingAssetCacheClearConfirmation;
     private IReadOnlySet<string> _selectedGameIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
     [ObservableProperty]
@@ -241,6 +244,12 @@ public sealed partial class MainViewModel : ObservableObject
     private LibraryGameItem? _selectedAssetGame;
 
     [ObservableProperty]
+    private GameDetailsDto? _selectedGameDetails;
+
+    [ObservableProperty]
+    private string _selectedAssetLanguage = "PT";
+
+    [ObservableProperty]
     private PluginManagementItemViewModel? _selectedPlugin;
 
     [ObservableProperty]
@@ -267,6 +276,7 @@ public sealed partial class MainViewModel : ObservableObject
         IImportWizardService importWizardService,
         IKeyboardShortcutService keyboardShortcutService,
         IFavoriteGameService favoriteGameService,
+        IGameDetailsService gameDetailsService,
         IGameLibraryService gameLibraryService,
         ILibraryViewService libraryViewService,
         IMainWindowService mainWindowService,
@@ -304,6 +314,7 @@ public sealed partial class MainViewModel : ObservableObject
         _importWizardService = importWizardService;
         _keyboardShortcutService = keyboardShortcutService;
         _favoriteGameService = favoriteGameService;
+        _gameDetailsService = gameDetailsService;
         _gameLibraryService = gameLibraryService;
         _libraryViewService = libraryViewService;
         _mainWindowService = mainWindowService;
@@ -355,6 +366,19 @@ public sealed partial class MainViewModel : ObservableObject
     public ObservableCollection<CoverAssetViewModel> CoverAssets { get; } = new();
 
     public ObservableCollection<LibraryGameItem> AssetSelectedGames { get; } = new();
+
+    public ObservableCollection<CoverAssetKindOptionViewModel> BulkAssetKindOptions { get; } =
+    [
+        new(CoverAssetKind.FrontCover, "Frente", true),
+        new(CoverAssetKind.BackCover, "Verso", true),
+        new(CoverAssetKind.DiscArt, "Disco", true),
+        new(CoverAssetKind.Banner, "Banner", false),
+        new(CoverAssetKind.Icon, "Icone", true)
+    ];
+
+    public ObservableCollection<GameDetailsActionItemViewModel> SelectedGameActions { get; } = new();
+
+    public ObservableCollection<GameDetailsHistoryItemViewModel> SelectedGameHistory { get; } = new();
 
     public ObservableCollection<ImportPreviewItemViewModel> ImportPreviewItems { get; } = new();
 
@@ -501,6 +525,22 @@ public sealed partial class MainViewModel : ObservableObject
         : AssetPreviewGame.HasMetadata
             ? $"{AssetPreviewGame.MetadataSummary} - {AssetPreviewGame.Genres}"
             : "Metadados ainda não sincronizados para este jogo.";
+
+    public string SelectedGameTechnicalSummary => SelectedGameDetails is null
+        ? "Selecione um jogo para ver dados técnicos, arquivo e ações."
+        : $"{SelectedGameDetails.Id} - {SelectedGameDetails.Region} - {SelectedGameDetails.Format} - {FormatSize(SelectedGameDetails.SizeInBytes)}";
+
+    public string SelectedGameFileSummary => SelectedGameDetails is null
+        ? "-"
+        : string.IsNullOrWhiteSpace(SelectedGameDetails.FilePath)
+            ? "Jogo carregado do dispositivo, sem caminho local original."
+            : SelectedGameDetails.FileExists
+                ? SelectedGameDetails.FilePath
+                : $"Arquivo não encontrado: {SelectedGameDetails.FilePath}";
+
+    public string SelectedGameHistorySummary => SelectedGameHistory.Count == 0
+        ? "Nenhuma operação registrada para este jogo."
+        : $"{SelectedGameHistory.Count} operação(ões) recente(s).";
 
     private LibraryGameItem? AssetPreviewGame => SelectedAssetGame ?? SelectedGame;
 
@@ -1443,6 +1483,7 @@ public sealed partial class MainViewModel : ObservableObject
     [RelayCommand]
     private Task ForceRefreshSelectedAssetsAsync(CancellationToken cancellationToken)
     {
+        _pendingAssetCacheClearConfirmation = false;
         return ExecuteCoverAssetBulkActionAsync(
             CoverAssetBulkActionMode.ForceRefresh,
             forceRefresh: true,
@@ -1454,6 +1495,15 @@ public sealed partial class MainViewModel : ObservableObject
     [RelayCommand]
     private Task ClearSelectedAssetCacheAsync(CancellationToken cancellationToken)
     {
+        if (!_pendingAssetCacheClearConfirmation)
+        {
+            _pendingAssetCacheClearConfirmation = true;
+            CoverBatchStatus = "Confirme a limpeza: clique em Limpar cache novamente para remover os assets dos jogos selecionados.";
+            StatusMessage = CoverBatchStatus;
+            return Task.CompletedTask;
+        }
+
+        _pendingAssetCacheClearConfirmation = false;
         return ExecuteCoverAssetBulkActionAsync(
             CoverAssetBulkActionMode.ClearCache,
             forceRefresh: false,
@@ -1465,6 +1515,7 @@ public sealed partial class MainViewModel : ObservableObject
     [RelayCommand]
     private Task ValidateSelectedAssetsAsync(CancellationToken cancellationToken)
     {
+        _pendingAssetCacheClearConfirmation = false;
         return ExecuteCoverAssetBulkActionAsync(
             CoverAssetBulkActionMode.ValidateCache,
             forceRefresh: false,
@@ -1487,6 +1538,14 @@ public sealed partial class MainViewModel : ObservableObject
             return;
         }
 
+        var assetKinds = GetSelectedBulkAssetKinds();
+        if (assetKinds.Count == 0)
+        {
+            StatusMessage = "Selecione pelo menos um tipo de asset.";
+            CoverBatchStatus = StatusMessage;
+            return;
+        }
+
         IsBusy = true;
         IsCoverBatchRunning = true;
         CoverBatchStatus = startMessage;
@@ -1505,8 +1564,8 @@ public sealed partial class MainViewModel : ObservableObject
             var result = await _coverAssetBulkActionService.ExecuteAsync(
                 new CoverAssetBulkActionRequest(
                     gameIds,
-                    [],
-                    "PT",
+                    assetKinds,
+                    SelectedAssetLanguage,
                     forceRefresh,
                     clearBeforeDownload,
                     mode),
@@ -1524,6 +1583,14 @@ public sealed partial class MainViewModel : ObservableObject
             IsCoverBatchRunning = false;
             IsBusy = false;
         }
+    }
+
+    private IReadOnlyList<CoverAssetKind> GetSelectedBulkAssetKinds()
+    {
+        return BulkAssetKindOptions
+            .Where(option => option.IsSelected)
+            .Select(option => option.Kind)
+            .ToArray();
     }
 
     [RelayCommand]
@@ -2019,6 +2086,7 @@ public sealed partial class MainViewModel : ObservableObject
     partial void OnSelectedGameChanged(LibraryGameItem? value)
     {
         OnPropertyChanged(nameof(SelectedFavoriteActionText));
+        _ = RefreshSelectedGameDetailsAsync(value, CancellationToken.None);
 
         if (value is not null && _selectedGameIds.Contains(value.Id))
         {
@@ -2040,6 +2108,12 @@ public sealed partial class MainViewModel : ObservableObject
         }
 
         _ = RefreshSelectedAssetGalleryAsync(CancellationToken.None);
+    }
+
+    partial void OnSelectedGameDetailsChanged(GameDetailsDto? value)
+    {
+        OnPropertyChanged(nameof(SelectedGameTechnicalSummary));
+        OnPropertyChanged(nameof(SelectedGameFileSummary));
     }
 
     partial void OnSelectedImportDriveChanged(UsbDrive? value)
@@ -2246,6 +2320,46 @@ public sealed partial class MainViewModel : ObservableObject
         OnAssetPanelChanged();
     }
 
+    private async Task RefreshSelectedGameDetailsAsync(LibraryGameItem? game, CancellationToken cancellationToken)
+    {
+        SelectedGameActions.Clear();
+        SelectedGameHistory.Clear();
+        if (game is null)
+        {
+            SelectedGameDetails = null;
+            OnPropertyChanged(nameof(SelectedGameHistorySummary));
+            return;
+        }
+
+        try
+        {
+            var details = await _gameDetailsService.GetAsync(game.Id, cancellationToken);
+            if (!string.Equals(SelectedGame?.Id, game.Id, StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+
+            SelectedGameDetails = details;
+            foreach (var action in details.ActionAvailability ?? [])
+            {
+                SelectedGameActions.Add(new GameDetailsActionItemViewModel(action));
+            }
+
+            foreach (var history in details.History ?? [])
+            {
+                SelectedGameHistory.Add(new GameDetailsHistoryItemViewModel(history));
+            }
+
+            OnPropertyChanged(nameof(SelectedGameHistorySummary));
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            SelectedGameDetails = null;
+            StatusMessage = $"Não foi possível carregar detalhes de {game.Id}.";
+            OnPropertyChanged(nameof(SelectedGameHistorySummary));
+        }
+    }
+
     private void ApplySelectionState()
     {
         foreach (var game in Games)
@@ -2270,6 +2384,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     private void RefreshAssetSelectedGames()
     {
+        _pendingAssetCacheClearConfirmation = false;
         var previousAssetGameId = SelectedAssetGame?.Id;
         AssetSelectedGames.Clear();
         foreach (var game in Games.Where(game => _selectedGameIds.Contains(game.Id)))
@@ -2302,6 +2417,21 @@ public sealed partial class MainViewModel : ObservableObject
             (CoverAssetKind.Banner, "Banner"),
             (CoverAssetKind.Icon, "Icon")
         ];
+    }
+
+    private static string FormatSize(long sizeInBytes)
+    {
+        string[] units = ["B", "KB", "MB", "GB", "TB"];
+        var size = (double)sizeInBytes;
+        var unitIndex = 0;
+
+        while (size >= 1024 && unitIndex < units.Length - 1)
+        {
+            size /= 1024;
+            unitIndex++;
+        }
+
+        return $"{size:0.##} {units[unitIndex]}";
     }
 
     private void ApplyDashboard(DashboardData data)
