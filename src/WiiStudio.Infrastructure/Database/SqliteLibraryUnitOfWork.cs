@@ -109,12 +109,27 @@ public sealed class SqliteLibraryUnitOfWork : ILibraryUnitOfWork
                 UNIQUE(Path)
             );
             """, cancellationToken);
+        await ExecuteAsync(connection, """
+            CREATE TABLE IF NOT EXISTS ImportHistory (
+                Id TEXT PRIMARY KEY,
+                GameId TEXT NULL,
+                SourcePath TEXT NULL,
+                TargetDeviceId TEXT NULL,
+                Operation TEXT NOT NULL,
+                Success INTEGER NOT NULL,
+                Message TEXT NULL,
+                CreatedAt TEXT NOT NULL
+            );
+            """, cancellationToken);
         await ExecuteAsync(connection, "CREATE INDEX IF NOT EXISTS IX_Games_GameId ON Games(GameId);", cancellationToken);
         await ExecuteAsync(connection, "CREATE INDEX IF NOT EXISTS IX_Games_Title ON Games(Title);", cancellationToken);
         await ExecuteAsync(connection, "CREATE INDEX IF NOT EXISTS IX_Games_IsFavorite ON Games(IsFavorite);", cancellationToken);
         await ExecuteAsync(connection, "CREATE INDEX IF NOT EXISTS IX_GameAssets_GameId ON GameAssets(GameId);", cancellationToken);
         await ExecuteAsync(connection, "CREATE INDEX IF NOT EXISTS IX_LibraryFiles_GameId ON LibraryFiles(GameId);", cancellationToken);
+        await ExecuteAsync(connection, "CREATE INDEX IF NOT EXISTS IX_ImportHistory_GameId ON ImportHistory(GameId);", cancellationToken);
+        await ExecuteAsync(connection, "CREATE INDEX IF NOT EXISTS IX_ImportHistory_CreatedAt ON ImportHistory(CreatedAt);", cancellationToken);
         await ExecuteAsync(connection, "INSERT OR IGNORE INTO SchemaMigrations (Version, AppliedAt) VALUES (1, $appliedAt);", cancellationToken, ("$appliedAt", DateTimeOffset.UtcNow.ToString("O")));
+        await ExecuteAsync(connection, "INSERT OR IGNORE INTO SchemaMigrations (Version, AppliedAt) VALUES (2, $appliedAt);", cancellationToken, ("$appliedAt", DateTimeOffset.UtcNow.ToString("O")));
 
         _initialized = true;
     }

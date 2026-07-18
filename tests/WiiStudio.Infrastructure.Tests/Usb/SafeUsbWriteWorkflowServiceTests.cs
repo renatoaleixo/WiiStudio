@@ -133,11 +133,13 @@ public sealed class SafeUsbWriteWorkflowServiceTests : IDisposable
         var drive = CreateDrive(UsbDriveFileSystem.Wbfs, freeSpace: 512L * 1024L * 1024L);
         var wwtService = new FakeWwtService();
         var taskManager = new FakeTaskManager();
+        var importHistoryRepository = new FakeImportHistoryRepository();
         var service = CreateService(
             [drive],
             wwtService: wwtService,
             taskManager: taskManager,
-            readinessService: new FakeReadinessService(ReadinessState.Ready));
+            readinessService: new FakeReadinessService(ReadinessState.Ready),
+            importHistoryRepository: importHistoryRepository);
         var preview = await service.CreatePreviewAsync(sourcePath, drive.Id, CancellationToken.None);
 
         var result = await service.ExecuteAsync(new UsbWriteExecutionRequest(preview, UserConfirmed: true), null, CancellationToken.None);
@@ -147,6 +149,11 @@ public sealed class SafeUsbWriteWorkflowServiceTests : IDisposable
         wwtService.AddedSources.Should().ContainSingle().Which.Should().Be(sourcePath);
         taskManager.Statuses.Should().Contain(ManagedTaskStatus.Completed);
         taskManager.ProgressValues.Should().Contain(progress => progress > 0.49 && progress < 0.51);
+        importHistoryRepository.Entries.Should().ContainSingle(entry =>
+            entry.GameId == "RMCP01"
+            && entry.Operation == "usb-write"
+            && entry.Success
+            && entry.Message == "usbWrite.completed");
     }
 
     [Fact]
@@ -184,7 +191,8 @@ public sealed class SafeUsbWriteWorkflowServiceTests : IDisposable
         FakeDevicePermissionService? devicePermissionService = null,
         FakeTaskManager? taskManager = null,
         FakeNotificationService? notificationService = null,
-        IWiiUsbReadinessService? readinessService = null)
+        IWiiUsbReadinessService? readinessService = null,
+        IImportHistoryRepository? importHistoryRepository = null)
     {
         return new SafeUsbWriteWorkflowService(
             new FakeUsbDriveService(drives),
@@ -193,7 +201,8 @@ public sealed class SafeUsbWriteWorkflowServiceTests : IDisposable
             devicePermissionService ?? new FakeDevicePermissionService(),
             taskManager ?? new FakeTaskManager(),
             notificationService ?? new FakeNotificationService(),
-            readinessService);
+            readinessService,
+            importHistoryRepository);
     }
 
     private string CreateSource(string fileName, int size)
@@ -401,6 +410,22 @@ public sealed class SafeUsbWriteWorkflowServiceTests : IDisposable
         public Task ExportAsync(WiiUsbReadinessResult result, string outputFile, CancellationToken cancellationToken = default)
         {
             return Task.CompletedTask;
+        }
+    }
+
+    private sealed class FakeImportHistoryRepository : IImportHistoryRepository
+    {
+        public List<ImportHistoryEntry> Entries { get; } = [];
+
+        public Task AppendAsync(ImportHistoryEntry entry, CancellationToken cancellationToken = default)
+        {
+            Entries.Add(entry);
+            return Task.CompletedTask;
+        }
+
+        public Task<IReadOnlyList<ImportHistoryEntry>> GetRecentAsync(int limit = 100, CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult<IReadOnlyList<ImportHistoryEntry>>(Entries.Take(limit).ToList());
         }
     }
 }

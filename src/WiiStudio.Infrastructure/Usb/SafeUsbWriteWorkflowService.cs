@@ -19,6 +19,7 @@ public sealed class SafeUsbWriteWorkflowService : IUsbWriteWorkflowService
     private readonly ITaskManager _taskManager;
     private readonly INotificationService _notificationService;
     private readonly IWiiUsbReadinessService? _readinessService;
+    private readonly IImportHistoryRepository? _importHistoryRepository;
 
     public SafeUsbWriteWorkflowService(
         IUsbDriveService usbDriveService,
@@ -27,7 +28,8 @@ public sealed class SafeUsbWriteWorkflowService : IUsbWriteWorkflowService
         IDevicePermissionService devicePermissionService,
         ITaskManager taskManager,
         INotificationService notificationService,
-        IWiiUsbReadinessService? readinessService = null)
+        IWiiUsbReadinessService? readinessService = null,
+        IImportHistoryRepository? importHistoryRepository = null)
     {
         _usbDriveService = usbDriveService;
         _wwtService = wwtService;
@@ -36,6 +38,7 @@ public sealed class SafeUsbWriteWorkflowService : IUsbWriteWorkflowService
         _taskManager = taskManager;
         _notificationService = notificationService;
         _readinessService = readinessService;
+        _importHistoryRepository = importHistoryRepository;
     }
 
     public async Task<UsbWritePreview> CreatePreviewAsync(
@@ -99,11 +102,13 @@ public sealed class SafeUsbWriteWorkflowService : IUsbWriteWorkflowService
 
         if (!request.UserConfirmed)
         {
+            await RecordImportHistoryAsync(request.Preview, success: false, "usbWrite.confirmationRequired", cancellationToken);
             return Failed(request.Preview, "usbWrite.confirmationRequired", TimeSpan.Zero);
         }
 
         if (request.Preview.IsBlocked)
         {
+            await RecordImportHistoryAsync(request.Preview, success: false, request.Preview.BlockReasonKey ?? "usbWrite.blocked", cancellationToken);
             return Failed(request.Preview, request.Preview.BlockReasonKey ?? "usbWrite.blocked", TimeSpan.Zero);
         }
 
@@ -111,6 +116,7 @@ public sealed class SafeUsbWriteWorkflowService : IUsbWriteWorkflowService
         var executionBlock = GetExecutionBlockReason(request.Preview, drive);
         if (executionBlock is not null)
         {
+            await RecordImportHistoryAsync(request.Preview, success: false, executionBlock, cancellationToken);
             return Failed(request.Preview, executionBlock, TimeSpan.Zero);
         }
 
@@ -137,6 +143,7 @@ public sealed class SafeUsbWriteWorkflowService : IUsbWriteWorkflowService
                 await _notificationService.PublishAsync(
                     NotificationMessage.Create(NotificationType.Error, "Falha na validação pós-escrita", request.Preview.SourcePath, isPersistent: true, groupKey: taskId.ToString("N")),
                     CancellationToken.None);
+                await RecordImportHistoryAsync(request.Preview, success: false, "usbWrite.postWriteValidationFailed", CancellationToken.None);
                 return Failed(
                     request.Preview,
                     "usbWrite.postWriteValidationFailed",
@@ -149,6 +156,7 @@ public sealed class SafeUsbWriteWorkflowService : IUsbWriteWorkflowService
             await _notificationService.PublishAsync(
                 NotificationMessage.Create(NotificationType.Success, "Escrita USB concluída", request.Preview.SourcePath, groupKey: taskId.ToString("N")),
                 cancellationToken);
+            await RecordImportHistoryAsync(request.Preview, success: true, "usbWrite.completed", cancellationToken);
             progress?.Report(new WiimmsOperationProgress(100, "Escrita USB concluída", request.Preview.SourcePath, null, null, null, TimeSpan.Zero, IsIndeterminate: false));
             return new UsbWriteResult(
                 true,
@@ -163,6 +171,7 @@ public sealed class SafeUsbWriteWorkflowService : IUsbWriteWorkflowService
         {
             stopwatch.Stop();
             await _taskManager.CancelAsync(taskId, CancellationToken.None);
+            await RecordImportHistoryAsync(request.Preview, success: false, "usbWrite.cancelled", CancellationToken.None);
             return Failed(request.Preview, "usbWrite.cancelled", stopwatch.Elapsed);
         }
         catch (Exception)
@@ -172,6 +181,7 @@ public sealed class SafeUsbWriteWorkflowService : IUsbWriteWorkflowService
             await _notificationService.PublishAsync(
                 NotificationMessage.Create(NotificationType.Error, "Falha na escrita USB", request.Preview.SourcePath, isPersistent: true, groupKey: taskId.ToString("N")),
                 CancellationToken.None);
+            await RecordImportHistoryAsync(request.Preview, success: false, "usbWrite.failed", CancellationToken.None);
             return Failed(request.Preview, "usbWrite.failed", stopwatch.Elapsed);
         }
     }
@@ -317,6 +327,30 @@ public sealed class SafeUsbWriteWorkflowService : IUsbWriteWorkflowService
                 Debug.WriteLine($"Failed to update USB write progress: {exception.Message}");
             }
         });
+    }
+
+    private async Task RecordImportHistoryAsync(
+        UsbWritePreview preview,
+        bool success,
+        string message,
+        CancellationToken cancellationToken)
+    {
+        if (_importHistoryRepository is null)
+        {
+            return;
+        }
+
+        await _importHistoryRepository.AppendAsync(
+            new ImportHistoryEntry(
+                Guid.NewGuid(),
+                preview.GameId,
+                preview.SourcePath,
+                preview.TargetDriveId.ToString(),
+                "usb-write",
+                success,
+                message,
+                DateTimeOffset.UtcNow),
+            cancellationToken);
     }
 
     private async Task<string?> TryDetectDuplicateAsync(UsbDrive drive, string gameId, CancellationToken cancellationToken)

@@ -128,6 +128,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<ILibraryFileRepository>(services => services.GetRequiredService<SqliteGameLibraryRepository>());
         services.AddSingleton<IGameMetadataRepository, SqliteGameMetadataRepository>();
         services.AddSingleton<IGameAssetRepository, SqliteGameAssetRepository>();
+        services.AddSingleton<IImportHistoryRepository, SqliteImportHistoryRepository>();
         services.AddSingleton<IProcessRunner, ProcessRunner>();
         services.AddSingleton<IProcessExecutor, SystemProcessExecutor>();
         services.AddSingleton<IExternalToolDefinitionProvider, ExternalToolDefinitionProvider>();

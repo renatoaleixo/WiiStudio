@@ -1,4 +1,5 @@
 using FluentAssertions;
+using Microsoft.Data.Sqlite;
 using WiiStudio.Application.DTOs;
 using WiiStudio.Domain.Enums;
 using WiiStudio.Infrastructure.Database;
@@ -47,6 +48,90 @@ public sealed class SqliteLibraryRepositoryTests : IDisposable
 
         var assets = await repository.GetByGameIdAsync("RMCP01", CancellationToken.None);
         assets.Should().ContainSingle().Which.LocalPath.Should().Be("/covers/RMCP01.png");
+    }
+
+    [Fact]
+    public async Task InitializeAsync_ShouldCreateImportHistoryAndMigrations()
+    {
+        var unitOfWork = CreateUnitOfWork();
+
+        await unitOfWork.InitializeAsync(CancellationToken.None);
+
+        await using var connection = unitOfWork.CreateConnection();
+        await connection.OpenAsync();
+        await using var tableCommand = connection.CreateCommand();
+        tableCommand.CommandText = "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = 'ImportHistory';";
+        var tableCount = (long)(await tableCommand.ExecuteScalarAsync() ?? 0L);
+        tableCount.Should().Be(1);
+
+        await using var migrationCommand = connection.CreateCommand();
+        migrationCommand.CommandText = "SELECT Version FROM SchemaMigrations ORDER BY Version;";
+        await using var reader = await migrationCommand.ExecuteReaderAsync();
+        var versions = new List<long>();
+        while (await reader.ReadAsync())
+        {
+            versions.Add(reader.GetInt64(0));
+        }
+
+        versions.Should().Contain([1, 2]);
+    }
+
+    [Fact]
+    public async Task InitializeAsync_ShouldBackupExistingDatabaseBeforeMigration()
+    {
+        var databasePath = Path.Combine(root, "with-backup.db");
+        Directory.CreateDirectory(root);
+        await using (var existingConnection = new SqliteConnection(new SqliteConnectionStringBuilder
+        {
+            DataSource = databasePath,
+            Mode = SqliteOpenMode.ReadWriteCreate
+        }.ToString()))
+        {
+            await existingConnection.OpenAsync();
+        }
+
+        var unitOfWork = new SqliteLibraryUnitOfWork(new LibraryDatabaseOptions
+        {
+            DatabasePath = databasePath,
+            BackupBeforeMigration = true
+        });
+
+        await unitOfWork.InitializeAsync(CancellationToken.None);
+
+        File.Exists($"{databasePath}.bak").Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task ImportHistoryRepository_ShouldPersistRecentEntries()
+    {
+        var unitOfWork = CreateUnitOfWork();
+        var repository = new SqliteImportHistoryRepository(unitOfWork);
+        var first = new ImportHistoryEntry(
+            Guid.NewGuid(),
+            "RMCP01",
+            "/games/RMCP01.iso",
+            "usb-1",
+            "usb-write",
+            true,
+            "usbWrite.completed",
+            DateTimeOffset.UtcNow.AddMinutes(-5));
+        var second = first with
+        {
+            Id = Guid.NewGuid(),
+            GameId = "RSPE01",
+            SourcePath = "/games/RSPE01.iso",
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+
+        await repository.AppendAsync(first, CancellationToken.None);
+        await repository.AppendAsync(second, CancellationToken.None);
+
+        var entries = await repository.GetRecentAsync(1, CancellationToken.None);
+
+        entries.Should().ContainSingle();
+        entries[0].GameId.Should().Be("RSPE01");
+        entries[0].Operation.Should().Be("usb-write");
+        entries[0].Success.Should().BeTrue();
     }
 
     public void Dispose()

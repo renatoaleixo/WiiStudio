@@ -313,3 +313,68 @@ public sealed class SqliteGameAssetRepository : IGameAssetRepository
         return assets;
     }
 }
+
+public sealed class SqliteImportHistoryRepository : IImportHistoryRepository
+{
+    private readonly SqliteLibraryUnitOfWork _unitOfWork;
+
+    public SqliteImportHistoryRepository(SqliteLibraryUnitOfWork unitOfWork)
+    {
+        _unitOfWork = unitOfWork;
+    }
+
+    public async Task AppendAsync(ImportHistoryEntry entry, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(entry);
+        await _unitOfWork.InitializeAsync(cancellationToken);
+        await using var connection = _unitOfWork.CreateConnection();
+        await connection.OpenAsync(cancellationToken);
+        await using var command = connection.CreateCommand();
+        command.CommandText = """
+            INSERT INTO ImportHistory (Id, GameId, SourcePath, TargetDeviceId, Operation, Success, Message, CreatedAt)
+            VALUES ($id, $gameId, $sourcePath, $targetDeviceId, $operation, $success, $message, $createdAt);
+            """;
+        command.Parameters.AddWithValue("$id", entry.Id.ToString("N"));
+        command.Parameters.AddWithValue("$gameId", (object?)entry.GameId ?? DBNull.Value);
+        command.Parameters.AddWithValue("$sourcePath", (object?)entry.SourcePath ?? DBNull.Value);
+        command.Parameters.AddWithValue("$targetDeviceId", (object?)entry.TargetDeviceId ?? DBNull.Value);
+        command.Parameters.AddWithValue("$operation", entry.Operation);
+        command.Parameters.AddWithValue("$success", entry.Success ? 1 : 0);
+        command.Parameters.AddWithValue("$message", (object?)entry.Message ?? DBNull.Value);
+        command.Parameters.AddWithValue("$createdAt", entry.CreatedAt.ToString("O"));
+        await command.ExecuteNonQueryAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<ImportHistoryEntry>> GetRecentAsync(
+        int limit = 100,
+        CancellationToken cancellationToken = default)
+    {
+        await _unitOfWork.InitializeAsync(cancellationToken);
+        await using var connection = _unitOfWork.CreateConnection();
+        await connection.OpenAsync(cancellationToken);
+        await using var command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT Id, GameId, SourcePath, TargetDeviceId, Operation, Success, Message, CreatedAt
+            FROM ImportHistory
+            ORDER BY CreatedAt DESC
+            LIMIT $limit;
+            """;
+        command.Parameters.AddWithValue("$limit", Math.Max(1, limit));
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        var entries = new List<ImportHistoryEntry>();
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            entries.Add(new ImportHistoryEntry(
+                Guid.Parse(reader.GetString(0)),
+                reader.IsDBNull(1) ? null : reader.GetString(1),
+                reader.IsDBNull(2) ? null : reader.GetString(2),
+                reader.IsDBNull(3) ? null : reader.GetString(3),
+                reader.GetString(4),
+                reader.GetInt32(5) == 1,
+                reader.IsDBNull(6) ? null : reader.GetString(6),
+                DateTimeOffset.Parse(reader.GetString(7))));
+        }
+
+        return entries;
+    }
+}
