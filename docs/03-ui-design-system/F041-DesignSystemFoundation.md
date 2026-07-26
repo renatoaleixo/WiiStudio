@@ -2,7 +2,7 @@
 # F041 - Design System Foundation
 
 > Feature ID: F041
-> Status: Ready for Development
+> Status: Implemented and Homologated
 > Priority: Critical
 > Epic: Design System
 
@@ -164,12 +164,12 @@ Obrigatório:
 
 # Critérios de Aceite
 
-- [ ] Tokens globais definidos.
-- [ ] Temas claro e escuro suportados.
-- [ ] Componentes base consomem tokens.
-- [ ] Acessibilidade considerada.
-- [ ] Documentação de uso criada.
-- [ ] Sem estilos duplicados.
+- [x] Tokens globais definidos.
+- [x] Temas claro e escuro suportados.
+- [x] Componentes base consomem tokens.
+- [x] Acessibilidade considerada.
+- [x] Documentação de uso criada.
+- [x] Sem estilos duplicados.
 
 ---
 

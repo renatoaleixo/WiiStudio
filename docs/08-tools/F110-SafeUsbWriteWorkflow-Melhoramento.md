@@ -2,7 +2,7 @@
 
 > **Suggested path:** `docs/08-tools/F110-SafeUsbWriteWorkflow-Melhoramento.md`  
 > **Priority:** Alta  
-> **Status:** Improvement proposal  
+> **Status:** Implemented and Homologated  
 > **Architecture:** .NET 10, Avalonia, Application / Infrastructure / Domain
 
 ---

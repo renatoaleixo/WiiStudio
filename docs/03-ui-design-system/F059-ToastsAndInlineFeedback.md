@@ -1,7 +1,7 @@
 # F059 - Toasts & Inline Feedback
 
 > Feature ID: F059
-> Status: Ready for Development
+> Status: Implemented and Homologated
 > Priority: High
 > Epic: Advanced UI Components
 
@@ -417,19 +417,19 @@ Obrigatório:
 
 # Critérios de Aceite
 
-- [ ] Toasts definidos.
-- [ ] Inline Feedback definido.
-- [ ] Banners definidos.
-- [ ] Snackbars definidos.
-- [ ] Severidades definidas.
-- [ ] Duração e persistência documentadas.
-- [ ] Integração com Notification Center definida.
-- [ ] Integração com Forms definida.
-- [ ] Integração com Dialogs definida.
-- [ ] Compatível com Light/Dark.
-- [ ] Acessibilidade validada.
-- [ ] Textos localizáveis.
-- [ ] Sem estilos inline.
+- [x] Toasts definidos.
+- [x] Inline Feedback definido.
+- [x] Banners definidos.
+- [x] Snackbars definidos.
+- [x] Severidades definidas.
+- [x] Duração e persistência documentadas.
+- [x] Integração com Notification Center definida.
+- [x] Integração com Forms definida.
+- [x] Integração com Dialogs definida.
+- [x] Compatível com Light/Dark.
+- [x] Acessibilidade validada.
+- [x] Textos localizáveis.
+- [x] Sem estilos inline.
 
 ---
 

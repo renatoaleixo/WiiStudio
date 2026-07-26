@@ -1,7 +1,7 @@
 # F006 - Import NKit
 
 > Feature ID: F006\
-> Status: Ready for Development\
+> Status: Implemented and Homologated\
 > Priority: High\
 > Epic: Import
 
@@ -191,12 +191,12 @@ da biblioteca.
 
 # Critérios de Aceite
 
--   [ ] Importa arquivos `.nkit.iso`.
--   [ ] Restaura ISO corretamente.
--   [ ] Valida ISO antes da gravação.
--   [ ] Remove temporários automaticamente.
--   [ ] Atualiza biblioteca ao concluir.
--   [ ] Suporta cancelamento.
+-   [x] Importa arquivos `.nkit.iso`.
+-   [x] Restaura ISO corretamente.
+-   [x] Valida ISO antes da gravação.
+-   [x] Remove temporários automaticamente.
+-   [x] Atualiza biblioteca ao concluir.
+-   [x] Suporta cancelamento.
 
 ------------------------------------------------------------------------
 

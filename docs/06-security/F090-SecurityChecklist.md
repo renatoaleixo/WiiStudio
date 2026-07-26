@@ -1,7 +1,7 @@
 # F090 - Security Checklist
 
 > Feature ID: F090
-> Status: Ready for Development
+> Status: Implemented and Homologated
 > Priority: Critical
 > Epic: Security & Permissions
 
@@ -15,142 +15,142 @@ Este checklist deve ser aplicado antes de considerar qualquer feature sensível 
 
 # Checklist Geral
 
-- [ ] Entrada externa validada.
-- [ ] Paths normalizados.
-- [ ] Path traversal bloqueado.
-- [ ] Permissões verificadas.
-- [ ] Operações destrutivas confirmadas.
-- [ ] Logs redigidos.
-- [ ] Exceptions não vazam segredos.
-- [ ] CancellationToken utilizado em operação longa.
-- [ ] Falha segura implementada.
-- [ ] Testes de erro implementados.
+- [x] Entrada externa validada.
+- [x] Paths normalizados.
+- [x] Path traversal bloqueado.
+- [x] Permissões verificadas.
+- [x] Operações destrutivas confirmadas.
+- [x] Logs redigidos.
+- [x] Exceptions não vazam segredos.
+- [x] CancellationToken utilizado em operação longa.
+- [x] Falha segura implementada.
+- [x] Testes de erro implementados.
 
 ---
 
 # File System
 
-- [ ] Leitura valida existência.
-- [ ] Escrita valida destino.
-- [ ] Espaço em disco verificado quando necessário.
-- [ ] Extensão validada.
-- [ ] Escrita temporária usada para arquivo importante.
-- [ ] Sobrescrita exige política.
-- [ ] Exclusão exige confirmação.
-- [ ] Plugin não acessa path fora do escopo.
-- [ ] Auditoria registrada para falhas de permissão.
+- [x] Leitura valida existência.
+- [x] Escrita valida destino.
+- [x] Espaço em disco verificado quando necessário.
+- [x] Extensão validada.
+- [x] Escrita temporária usada para arquivo importante.
+- [x] Sobrescrita exige política.
+- [x] Exclusão exige confirmação.
+- [x] Plugin não acessa path fora do escopo.
+- [x] Auditoria registrada para falhas de permissão.
 
 ---
 
 # Safe Path
 
-- [ ] Path normalizado.
-- [ ] Path relativo validado contra root.
-- [ ] Path absoluto permitido somente quando necessário.
-- [ ] `..` e variações bloqueadas.
-- [ ] Symlink tratado.
-- [ ] Paths de manifesto não escapam da pasta.
-- [ ] Paths multiplataforma testados.
-- [ ] Nenhuma concatenação insegura.
+- [x] Path normalizado.
+- [x] Path relativo validado contra root.
+- [x] Path absoluto permitido somente quando necessário.
+- [x] `..` e variações bloqueadas.
+- [x] Symlink tratado.
+- [x] Paths de manifesto não escapam da pasta.
+- [x] Paths multiplataforma testados.
+- [x] Nenhuma concatenação insegura.
 
 ---
 
 # External Process
 
-- [ ] Usa `IProcessRunner`.
-- [ ] Não usa `Process.Start` direto.
-- [ ] Não usa shell arbitrário.
-- [ ] Executável validado.
-- [ ] Argumentos passados como lista.
-- [ ] Timeout definido.
-- [ ] CancellationToken suportado.
-- [ ] stdout/stderr capturados.
-- [ ] Logs redigidos.
-- [ ] Processos longos integrados ao Task Manager.
+- [x] Usa `IProcessRunner`.
+- [x] Não usa `Process.Start` direto.
+- [x] Não usa shell arbitrário.
+- [x] Executável validado.
+- [x] Argumentos passados como lista.
+- [x] Timeout definido.
+- [x] CancellationToken suportado.
+- [x] stdout/stderr capturados.
+- [x] Logs redigidos.
+- [x] Processos longos integrados ao Task Manager.
 
 ---
 
 # Plugins
 
-- [ ] Manifesto validado.
-- [ ] SDK compatível.
-- [ ] Permissões conhecidas.
-- [ ] Permissões aprovadas.
-- [ ] Contexto isolado.
-- [ ] Storage isolado.
-- [ ] Exceções capturadas.
-- [ ] Plugin pode ser desativado.
-- [ ] Plugin inseguro vai para quarentena.
-- [ ] Logs contêm PluginId.
-- [ ] Capacidades removidas no unload.
+- [x] Manifesto validado.
+- [x] SDK compatível.
+- [x] Permissões conhecidas.
+- [x] Permissões aprovadas.
+- [x] Contexto isolado.
+- [x] Storage isolado.
+- [x] Exceções capturadas.
+- [x] Plugin pode ser desativado.
+- [x] Plugin inseguro vai para quarentena.
+- [x] Logs contêm PluginId.
+- [x] Capacidades removidas no unload.
 
 ---
 
 # Sensitive Settings
 
-- [ ] Setting classificada.
-- [ ] Secret não aparece em claro na UI.
-- [ ] Secret não aparece em log.
-- [ ] Secret não é exportada por padrão.
-- [ ] Importação valida formato.
-- [ ] Plugin não acessa secret externo.
-- [ ] Auditoria não registra valor.
-- [ ] Fallback de armazenamento documentado.
+- [x] Setting classificada.
+- [x] Secret não aparece em claro na UI.
+- [x] Secret não aparece em log.
+- [x] Secret não é exportada por padrão.
+- [x] Importação valida formato.
+- [x] Plugin não acessa secret externo.
+- [x] Auditoria não registra valor.
+- [x] Fallback de armazenamento documentado.
 
 ---
 
 # Logs
 
-- [ ] Redaction aplicada.
-- [ ] Authorization redigido.
-- [ ] Tokens redigidos.
-- [ ] Connection strings redigidas.
-- [ ] Exceptions redigidas.
-- [ ] stdout/stderr redigidos.
-- [ ] Exportação redigida.
-- [ ] Logs mantêm utilidade diagnóstica.
+- [x] Redaction aplicada.
+- [x] Authorization redigido.
+- [x] Tokens redigidos.
+- [x] Connection strings redigidas.
+- [x] Exceptions redigidas.
+- [x] stdout/stderr redigidos.
+- [x] Exportação redigida.
+- [x] Logs mantêm utilidade diagnóstica.
 
 ---
 
 # Backups
 
-- [ ] Destino validado.
-- [ ] Espaço verificado.
-- [ ] Manifesto gerado.
-- [ ] Hash calculado.
-- [ ] Integridade validada.
-- [ ] Restauração destrutiva confirmada.
-- [ ] Safety backup criado quando possível.
-- [ ] Path traversal bloqueado.
-- [ ] Secrets tratados.
-- [ ] Rollback previsto.
+- [x] Destino validado.
+- [x] Espaço verificado.
+- [x] Manifesto gerado.
+- [x] Hash calculado.
+- [x] Integridade validada.
+- [x] Restauração destrutiva confirmada.
+- [x] Safety backup criado quando possível.
+- [x] Path traversal bloqueado.
+- [x] Secrets tratados.
+- [x] Rollback previsto.
 
 ---
 
 # Updates
 
-- [ ] Origem validada.
-- [ ] Metadata validada.
-- [ ] Checksum validado.
-- [ ] Assinatura futura considerada.
-- [ ] Changelog exibido.
-- [ ] Compatibilidade verificada.
-- [ ] Downgrade bloqueado.
-- [ ] Rollback previsto.
-- [ ] Auditoria registrada.
-- [ ] Novas permissões de plugin exibidas.
+- [x] Origem validada.
+- [x] Metadata validada.
+- [x] Checksum validado.
+- [x] Assinatura futura considerada.
+- [x] Changelog exibido.
+- [x] Compatibilidade verificada.
+- [x] Downgrade bloqueado.
+- [x] Rollback previsto.
+- [x] Auditoria registrada.
+- [x] Novas permissões de plugin exibidas.
 
 ---
 
 # UI e Acessibilidade Segura
 
-- [ ] Ações destrutivas confirmadas.
-- [ ] Mensagens não revelam segredo.
-- [ ] Erros técnicos ficam em detalhes seguros.
-- [ ] Notificações não vazam dados.
-- [ ] Dialogs críticos são acessíveis.
-- [ ] Foco não fica preso indevidamente.
-- [ ] Operações bloqueantes têm cancelamento.
+- [x] Ações destrutivas confirmadas.
+- [x] Mensagens não revelam segredo.
+- [x] Erros técnicos ficam em detalhes seguros.
+- [x] Notificações não vazam dados.
+- [x] Dialogs críticos são acessíveis.
+- [x] Foco não fica preso indevidamente.
+- [x] Operações bloqueantes têm cancelamento.
 
 ---
 

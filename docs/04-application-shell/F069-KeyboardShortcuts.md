@@ -1,7 +1,7 @@
 # F069 - Keyboard Shortcuts
 
 > Feature ID: F069
-> Status: Ready for Development
+> Status: Implemented and Homologated
 > Priority: Critical
 > Epic: Application Shell
 
@@ -396,18 +396,18 @@ Obrigatório:
 
 # Critérios de Aceite
 
-- [ ] Atalhos globais definidos.
-- [ ] Atalhos contextuais definidos.
-- [ ] Shortcut Registry especificado.
-- [ ] Shortcut Service especificado.
-- [ ] Resolução de conflitos documentada.
-- [ ] Integração com Commands definida.
-- [ ] Integração com Command Palette definida.
-- [ ] Integração com Main Menu definida.
-- [ ] Integração com Tooltips definida.
-- [ ] Acessibilidade validada.
-- [ ] Multiplataforma considerado.
-- [ ] Sem lógica de negócio no code-behind.
+- [x] Atalhos globais definidos.
+- [x] Atalhos contextuais definidos.
+- [x] Shortcut Registry especificado.
+- [x] Shortcut Service especificado.
+- [x] Resolução de conflitos documentada.
+- [x] Integração com Commands definida.
+- [x] Integração com Command Palette definida.
+- [x] Integração com Main Menu definida.
+- [x] Integração com Tooltips definida.
+- [x] Acessibilidade validada.
+- [x] Multiplataforma considerado.
+- [x] Sem lógica de negócio no code-behind.
 
 ---
 

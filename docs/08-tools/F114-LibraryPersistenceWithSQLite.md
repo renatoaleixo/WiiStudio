@@ -1,7 +1,7 @@
 # F114 - Library Persistence with SQLite
 
 > Feature ID: F114  
-> Status: Ready for Development  
+> Status: Implemented and Homologated  
 > Priority: Critical  
 > Epic: Persistence / Game Library  
 > Area: Database, Infrastructure, Game Library, Metadata, Assets  
@@ -333,16 +333,16 @@ Last error: ...
 
 # Critérios de Aceite
 
-- [ ] Biblioteca persiste em SQLite.
-- [ ] Repositories criados.
-- [ ] Migrations funcionam.
-- [ ] JSON antigo é migrado com backup.
-- [ ] Busca/filtro usam banco.
-- [ ] Assets são registrados.
-- [ ] Metadados são registrados.
-- [ ] Diagnóstico mostra status do banco.
-- [ ] Testes de banco passam.
-- [ ] UI não acessa SQLite diretamente.
+- [x] Biblioteca persiste em SQLite.
+- [x] Repositories criados.
+- [x] Migrations funcionam.
+- [x] JSON antigo é migrado com backup.
+- [x] Busca/filtro usam banco.
+- [x] Assets são registrados.
+- [x] Metadados são registrados.
+- [x] Diagnóstico mostra status do banco.
+- [x] Testes de banco passam.
+- [x] UI não acessa SQLite diretamente.
 
 ---
 

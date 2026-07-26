@@ -1,7 +1,7 @@
 # F100 - Quality Gates
 
 > Feature ID: F100
-> Status: Ready for Development
+> Status: Implemented and Homologated
 > Priority: Critical
 > Epic: Testing & Quality
 
@@ -228,17 +228,17 @@ Exigir revisão quando:
 
 # Critérios de Aceite
 
-- [ ] Gate de PR definido.
-- [ ] Gate de feature definido.
-- [ ] Gate de segurança definido.
-- [ ] Gate de testes definido.
-- [ ] Gate de UI definido.
-- [ ] Gate de plugins definido.
-- [ ] Gate de banco definido.
-- [ ] Gate de processos externos definido.
-- [ ] Gate de documentação definido.
-- [ ] Bloqueios automáticos definidos.
-- [ ] Bloqueios manuais definidos.
+- [x] Gate de PR definido.
+- [x] Gate de feature definido.
+- [x] Gate de segurança definido.
+- [x] Gate de testes definido.
+- [x] Gate de UI definido.
+- [x] Gate de plugins definido.
+- [x] Gate de banco definido.
+- [x] Gate de processos externos definido.
+- [x] Gate de documentação definido.
+- [x] Bloqueios automáticos definidos.
+- [x] Bloqueios manuais definidos.
 
 ---
 

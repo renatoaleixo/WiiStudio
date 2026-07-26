@@ -1,7 +1,7 @@
 # F077 - Plugin Metadata Providers
 
 > Feature ID: F077
-> Status: Ready for Development
+> Status: Implemented and Homologated
 > Priority: High
 > Epic: Plugin SDK
 
@@ -309,18 +309,18 @@ Provider pode aparecer em:
 
 # Critérios de Aceite
 
-- [ ] Contrato `IMetadataProviderPlugin` definido.
-- [ ] Request definido.
-- [ ] Result definido.
-- [ ] GameMetadata definido.
-- [ ] Permissões documentadas.
-- [ ] Prioridade documentada.
-- [ ] Fallback documentado.
-- [ ] Cache documentado.
-- [ ] Rate limit documentado.
-- [ ] Política de preservação definida.
-- [ ] Diagnóstico definido.
-- [ ] Integração com Metadata Synchronization prevista.
+- [x] Contrato `IMetadataProviderPlugin` definido.
+- [x] Request definido.
+- [x] Result definido.
+- [x] GameMetadata definido.
+- [x] Permissões documentadas.
+- [x] Prioridade documentada.
+- [x] Fallback documentado.
+- [x] Cache documentado.
+- [x] Rate limit documentado.
+- [x] Política de preservação definida.
+- [x] Diagnóstico definido.
+- [x] Integração com Metadata Synchronization prevista.
 
 ---
 

@@ -1,7 +1,7 @@
 # F004 - Import WBFS
 
 > Feature ID: F004\
-> Status: Ready for Development\
+> Status: Implemented and Homologated\
 > Priority: Critical\
 > Epic: Import
 
@@ -159,12 +159,12 @@ public interface IWbfsImportService
 
 # Critérios de Aceite
 
--   [ ] Importa um ou múltiplos arquivos `.wbfs`.
--   [ ] Detecta duplicidade antes de gravar.
--   [ ] Não sobrescreve jogos sem confirmação.
--   [ ] Atualiza biblioteca automaticamente.
--   [ ] Permite cancelamento.
--   [ ] Registra logs estruturados.
+-   [x] Importa um ou múltiplos arquivos `.wbfs`.
+-   [x] Detecta duplicidade antes de gravar.
+-   [x] Não sobrescreve jogos sem confirmação.
+-   [x] Atualiza biblioteca automaticamente.
+-   [x] Permite cancelamento.
+-   [x] Registra logs estruturados.
 
 ------------------------------------------------------------------------
 

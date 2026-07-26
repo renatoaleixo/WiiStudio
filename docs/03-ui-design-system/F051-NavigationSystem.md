@@ -1,7 +1,7 @@
 # F051 - Navigation System
 
 > Feature ID: F051
-> Status: Ready for Development
+> Status: Implemented and Homologated
 > Priority: Critical
 > Epic: Advanced UI Components
 
@@ -444,20 +444,20 @@ Obrigatório:
 
 # Critérios de Aceite
 
-- [ ] Áreas principais de navegação definidas.
-- [ ] Rotas oficiais documentadas.
-- [ ] `INavigationService` definido.
-- [ ] Sidebar suporta modo expandido.
-- [ ] Sidebar suporta modo recolhido.
-- [ ] Item ativo destacado.
-- [ ] Navegação por teclado funcional.
-- [ ] Breadcrumb suportado quando aplicável.
-- [ ] Integração com Command Palette prevista.
-- [ ] Integração com atalhos prevista.
-- [ ] Compatível com Light/Dark.
-- [ ] Textos localizáveis.
-- [ ] Sem lógica de navegação no code-behind.
-- [ ] Rota inválida tratada.
+- [x] Áreas principais de navegação definidas.
+- [x] Rotas oficiais documentadas.
+- [x] `INavigationService` definido.
+- [x] Sidebar suporta modo expandido.
+- [x] Sidebar suporta modo recolhido.
+- [x] Item ativo destacado.
+- [x] Navegação por teclado funcional.
+- [x] Breadcrumb suportado quando aplicável.
+- [x] Integração com Command Palette prevista.
+- [x] Integração com atalhos prevista.
+- [x] Compatível com Light/Dark.
+- [x] Textos localizáveis.
+- [x] Sem lógica de navegação no code-behind.
+- [x] Rota inválida tratada.
 
 ---
 

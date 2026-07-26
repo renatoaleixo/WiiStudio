@@ -1,6 +1,6 @@
 # F036 - Dashboard
 
-> Feature ID: F036 Status: Ready for Development Priority: High Epic:
+> Feature ID: F036 Status: Implemented and Homologated Priority: High Epic:
 > User Interface
 
 # Objetivo
@@ -148,11 +148,11 @@ public interface IDashboardService
 
 # Critérios de Aceite
 
--   [ ] Carregamento inferior a 2 segundos.
--   [ ] Atualização automática.
--   [ ] Widgets configuráveis.
--   [ ] Atalhos rápidos funcionais.
--   [ ] Integração com todos os módulos.
+-   [x] Carregamento inferior a 2 segundos.
+-   [x] Atualização automática.
+-   [x] Widgets configuráveis.
+-   [x] Atalhos rápidos funcionais.
+-   [x] Integração com todos os módulos.
 
 ------------------------------------------------------------------------
 

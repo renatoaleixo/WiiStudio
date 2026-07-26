@@ -1,7 +1,7 @@
 # F124 - Packaging, Installer and CI/CD
 
 > Feature ID: F124  
-> Status: Ready for Development  
+> Status: Implemented and Homologated  
 > Priority: Critical  
 > Epic: Release Engineering / Production Readiness  
 > Area: Packaging, Installer, CI/CD, GitHub Releases, Testing  
@@ -284,17 +284,17 @@ Após empacotar:
 
 # Critérios de Aceite
 
-- [ ] Linux AppImage gerado.
-- [ ] Linux deb/rpm definidos.
-- [ ] Windows installer definido.
-- [ ] macOS DMG/app bundle definido.
-- [ ] Pipeline build/test/package definido.
-- [ ] GitHub Release definido.
-- [ ] Checksums gerados.
-- [ ] Manifest gerado.
-- [ ] Testes automáticos antes da release.
-- [ ] Smoke tests definidos.
-- [ ] Nenhum teste formata disco real.
+- [x] Linux AppImage gerado.
+- [x] Linux deb/rpm definidos.
+- [x] Windows installer definido.
+- [x] macOS DMG/app bundle definido.
+- [x] Pipeline build/test/package definido.
+- [x] GitHub Release definido.
+- [x] Checksums gerados.
+- [x] Manifest gerado.
+- [x] Testes automáticos antes da release.
+- [x] Smoke tests definidos.
+- [x] Nenhum teste formata disco real.
 
 ---
 

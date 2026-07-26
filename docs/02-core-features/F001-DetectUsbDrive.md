@@ -1,7 +1,7 @@
 # F001 - Detect USB Drive
 
 > Feature ID: F001\
-> Status: Ready for Development\
+> Status: Implemented and Homologated\
 > Priority: Critical\
 > Epic: Device Management
 
@@ -125,11 +125,11 @@ Cada erro deve possuir mensagem amigável e log estruturado.
 
 # Critérios de Aceite
 
--   [ ] Detecta conexão automática.
--   [ ] Detecta remoção automática.
--   [ ] Atualiza biblioteca sem reiniciar.
--   [ ] Não bloqueia a interface.
--   [ ] Funciona nas plataformas suportadas.
+-   [x] Detecta conexão automática.
+-   [x] Detecta remoção automática.
+-   [x] Atualiza biblioteca sem reiniciar.
+-   [x] Não bloqueia a interface.
+-   [x] Funciona nas plataformas suportadas.
 
 ------------------------------------------------------------------------
 

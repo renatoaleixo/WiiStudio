@@ -1,7 +1,7 @@
 # F071 - Plugin SDK Foundation
 
 > Feature ID: F071
-> Status: Ready for Development
+> Status: Implemented and Homologated
 > Priority: Critical
 > Epic: Plugin SDK
 
@@ -456,18 +456,18 @@ src/
 
 # Critérios de Aceite
 
-- [ ] Arquitetura base do Plugin SDK definida.
-- [ ] Contrato `IWiiStudioPlugin` definido.
-- [ ] `IPluginContext` definido.
-- [ ] Ciclo de vida documentado.
-- [ ] Estados de plugin definidos.
-- [ ] Versionamento definido.
-- [ ] Compatibilidade documentada.
-- [ ] Falha segura documentada.
-- [ ] Logging de plugins definido.
-- [ ] Storage isolado previsto.
-- [ ] UI Extensions previstas.
-- [ ] Regras para o Codex documentadas.
+- [x] Arquitetura base do Plugin SDK definida.
+- [x] Contrato `IWiiStudioPlugin` definido.
+- [x] `IPluginContext` definido.
+- [x] Ciclo de vida documentado.
+- [x] Estados de plugin definidos.
+- [x] Versionamento definido.
+- [x] Compatibilidade documentada.
+- [x] Falha segura documentada.
+- [x] Logging de plugins definido.
+- [x] Storage isolado previsto.
+- [x] UI Extensions previstas.
+- [x] Regras para o Codex documentadas.
 
 ---
 

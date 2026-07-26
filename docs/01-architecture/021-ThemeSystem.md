@@ -150,8 +150,8 @@ Registrar:
 
 # Checklist
 
--   [ ] ThemeManager definido
--   [ ] IThemeService especificado
--   [ ] Persistência documentada
--   [ ] Recursos centralizados
--   [ ] Acessibilidade contemplada
+-   [x] ThemeManager definido
+-   [x] IThemeService especificado
+-   [x] Persistência documentada
+-   [x] Recursos centralizados
+-   [x] Acessibilidade contemplada

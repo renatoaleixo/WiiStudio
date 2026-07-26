@@ -1,7 +1,7 @@
 # F072 - Plugin Manifest
 
 > Feature ID: F072
-> Status: Ready for Development
+> Status: Implemented and Homologated
 > Priority: Critical
 > Epic: Plugin SDK
 
@@ -482,20 +482,20 @@ Falhas de manifesto devem registrar:
 
 # Critérios de Aceite
 
-- [ ] Estrutura oficial do manifesto definida.
-- [ ] Campos obrigatórios definidos.
-- [ ] Campos opcionais definidos.
-- [ ] ID do plugin padronizado.
-- [ ] Versionamento definido.
-- [ ] Compatibilidade definida.
-- [ ] Capacidades oficiais definidas.
-- [ ] Permissões declaradas.
-- [ ] Dependências documentadas.
-- [ ] Recursos documentados.
-- [ ] Schema JSON previsto.
-- [ ] Validação documentada.
-- [ ] Segurança de paths definida.
-- [ ] Regras para o Codex documentadas.
+- [x] Estrutura oficial do manifesto definida.
+- [x] Campos obrigatórios definidos.
+- [x] Campos opcionais definidos.
+- [x] ID do plugin padronizado.
+- [x] Versionamento definido.
+- [x] Compatibilidade definida.
+- [x] Capacidades oficiais definidas.
+- [x] Permissões declaradas.
+- [x] Dependências documentadas.
+- [x] Recursos documentados.
+- [x] Schema JSON previsto.
+- [x] Validação documentada.
+- [x] Segurança de paths definida.
+- [x] Regras para o Codex documentadas.
 
 ---
 

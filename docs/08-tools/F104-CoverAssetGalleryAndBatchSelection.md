@@ -1,7 +1,7 @@
 # F104 - Cover Asset Gallery and Batch Selection
 
 > Feature ID: F104  
-> Status: Ready for Development  
+> Status: Implemented and Homologated  
 > Priority: High  
 > Epic: Metadata & Assets / Library UX  
 > Area: UI, Application, Cache, Asset Manager, Batch Operations  
@@ -215,11 +215,11 @@ Baixar capas e artes
 E futuramente permitir seleção granular:
 
 ```text
-[ ] Frente
-[ ] Verso / Full Cover
-[ ] Disco
-[ ] Banner
-[ ] Thumbnail
+[x] Frente
+[x] Verso / Full Cover
+[x] Disco
+[x] Banner
+[x] Thumbnail
 ```
 
 ---
@@ -749,26 +749,26 @@ Obrigatório:
 
 # Critérios de Aceite
 
-- [ ] Selecionar múltiplos jogos na biblioteca.
-- [ ] `Ctrl + Click` altera seleção.
-- [ ] `Shift + Click` seleciona intervalo.
-- [ ] Botão **Selecionar tudo** funciona.
-- [ ] Botão **Limpar seleção** funciona.
-- [ ] Contador de seleção está correto.
-- [ ] Baixar capas para múltiplos jogos selecionados.
-- [ ] Progresso por jogo é exibido.
-- [ ] Lote continua mesmo com falhas parciais.
-- [ ] Operação em lote pode ser cancelada.
-- [ ] Visualizar capa frontal ampliada.
-- [ ] Visualizar BackCover/FullCover.
-- [ ] Visualizar DiscArt.
-- [ ] Visualizar Banner quando existir.
-- [ ] Mostrar placeholder quando asset não existir.
-- [ ] Atualizar UI logo após download.
-- [ ] Miniatura da biblioteca atualiza após download.
-- [ ] Painel de detalhes atualiza após download.
-- [ ] Galeria atualiza após download.
-- [ ] Testes não dependem de internet real.
+- [x] Selecionar múltiplos jogos na biblioteca.
+- [x] `Ctrl + Click` altera seleção.
+- [x] `Shift + Click` seleciona intervalo.
+- [x] Botão **Selecionar tudo** funciona.
+- [x] Botão **Limpar seleção** funciona.
+- [x] Contador de seleção está correto.
+- [x] Baixar capas para múltiplos jogos selecionados.
+- [x] Progresso por jogo é exibido.
+- [x] Lote continua mesmo com falhas parciais.
+- [x] Operação em lote pode ser cancelada.
+- [x] Visualizar capa frontal ampliada.
+- [x] Visualizar BackCover/FullCover.
+- [x] Visualizar DiscArt.
+- [x] Visualizar Banner quando existir.
+- [x] Mostrar placeholder quando asset não existir.
+- [x] Atualizar UI logo após download.
+- [x] Miniatura da biblioteca atualiza após download.
+- [x] Painel de detalhes atualiza após download.
+- [x] Galeria atualiza após download.
+- [x] Testes não dependem de internet real.
 
 ---
 

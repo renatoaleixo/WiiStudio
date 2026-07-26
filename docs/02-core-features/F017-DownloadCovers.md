@@ -1,6 +1,6 @@
 # F017 - Download Covers
 
-> Feature ID: F017 Status: Ready for Development Priority: High Epic:
+> Feature ID: F017 Status: Implemented and Homologated Priority: High Epic:
 > Metadata & Assets
 
 # Objetivo
@@ -171,11 +171,11 @@ Registrar logs estruturados e manter cache consistente.
 
 # Critérios de Aceite
 
--   [ ] Download individual.
--   [ ] Download em lote.
--   [ ] Cache reutilizado.
--   [ ] Atualização incremental.
--   [ ] Suporte a múltiplos Providers.
+-   [x] Download individual.
+-   [x] Download em lote.
+-   [x] Cache reutilizado.
+-   [x] Atualização incremental.
+-   [x] Suporte a múltiplos Providers.
 
 ------------------------------------------------------------------------
 

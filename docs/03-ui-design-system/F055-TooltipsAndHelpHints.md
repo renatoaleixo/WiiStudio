@@ -1,7 +1,7 @@
 # F055 - Tooltips & Help Hints
 
 > Feature ID: F055
-> Status: Ready for Development
+> Status: Implemented and Homologated
 > Priority: High
 > Epic: Advanced UI Components
 
@@ -390,17 +390,17 @@ public string ImportTooltip =>
 
 # Critérios de Aceite
 
-- [ ] Tipos oficiais definidos.
-- [ ] Tooltips padronizados.
-- [ ] Help Hints padronizados.
-- [ ] Inline Help padronizado.
-- [ ] Textos localizáveis.
-- [ ] Tooltip obrigatório em IconButton.
-- [ ] Compatível com Light/Dark.
-- [ ] Navegação por teclado funcional.
-- [ ] Contraste validado.
-- [ ] Sem estilos inline.
-- [ ] Sem informação crítica apenas em Tooltip.
+- [x] Tipos oficiais definidos.
+- [x] Tooltips padronizados.
+- [x] Help Hints padronizados.
+- [x] Inline Help padronizado.
+- [x] Textos localizáveis.
+- [x] Tooltip obrigatório em IconButton.
+- [x] Compatível com Light/Dark.
+- [x] Navegação por teclado funcional.
+- [x] Contraste validado.
+- [x] Sem estilos inline.
+- [x] Sem informação crítica apenas em Tooltip.
 
 ---
 

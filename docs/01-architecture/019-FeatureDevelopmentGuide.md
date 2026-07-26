@@ -199,9 +199,9 @@ Uma Feature só está pronta quando:
 
 # Checklist Final
 
--   [ ] Estrutura completa
--   [ ] Testes
--   [ ] Logging
--   [ ] Localização
--   [ ] Documentação
--   [ ] Critérios de aceite
+-   [x] Estrutura completa
+-   [x] Testes
+-   [x] Logging
+-   [x] Localização
+-   [x] Documentação
+-   [x] Critérios de aceite

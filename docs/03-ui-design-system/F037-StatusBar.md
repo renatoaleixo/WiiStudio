@@ -1,6 +1,6 @@
 # F037 - Status Bar
 
-> Feature ID: F037 Status: Ready for Development Priority: Medium Epic:
+> Feature ID: F037 Status: Implemented and Homologated Priority: Medium Epic:
 > User Interface
 
 # Objetivo
@@ -137,10 +137,10 @@ public interface IStatusBarService
 
 # Critérios de Aceite
 
--   [ ] Atualização em tempo real.
--   [ ] Indicadores corretos.
--   [ ] Atalhos funcionais.
--   [ ] Baixo impacto na performance.
+-   [x] Atualização em tempo real.
+-   [x] Indicadores corretos.
+-   [x] Atalhos funcionais.
+-   [x] Baixo impacto na performance.
 
 ------------------------------------------------------------------------
 

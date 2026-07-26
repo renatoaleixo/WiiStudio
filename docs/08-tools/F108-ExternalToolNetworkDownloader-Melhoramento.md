@@ -2,7 +2,7 @@
 
 > **Suggested path:** `docs/08-tools/F108-ExternalToolNetworkDownloader-Melhoramento.md`  
 > **Priority:** Alta  
-> **Status:** Improvement proposal  
+> **Status:** Implemented and Homologated  
 > **Architecture:** .NET 10, Avalonia, Application / Infrastructure / Domain
 
 ---

@@ -1,7 +1,7 @@
 # F085 - Sensitive Settings Protection
 
 > Feature ID: F085
-> Status: Ready for Development
+> Status: Implemented and Homologated
 > Priority: High
 > Epic: Security & Permissions
 
@@ -241,16 +241,16 @@ Registrar alterações sem expor valor:
 
 # Critérios de Aceite
 
-- [ ] Dados sensíveis definidos.
-- [ ] Classificação definida.
-- [ ] Modelo de setting definido.
-- [ ] Armazenamento seguro documentado.
-- [ ] UI para campos sensíveis definida.
-- [ ] Exportação segura definida.
-- [ ] Importação segura definida.
-- [ ] Regras para plugins definidas.
-- [ ] Logs redigidos.
-- [ ] Auditoria definida.
+- [x] Dados sensíveis definidos.
+- [x] Classificação definida.
+- [x] Modelo de setting definido.
+- [x] Armazenamento seguro documentado.
+- [x] UI para campos sensíveis definida.
+- [x] Exportação segura definida.
+- [x] Importação segura definida.
+- [x] Regras para plugins definidas.
+- [x] Logs redigidos.
+- [x] Auditoria definida.
 
 ---
 

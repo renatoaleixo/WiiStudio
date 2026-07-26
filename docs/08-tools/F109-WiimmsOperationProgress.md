@@ -1,7 +1,7 @@
 # F109 - Wiimms Operation Progress
 
 > Feature ID: F109  
-> Status: Ready for Development  
+> Status: Implemented and Homologated  
 > Priority: High  
 > Epic: Wiimms Integration / Task Manager  
 > Area: ProcessRunner, Import, Export, Conversion, USB Operations, UI Feedback
@@ -356,15 +356,15 @@ Regras:
 
 # Critérios de Aceite
 
-- [ ] Operações Wiimms aparecem no Task Manager.
-- [ ] Progresso é atualizado quando possível.
-- [ ] Estado indeterminado é exibido quando não há percentual.
-- [ ] Status Bar mostra operação atual.
-- [ ] Notificação final é exibida.
-- [ ] Cancelamento funciona.
-- [ ] Timeout funciona.
-- [ ] Falha mostra diagnóstico.
-- [ ] Testes usam saída fake do Wiimms.
+- [x] Operações Wiimms aparecem no Task Manager.
+- [x] Progresso é atualizado quando possível.
+- [x] Estado indeterminado é exibido quando não há percentual.
+- [x] Status Bar mostra operação atual.
+- [x] Notificação final é exibida.
+- [x] Cancelamento funciona.
+- [x] Timeout funciona.
+- [x] Falha mostra diagnóstico.
+- [x] Testes usam saída fake do Wiimms.
 
 ---
 

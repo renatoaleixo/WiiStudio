@@ -1,7 +1,7 @@
 # F054 - Menus & Context Menus
 
 > Feature ID: F054
-> Status: Ready for Development
+> Status: Implemented and Homologated
 > Priority: High
 > Epic: Advanced UI Components
 
@@ -419,21 +419,21 @@ Obrigatório:
 
 # Critérios de Aceite
 
-- [ ] Tipos oficiais de menus definidos.
-- [ ] Main Menu documentado.
-- [ ] Context Menus documentados.
-- [ ] Action Menu documentado.
-- [ ] Flyout Menu documentado.
-- [ ] Estados visuais definidos.
-- [ ] Integração com Commands prevista.
-- [ ] Integração com Command Palette prevista.
-- [ ] Integração com Keyboard Shortcuts prevista.
-- [ ] Ações destrutivas exigem confirmação.
-- [ ] Compatível com Light/Dark.
-- [ ] Navegação por teclado funcional.
-- [ ] Textos localizáveis.
-- [ ] Sem estilos inline.
-- [ ] Sem lógica de negócio na View.
+- [x] Tipos oficiais de menus definidos.
+- [x] Main Menu documentado.
+- [x] Context Menus documentados.
+- [x] Action Menu documentado.
+- [x] Flyout Menu documentado.
+- [x] Estados visuais definidos.
+- [x] Integração com Commands prevista.
+- [x] Integração com Command Palette prevista.
+- [x] Integração com Keyboard Shortcuts prevista.
+- [x] Ações destrutivas exigem confirmação.
+- [x] Compatível com Light/Dark.
+- [x] Navegação por teclado funcional.
+- [x] Textos localizáveis.
+- [x] Sem estilos inline.
+- [x] Sem lógica de negócio na View.
 
 ---
 

@@ -2,7 +2,7 @@
 
 > **Suggested path:** `docs/08-tools/F125-HardwareValidationAndReleaseAcceptance-Melhoramento.md`  
 > **Priority:** Baixa  
-> **Status:** Improvement proposal  
+> **Status:** Implemented and Homologated  
 > **Architecture:** .NET 10, Avalonia, Application / Infrastructure / Domain
 
 ---

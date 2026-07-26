@@ -1,7 +1,7 @@
 # F042 - Color System
 
 > Feature ID: F042
-> Status: Ready for Development
+> Status: Implemented and Homologated
 > Priority: Critical
 > Epic: Design System
 

@@ -170,8 +170,8 @@ Cada erro deve sugerir uma ação corretiva.
 
 # Checklist
 
--   [ ] Dashboard definido
--   [ ] Relatório estruturado
--   [ ] Interface especificada
--   [ ] Exportação documentada
--   [ ] Casos de erro definidos
+-   [x] Dashboard definido
+-   [x] Relatório estruturado
+-   [x] Interface especificada
+-   [x] Exportação documentada
+-   [x] Casos de erro definidos

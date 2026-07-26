@@ -1,7 +1,7 @@
 # F064 - Header Area
 
 > Feature ID: F064
-> Status: Ready for Development
+> Status: Implemented and Homologated
 > Priority: High
 > Epic: Application Shell
 
@@ -314,20 +314,20 @@ Obrigatório:
 
 # Critérios de Aceite
 
-- [ ] Header oficial definido.
-- [ ] Título da tela suportado.
-- [ ] Subtítulo/contexto suportado.
-- [ ] Breadcrumb opcional suportado.
-- [ ] Ações globais definidas.
-- [ ] Command Palette acessível.
-- [ ] Notification indicator previsto.
-- [ ] Task indicator previsto.
-- [ ] Responsividade documentada.
-- [ ] Compatível com Light/Dark.
-- [ ] Acessibilidade validada.
-- [ ] Textos localizáveis.
-- [ ] Sem lógica de negócio na View.
-- [ ] Sem valores hardcoded.
+- [x] Header oficial definido.
+- [x] Título da tela suportado.
+- [x] Subtítulo/contexto suportado.
+- [x] Breadcrumb opcional suportado.
+- [x] Ações globais definidas.
+- [x] Command Palette acessível.
+- [x] Notification indicator previsto.
+- [x] Task indicator previsto.
+- [x] Responsividade documentada.
+- [x] Compatível com Light/Dark.
+- [x] Acessibilidade validada.
+- [x] Textos localizáveis.
+- [x] Sem lógica de negócio na View.
+- [x] Sem valores hardcoded.
 
 ---
 

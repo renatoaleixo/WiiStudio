@@ -210,10 +210,10 @@ Registrar:
 
 # Checklist
 
--   [ ] Pipeline
--   [ ] Queue
--   [ ] ConversionJob
--   [ ] Eventos
--   [ ] Logging
--   [ ] Rollback
--   [ ] Interfaces
+-   [x] Pipeline
+-   [x] Queue
+-   [x] ConversionJob
+-   [x] Eventos
+-   [x] Logging
+-   [x] Rollback
+-   [x] Interfaces

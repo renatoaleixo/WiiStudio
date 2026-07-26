@@ -1,7 +1,7 @@
 # F070 - Accessibility Navigation
 
 > Feature ID: F070
-> Status: Ready for Development
+> Status: Implemented and Homologated
 > Priority: Critical
 > Epic: Application Shell
 
@@ -413,20 +413,20 @@ Responsável por padronizar navegação por teclado.
 
 # Critérios de Aceite
 
-- [ ] Navegação por teclado definida.
-- [ ] Foco visível definido.
-- [ ] Ordem de tabulação documentada.
-- [ ] Dialogs com foco preso.
-- [ ] Panels com retorno de foco.
-- [ ] Sidebar acessível.
-- [ ] DataGrid acessível.
-- [ ] Forms acessíveis.
-- [ ] Command Palette acessível.
-- [ ] Atalhos documentados.
-- [ ] Não há dependência exclusiva de cor.
-- [ ] Contraste considerado.
-- [ ] Textos localizáveis.
-- [ ] Sem estilos hardcoded de foco.
+- [x] Navegação por teclado definida.
+- [x] Foco visível definido.
+- [x] Ordem de tabulação documentada.
+- [x] Dialogs com foco preso.
+- [x] Panels com retorno de foco.
+- [x] Sidebar acessível.
+- [x] DataGrid acessível.
+- [x] Forms acessíveis.
+- [x] Command Palette acessível.
+- [x] Atalhos documentados.
+- [x] Não há dependência exclusiva de cor.
+- [x] Contraste considerado.
+- [x] Textos localizáveis.
+- [x] Sem estilos hardcoded de foco.
 
 ---
 

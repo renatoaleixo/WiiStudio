@@ -1,7 +1,7 @@
 # F112 - Application Update Provider
 
 > Feature ID: F112  
-> Status: Ready for Development  
+> Status: Implemented and Homologated  
 > Priority: High  
 > Epic: Application Updates / Security  
 > Area: Infrastructure, Update Manager, Security, Diagnostics, Installer  
@@ -322,15 +322,15 @@ Primeira versão pode registrar instruções de rollback manual por plataforma.
 
 # Critérios de Aceite
 
-- [ ] `NullApplicationUpdateProvider` deixa de ser padrão.
-- [ ] `NullApplicationUpdateInstaller` deixa de ser padrão quando update real estiver habilitado.
-- [ ] App verifica release real via manifesto/provider.
-- [ ] Usuário vê versão, canal e release notes.
-- [ ] Download exige HTTPS.
-- [ ] Checksum é validado.
-- [ ] Instalação exige confirmação.
-- [ ] Diagnóstico mostra status.
-- [ ] Testes não usam internet real.
+- [x] `NullApplicationUpdateProvider` deixa de ser padrão.
+- [x] `NullApplicationUpdateInstaller` deixa de ser padrão quando update real estiver habilitado.
+- [x] App verifica release real via manifesto/provider.
+- [x] Usuário vê versão, canal e release notes.
+- [x] Download exige HTTPS.
+- [x] Checksum é validado.
+- [x] Instalação exige confirmação.
+- [x] Diagnóstico mostra status.
+- [x] Testes não usam internet real.
 
 ---
 

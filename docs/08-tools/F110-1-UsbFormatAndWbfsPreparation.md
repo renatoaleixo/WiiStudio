@@ -1,7 +1,7 @@
 # F110-1 - USB Format and WBFS Preparation
 
 > Feature ID: F110-1  
-> Status: Ready for Development  
+> Status: Implemented and Homologated  
 > Priority: Critical  
 > Epic: USB Device Operations / Safety  
 > Area: Device Manager, Wiimms Integration, Privileged Access, Task Manager, Diagnostics  
@@ -772,22 +772,22 @@ Mostrar erro e sugerir diagnóstico.
 
 # Critérios de Aceite
 
-- [ ] Detecta discos e partições via F107.
-- [ ] Mostra claramente o dispositivo alvo.
-- [ ] Bloqueia disco do sistema.
-- [ ] Exige confirmação explícita.
-- [ ] Mostra aviso de perda total de dados.
-- [ ] Exige digitar `FORMATAR WBFS`.
-- [ ] Faz preview antes da execução.
-- [ ] Integra com F105/F106.
-- [ ] Integra com F109.
-- [ ] Integra com F110.
-- [ ] Registra tarefa/notificação via F113.
-- [ ] Valida resultado após formatar.
-- [ ] Roda diagnóstico pós-formatação.
-- [ ] Nunca executa comando arbitrário.
-- [ ] Usa apenas Wiimms validado e comando catalogado.
-- [ ] Testes usam fakes e não acessam disco real.
+- [x] Detecta discos e partições via F107.
+- [x] Mostra claramente o dispositivo alvo.
+- [x] Bloqueia disco do sistema.
+- [x] Exige confirmação explícita.
+- [x] Mostra aviso de perda total de dados.
+- [x] Exige digitar `FORMATAR WBFS`.
+- [x] Faz preview antes da execução.
+- [x] Integra com F105/F106.
+- [x] Integra com F109.
+- [x] Integra com F110.
+- [x] Registra tarefa/notificação via F113.
+- [x] Valida resultado após formatar.
+- [x] Roda diagnóstico pós-formatação.
+- [x] Nunca executa comando arbitrário.
+- [x] Usa apenas Wiimms validado e comando catalogado.
+- [x] Testes usam fakes e não acessam disco real.
 
 ---
 

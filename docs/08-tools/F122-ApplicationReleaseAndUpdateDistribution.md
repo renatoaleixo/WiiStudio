@@ -1,7 +1,7 @@
 # F122 - Application Release and Update Distribution
 
 > Feature ID: F122  
-> Status: Ready for Development  
+> Status: Implemented and Homologated  
 > Priority: Critical  
 > Epic: Release Engineering / Application Updates  
 > Area: Update Provider, Installer, CI/CD, Security, Distribution  
@@ -345,17 +345,17 @@ Last error
 
 # Critérios de Aceite
 
-- [ ] URL oficial HTTPS definida.
-- [ ] Manifest JSON definido.
-- [ ] Pacotes Linux/Windows/macOS definidos.
-- [ ] Checksum obrigatório definido.
-- [ ] Assinatura definida.
-- [ ] Canais stable/beta definidos.
-- [ ] Versionamento SemVer definido.
-- [ ] Estratégia de instalação/update definida.
-- [ ] Rollback definido por plataforma.
-- [ ] Validações de segurança definidas.
-- [ ] Testes com fakes definidos.
+- [x] URL oficial HTTPS definida.
+- [x] Manifest JSON definido.
+- [x] Pacotes Linux/Windows/macOS definidos.
+- [x] Checksum obrigatório definido.
+- [x] Assinatura definida.
+- [x] Canais stable/beta definidos.
+- [x] Versionamento SemVer definido.
+- [x] Estratégia de instalação/update definida.
+- [x] Rollback definido por plataforma.
+- [x] Validações de segurança definidas.
+- [x] Testes com fakes definidos.
 
 ---
 

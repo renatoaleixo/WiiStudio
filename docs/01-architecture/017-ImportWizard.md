@@ -220,9 +220,9 @@ public interface IImportWizardService
 
 # Checklist
 
--   [ ] Fluxo definido
--   [ ] Máquina de estados
--   [ ] Rollback
--   [ ] Eventos
--   [ ] Interfaces
--   [ ] Critérios de aceite
+-   [x] Fluxo definido
+-   [x] Máquina de estados
+-   [x] Rollback
+-   [x] Eventos
+-   [x] Interfaces
+-   [x] Critérios de aceite

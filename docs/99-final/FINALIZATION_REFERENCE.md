@@ -16,6 +16,8 @@ das features documentadas de `F001` até `F126`.
 - Security: `F081` até `F090` implementadas.
 - Testing & Quality: `F091` até `F100` implementadas.
 - Tools, Readiness & Release Engineering: `F101` até `F126` implementadas.
+- Homologação funcional e melhorias: concluídas.
+- Homologação em hardware real: concluída conforme `HOMOLOGATION_ACCEPTANCE.md`.
 
 ---
 
@@ -165,6 +167,9 @@ release-validation/
 └── acceptance-report.md
 ```
 
-Esse pacote não aprova a release automaticamente. Gates que exigem HD WBFS real,
-FAT32 `/wbfs`, pendrive e Wii real permanecem pendentes até homologação manual
-com dispositivos dedicados e evidências anexadas.
+As homologações manuais e funcionais foram concluídas, incluindo melhorias,
+HD WBFS real, FAT32 `/wbfs`, pendrive e Wii real. O aceite final está registrado
+em `HOMOLOGATION_ACCEPTANCE.md`.
+
+Pacotes `release-validation/` continuam úteis para cada release pública, pois
+guardam evidências específicas de versão, ambiente, logs e screenshots.

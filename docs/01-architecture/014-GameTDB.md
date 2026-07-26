@@ -165,8 +165,8 @@ Sem alterar a camada Application.
 
 # Checklist
 
--   [ ] Interface definida
--   [ ] Cache especificado
--   [ ] Fluxo documentado
--   [ ] Logging definido
--   [ ] Extensibilidade garantida
+-   [x] Interface definida
+-   [x] Cache especificado
+-   [x] Fluxo documentado
+-   [x] Logging definido
+-   [x] Extensibilidade garantida

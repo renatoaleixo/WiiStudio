@@ -1,7 +1,7 @@
 # F050 - Cards & Containers
 
 > Feature ID: F050
-> Status: Ready for Development
+> Status: Implemented and Homologated
 > Priority: Critical
 > Epic: Design System
 
@@ -662,21 +662,21 @@ A View não deve conter lógica de negócio.
 
 # Critérios de Aceite
 
-- [ ] Card padrão definido.
-- [ ] Container padrão definido.
-- [ ] Panel padrão definido.
-- [ ] Section padrão definida.
-- [ ] Tile padrão definido.
-- [ ] EmptyStateContainer definido.
-- [ ] ErrorStateContainer definido.
-- [ ] LoadingStateContainer definido.
-- [ ] Estados visuais implementados.
-- [ ] Compatível com Light/Dark.
-- [ ] Responsividade considerada.
-- [ ] Acessibilidade validada.
-- [ ] Sem estilos inline.
-- [ ] Sem cores hardcoded.
-- [ ] Sem lógica de negócio na View.
+- [x] Card padrão definido.
+- [x] Container padrão definido.
+- [x] Panel padrão definido.
+- [x] Section padrão definida.
+- [x] Tile padrão definido.
+- [x] EmptyStateContainer definido.
+- [x] ErrorStateContainer definido.
+- [x] LoadingStateContainer definido.
+- [x] Estados visuais implementados.
+- [x] Compatível com Light/Dark.
+- [x] Responsividade considerada.
+- [x] Acessibilidade validada.
+- [x] Sem estilos inline.
+- [x] Sem cores hardcoded.
+- [x] Sem lógica de negócio na View.
 
 ---
 

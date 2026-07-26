@@ -1,7 +1,7 @@
 # F086 - Safe Path Handling
 
 > Feature ID: F086
-> Status: Ready for Development
+> Status: Implemented and Homologated
 > Priority: Critical
 > Epic: Security & Permissions
 
@@ -294,18 +294,18 @@ Antes de enviar path para processo externo:
 
 # Critérios de Aceite
 
-- [ ] SafePathService definido.
-- [ ] Normalização definida.
-- [ ] Path traversal bloqueado.
-- [ ] Paths relativos controlados.
-- [ ] Paths absolutos validados.
-- [ ] Extensões permitidas definidas.
-- [ ] Escrita segura definida.
-- [ ] Temporários definidos.
-- [ ] Symlinks considerados.
-- [ ] Multiplataforma considerado.
-- [ ] Plugins restritos.
-- [ ] ProcessRunner integrado.
+- [x] SafePathService definido.
+- [x] Normalização definida.
+- [x] Path traversal bloqueado.
+- [x] Paths relativos controlados.
+- [x] Paths absolutos validados.
+- [x] Extensões permitidas definidas.
+- [x] Escrita segura definida.
+- [x] Temporários definidos.
+- [x] Symlinks considerados.
+- [x] Multiplataforma considerado.
+- [x] Plugins restritos.
+- [x] ProcessRunner integrado.
 
 ---
 

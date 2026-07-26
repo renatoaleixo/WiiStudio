@@ -1,6 +1,6 @@
 # F039 - Theme Engine
 
-> Feature ID: F039 Status: Ready for Development Priority: High Epic:
+> Feature ID: F039 Status: Implemented and Homologated Priority: High Epic:
 > User Interface
 
 # Objetivo
@@ -148,10 +148,10 @@ public interface IThemeService
 
 # Critérios de Aceite
 
--   [ ] Alternância instantânea.
--   [ ] Persistência por perfil.
--   [ ] Importação/exportação.
--   [ ] Temas personalizados.
+-   [x] Alternância instantânea.
+-   [x] Persistência por perfil.
+-   [x] Importação/exportação.
+-   [x] Temas personalizados.
 
 ------------------------------------------------------------------------
 

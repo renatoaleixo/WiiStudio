@@ -1,7 +1,7 @@
 # F102 - GameTDB Cover Provider
 
 > Feature ID: F102  
-> Status: Ready for Development  
+> Status: Implemented and Homologated  
 > Priority: Critical  
 > Epic: Metadata & Assets  
 > Area: Infrastructure, Application, UI, Cache, Diagnostics  
@@ -841,21 +841,21 @@ UI apenas aciona e exibe estado.
 
 # Critérios de Aceite
 
-- [ ] `GameTdbCoverProvider` implementado.
-- [ ] `NullCoverProvider` deixa de ser o provider padrão.
-- [ ] Capa frontal real baixa para jogo conhecido, exemplo `RMCP01`.
-- [ ] Capa frontal real baixa para jogo conhecido, exemplo `RSPE01`.
-- [ ] Capas em lote funcionam.
-- [ ] Cache é reutilizado quando arquivo já existe.
-- [ ] `ForceRefresh` baixa novamente.
-- [ ] Contagem correta: baixadas, cache, ausentes, falhas.
-- [ ] HTTP 404 retorna `Missing`.
-- [ ] Erro de rede não quebra lote.
-- [ ] Imagem inválida é rejeitada.
-- [ ] `CoverAssetKind` mapeia para diretórios corretos.
-- [ ] Thumbnails são gerados quando configurado.
-- [ ] Logs e Diagnostics mostram provider real.
-- [ ] Segurança aplicada.
+- [x] `GameTdbCoverProvider` implementado.
+- [x] `NullCoverProvider` deixa de ser o provider padrão.
+- [x] Capa frontal real baixa para jogo conhecido, exemplo `RMCP01`.
+- [x] Capa frontal real baixa para jogo conhecido, exemplo `RSPE01`.
+- [x] Capas em lote funcionam.
+- [x] Cache é reutilizado quando arquivo já existe.
+- [x] `ForceRefresh` baixa novamente.
+- [x] Contagem correta: baixadas, cache, ausentes, falhas.
+- [x] HTTP 404 retorna `Missing`.
+- [x] Erro de rede não quebra lote.
+- [x] Imagem inválida é rejeitada.
+- [x] `CoverAssetKind` mapeia para diretórios corretos.
+- [x] Thumbnails são gerados quando configurado.
+- [x] Logs e Diagnostics mostram provider real.
+- [x] Segurança aplicada.
 
 ---
 

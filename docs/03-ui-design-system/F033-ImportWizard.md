@@ -1,6 +1,6 @@
 # F033 - Import Wizard
 
-> Feature ID: F033 Status: Ready for Development Priority: Critical
+> Feature ID: F033 Status: Implemented and Homologated Priority: Critical
 > Epic: User Interface
 
 # Objetivo
@@ -151,11 +151,11 @@ public interface IImportWizardService
 
 # Critérios de Aceite
 
--   [ ] Fluxo guiado completo.
--   [ ] Validação automática.
--   [ ] Resumo antes da execução.
--   [ ] Progresso em tempo real.
--   [ ] Integração com todos os importadores.
+-   [x] Fluxo guiado completo.
+-   [x] Validação automática.
+-   [x] Resumo antes da execução.
+-   [x] Progresso em tempo real.
+-   [x] Integração com todos os importadores.
 
 ------------------------------------------------------------------------
 

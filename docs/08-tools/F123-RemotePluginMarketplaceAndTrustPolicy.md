@@ -1,7 +1,7 @@
 # F123 - Remote Plugin Marketplace and Trust Policy
 
 > Feature ID: F123  
-> Status: Ready for Development  
+> Status: Implemented and Homologated  
 > Priority: High  
 > Epic: Plugin SDK / Marketplace / Security  
 > Area: Plugins, Marketplace, Trust, Security, Update, Quarantine  
@@ -328,17 +328,17 @@ Obrigatório:
 
 # Critérios de Aceite
 
-- [ ] Catálogo remoto definido.
-- [ ] Formato JSON definido.
-- [ ] Download de plugin exige HTTPS.
-- [ ] Checksum obrigatório.
-- [ ] Assinatura definida.
-- [ ] Permissões exibidas.
-- [ ] Plugin revogado é bloqueado.
-- [ ] Quarentena funciona.
-- [ ] Atualização de plugin definida.
-- [ ] Política de confiança definida.
-- [ ] Testes com fakes definidos.
+- [x] Catálogo remoto definido.
+- [x] Formato JSON definido.
+- [x] Download de plugin exige HTTPS.
+- [x] Checksum obrigatório.
+- [x] Assinatura definida.
+- [x] Permissões exibidas.
+- [x] Plugin revogado é bloqueado.
+- [x] Quarentena funciona.
+- [x] Atualização de plugin definida.
+- [x] Política de confiança definida.
+- [x] Testes com fakes definidos.
 
 ---
 

@@ -1,7 +1,7 @@
 # F079 - Plugin Diagnostics
 
 > Feature ID: F079
-> Status: Ready for Development
+> Status: Implemented and Homologated
 > Priority: High
 > Epic: Plugin SDK
 
@@ -240,15 +240,15 @@ O relatório pode sugerir:
 
 # Critérios de Aceite
 
-- [ ] Eventos diagnosticáveis definidos.
-- [ ] Modelo de evento definido.
-- [ ] Serviço de diagnóstico definido.
-- [ ] Relatório de plugin definido.
-- [ ] Métricas definidas.
-- [ ] Integração com Logging Center definida.
-- [ ] Integração com Advanced Diagnostics definida.
-- [ ] Redação de dados sensíveis definida.
-- [ ] Recomendações automáticas previstas.
+- [x] Eventos diagnosticáveis definidos.
+- [x] Modelo de evento definido.
+- [x] Serviço de diagnóstico definido.
+- [x] Relatório de plugin definido.
+- [x] Métricas definidas.
+- [x] Integração com Logging Center definida.
+- [x] Integração com Advanced Diagnostics definida.
+- [x] Redação de dados sensíveis definida.
+- [x] Recomendações automáticas previstas.
 
 ---
 

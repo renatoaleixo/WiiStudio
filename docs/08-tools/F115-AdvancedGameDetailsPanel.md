@@ -1,7 +1,7 @@
 # F115 - Advanced Game Details Panel
 
 > Feature ID: F115  
-> Status: Ready for Development  
+> Status: Implemented and Homologated  
 > Priority: High  
 > Epic: Library UX / Game Details  
 > Area: UI, Metadata, Assets, Library, Operations  
@@ -347,21 +347,21 @@ Last operations
 
 # Critérios de Aceite
 
-- [ ] Painel avançado aparece ao selecionar jogo.
-- [ ] Exibe FrontCover grande.
-- [ ] Exibe BackCover/FullCover.
-- [ ] Exibe DiscArt.
-- [ ] Exibe metadados completos.
-- [ ] Exibe ID6/Game ID.
-- [ ] Exibe região.
-- [ ] Exibe formato.
-- [ ] Exibe tamanho.
-- [ ] Exibe caminho.
-- [ ] Exibe data de importação.
-- [ ] Ações disponíveis aparecem.
-- [ ] Placeholders funcionam.
-- [ ] UI atualiza após download/sync.
-- [ ] Testes com fakes passam.
+- [x] Painel avançado aparece ao selecionar jogo.
+- [x] Exibe FrontCover grande.
+- [x] Exibe BackCover/FullCover.
+- [x] Exibe DiscArt.
+- [x] Exibe metadados completos.
+- [x] Exibe ID6/Game ID.
+- [x] Exibe região.
+- [x] Exibe formato.
+- [x] Exibe tamanho.
+- [x] Exibe caminho.
+- [x] Exibe data de importação.
+- [x] Ações disponíveis aparecem.
+- [x] Placeholders funcionam.
+- [x] UI atualiza após download/sync.
+- [x] Testes com fakes passam.
 
 ---
 

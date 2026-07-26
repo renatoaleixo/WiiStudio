@@ -1,7 +1,7 @@
 # F057 - Progress Indicators
 
 > Feature ID: F057
-> Status: Ready for Development
+> Status: Implemented and Homologated
 > Priority: Critical
 > Epic: Advanced UI Components
 
@@ -434,18 +434,18 @@ Obrigatório:
 
 # Critérios de Aceite
 
-- [ ] ProgressBar definida.
-- [ ] Spinner definido.
-- [ ] Progresso indeterminado definido.
-- [ ] Step Progress definido.
-- [ ] Batch Progress definido.
-- [ ] Integração com Task Manager documentada.
-- [ ] Cancelamento previsto.
-- [ ] Estados Completed, Failed e Cancelled definidos.
-- [ ] Compatível com Light/Dark.
-- [ ] Acessibilidade validada.
-- [ ] Sem valores hardcoded.
-- [ ] Sem bloqueio da UI.
+- [x] ProgressBar definida.
+- [x] Spinner definido.
+- [x] Progresso indeterminado definido.
+- [x] Step Progress definido.
+- [x] Batch Progress definido.
+- [x] Integração com Task Manager documentada.
+- [x] Cancelamento previsto.
+- [x] Estados Completed, Failed e Cancelled definidos.
+- [x] Compatível com Light/Dark.
+- [x] Acessibilidade validada.
+- [x] Sem valores hardcoded.
+- [x] Sem bloqueio da UI.
 
 ---
 

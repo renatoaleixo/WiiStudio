@@ -1,6 +1,6 @@
 # F035 - Device Manager
 
-> Feature ID: F035 Status: Ready for Development Priority: Critical
+> Feature ID: F035 Status: Implemented and Homologated Priority: Critical
 > Epic: User Interface
 
 # Objetivo
@@ -149,11 +149,11 @@ public interface IDeviceManagerService
 
 # Critérios de Aceite
 
--   [ ] Detecção automática.
--   [ ] Atualização em tempo real.
--   [ ] Exibição completa de informações.
--   [ ] Ejeção segura.
--   [ ] Integração com diagnóstico.
+-   [x] Detecção automática.
+-   [x] Atualização em tempo real.
+-   [x] Exibição completa de informações.
+-   [x] Ejeção segura.
+-   [x] Integração com diagnóstico.
 
 ------------------------------------------------------------------------
 

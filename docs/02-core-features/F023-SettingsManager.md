@@ -1,6 +1,6 @@
 # F023 - Settings Manager
 
-> Feature ID: F023 Status: Ready for Development Priority: High Epic:
+> Feature ID: F023 Status: Implemented and Homologated Priority: High Epic:
 > Settings & User Experience
 
 # Objetivo
@@ -168,11 +168,11 @@ Todos os erros devem registrar logs estruturados.
 
 # Critérios de Aceite
 
--   [ ] Persistência automática.
--   [ ] Importação/exportação.
--   [ ] Restauração de padrões.
--   [ ] Validação completa.
--   [ ] Aplicação dinâmica.
+-   [x] Persistência automática.
+-   [x] Importação/exportação.
+-   [x] Restauração de padrões.
+-   [x] Validação completa.
+-   [x] Aplicação dinâmica.
 
 ------------------------------------------------------------------------
 

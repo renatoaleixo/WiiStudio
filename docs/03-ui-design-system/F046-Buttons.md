@@ -1,7 +1,7 @@
 # F046 - Buttons
 
 > Feature ID: F046
-> Status: Ready for Development
+> Status: Implemented and Homologated
 > Priority: Critical
 > Epic: Design System
 
@@ -268,16 +268,16 @@ O botão deve refletir o estado quando aplicável e delegar mensagens ao Notific
 
 # Critérios de Aceite
 
-- [ ] Variantes oficiais implementadas.
-- [ ] Tamanhos oficiais implementados.
-- [ ] Estados visuais implementados.
-- [ ] Compatível com Light/Dark.
-- [ ] Navegação por teclado funcional.
-- [ ] IconButton com tooltip.
-- [ ] Sem estilos inline.
-- [ ] Sem cores hardcoded.
-- [ ] Integração com Command Binding.
-- [ ] Loading state disponível.
+- [x] Variantes oficiais implementadas.
+- [x] Tamanhos oficiais implementados.
+- [x] Estados visuais implementados.
+- [x] Compatível com Light/Dark.
+- [x] Navegação por teclado funcional.
+- [x] IconButton com tooltip.
+- [x] Sem estilos inline.
+- [x] Sem cores hardcoded.
+- [x] Integração com Command Binding.
+- [x] Loading state disponível.
 
 ---
 

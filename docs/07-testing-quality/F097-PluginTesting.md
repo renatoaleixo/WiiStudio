@@ -1,7 +1,7 @@
 # F097 - Plugin Testing
 
 > Feature ID: F097
-> Status: Ready for Development
+> Status: Implemented and Homologated
 > Priority: Critical
 > Epic: Testing & Quality
 
@@ -264,17 +264,17 @@ tests/
 
 # Critérios de Aceite
 
-- [ ] Test plugins definidos.
-- [ ] Manifest tests definidos.
-- [ ] Discovery tests definidos.
-- [ ] Loading tests definidos.
-- [ ] Permission tests definidos.
-- [ ] Security tests definidos.
-- [ ] Diagnostics tests definidos.
-- [ ] UI extension tests definidos.
-- [ ] Provider tests definidos.
-- [ ] Falha segura testada.
-- [ ] Unload testado.
+- [x] Test plugins definidos.
+- [x] Manifest tests definidos.
+- [x] Discovery tests definidos.
+- [x] Loading tests definidos.
+- [x] Permission tests definidos.
+- [x] Security tests definidos.
+- [x] Diagnostics tests definidos.
+- [x] UI extension tests definidos.
+- [x] Provider tests definidos.
+- [x] Falha segura testada.
+- [x] Unload testado.
 
 ---
 

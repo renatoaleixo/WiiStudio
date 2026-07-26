@@ -1,7 +1,7 @@
 # F075 - Plugin Permissions
 
 > Feature ID: F075
-> Status: Ready for Development
+> Status: Implemented and Homologated
 > Priority: Critical
 > Epic: Plugin SDK
 
@@ -347,17 +347,17 @@ O sistema de permissões deve se integrar com:
 
 # Critérios de Aceite
 
-- [ ] Permissões oficiais definidas.
-- [ ] Níveis de risco definidos.
-- [ ] Permission Service especificado.
-- [ ] Validação antes do loading definida.
-- [ ] Auditoria definida.
-- [ ] UI de permissões prevista.
-- [ ] FileSystem permissions documentadas.
-- [ ] ExecuteProcess documentado como crítico.
-- [ ] NetworkAccess documentado.
-- [ ] Regras para o Codex documentadas.
-- [ ] Nenhuma permissão implícita.
+- [x] Permissões oficiais definidas.
+- [x] Níveis de risco definidos.
+- [x] Permission Service especificado.
+- [x] Validação antes do loading definida.
+- [x] Auditoria definida.
+- [x] UI de permissões prevista.
+- [x] FileSystem permissions documentadas.
+- [x] ExecuteProcess documentado como crítico.
+- [x] NetworkAccess documentado.
+- [x] Regras para o Codex documentadas.
+- [x] Nenhuma permissão implícita.
 
 ---
 

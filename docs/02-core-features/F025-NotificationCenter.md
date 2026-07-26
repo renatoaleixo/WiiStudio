@@ -1,6 +1,6 @@
 # F025 - Notification Center
 
-> Feature ID: F025 Status: Ready for Development Priority: High Epic:
+> Feature ID: F025 Status: Implemented and Homologated Priority: High Epic:
 > Settings & User Experience
 
 # Objetivo
@@ -155,11 +155,11 @@ Todos devem registrar logs estruturados.
 
 # Critérios de Aceite
 
--   [ ] Toasts funcionais.
--   [ ] Histórico persistente.
--   [ ] Progresso em tempo real.
--   [ ] Agrupamento.
--   [ ] Ações rápidas.
+-   [x] Toasts funcionais.
+-   [x] Histórico persistente.
+-   [x] Progresso em tempo real.
+-   [x] Agrupamento.
+-   [x] Ações rápidas.
 
 ------------------------------------------------------------------------
 

@@ -1,7 +1,7 @@
 # F062 - Main Menu
 
 > Feature ID: F062
-> Status: Ready for Development
+> Status: Implemented and Homologated
 > Priority: High
 > Epic: Application Shell
 
@@ -452,19 +452,19 @@ Obrigatório:
 
 # Critérios de Aceite
 
-- [ ] Grupos oficiais definidos.
-- [ ] Itens principais documentados.
-- [ ] MainMenuViewModel especificado.
-- [ ] Commands integrados.
-- [ ] Atalhos exibidos.
-- [ ] Textos localizáveis.
-- [ ] Integração com Command Palette.
-- [ ] Integração com Navigation System.
-- [ ] Ações destrutivas protegidas.
-- [ ] Compatível com Light/Dark.
-- [ ] Navegação por teclado funcional.
-- [ ] Sem lógica de negócio na View.
-- [ ] Sem valores hardcoded.
+- [x] Grupos oficiais definidos.
+- [x] Itens principais documentados.
+- [x] MainMenuViewModel especificado.
+- [x] Commands integrados.
+- [x] Atalhos exibidos.
+- [x] Textos localizáveis.
+- [x] Integração com Command Palette.
+- [x] Integração com Navigation System.
+- [x] Ações destrutivas protegidas.
+- [x] Compatível com Light/Dark.
+- [x] Navegação por teclado funcional.
+- [x] Sem lógica de negócio na View.
+- [x] Sem valores hardcoded.
 
 ---
 

@@ -1,7 +1,7 @@
 # F063 - Sidebar Navigation
 
 > Feature ID: F063
-> Status: Ready for Development
+> Status: Implemented and Homologated
 > Priority: Critical
 > Epic: Application Shell
 
@@ -487,22 +487,22 @@ Obrigatório:
 
 # Critérios de Aceite
 
-- [ ] Grupos oficiais definidos.
-- [ ] Itens oficiais definidos.
-- [ ] Modo expandido definido.
-- [ ] Modo recolhido definido.
-- [ ] Modo Compact definido.
-- [ ] Estado ativo documentado.
-- [ ] Badges opcionais documentados.
-- [ ] SidebarViewModel especificado.
-- [ ] Integração com NavigationService.
-- [ ] Integração com Command Palette.
-- [ ] Integração com Keyboard Shortcuts.
-- [ ] Compatível com Light/Dark.
-- [ ] Textos localizáveis.
-- [ ] Acessibilidade validada.
-- [ ] Sem lógica de negócio na View.
-- [ ] Sem valores hardcoded.
+- [x] Grupos oficiais definidos.
+- [x] Itens oficiais definidos.
+- [x] Modo expandido definido.
+- [x] Modo recolhido definido.
+- [x] Modo Compact definido.
+- [x] Estado ativo documentado.
+- [x] Badges opcionais documentados.
+- [x] SidebarViewModel especificado.
+- [x] Integração com NavigationService.
+- [x] Integração com Command Palette.
+- [x] Integração com Keyboard Shortcuts.
+- [x] Compatível com Light/Dark.
+- [x] Textos localizáveis.
+- [x] Acessibilidade validada.
+- [x] Sem lógica de negócio na View.
+- [x] Sem valores hardcoded.
 
 ---
 

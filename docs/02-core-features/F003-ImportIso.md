@@ -1,7 +1,7 @@
 # F003 - Import ISO
 
 > Feature ID: F003\
-> Status: Ready for Development\
+> Status: Implemented and Homologated\
 > Priority: Critical\
 > Epic: Import
 
@@ -162,11 +162,11 @@ da biblioteca.
 
 # Critérios de Aceite
 
--   [ ] Importa uma ou várias ISOs.
--   [ ] Detecta duplicidade.
--   [ ] Atualiza a biblioteca automaticamente.
--   [ ] Permite cancelamento.
--   [ ] Exibe progresso em tempo real.
+-   [x] Importa uma ou várias ISOs.
+-   [x] Detecta duplicidade.
+-   [x] Atualiza a biblioteca automaticamente.
+-   [x] Permite cancelamento.
+-   [x] Exibe progresso em tempo real.
 
 ------------------------------------------------------------------------
 

@@ -1,7 +1,7 @@
 # F002 - Scan Game Library
 
 > Feature ID: F002\
-> Status: Ready for Development\
+> Status: Implemented and Homologated\
 > Priority: Critical\
 > Epic: Device Management / Library
 
@@ -149,11 +149,11 @@ existente.
 
 # Critérios de Aceite
 
--   [ ] Detecta todos os jogos válidos.
--   [ ] Ignora arquivos inválidos.
--   [ ] Atualiza a UI em tempo real.
--   [ ] Permite cancelamento.
--   [ ] Não duplica jogos.
+-   [x] Detecta todos os jogos válidos.
+-   [x] Ignora arquivos inválidos.
+-   [x] Atualiza a UI em tempo real.
+-   [x] Permite cancelamento.
+-   [x] Não duplica jogos.
 
 ------------------------------------------------------------------------
 

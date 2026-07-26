@@ -170,8 +170,8 @@ Registrar:
 
 # Checklist
 
--   [ ] Manifesto definido
--   [ ] Interfaces documentadas
--   [ ] Ciclo de vida especificado
--   [ ] Estratégia de segurança
--   [ ] Logging definido
+-   [x] Manifesto definido
+-   [x] Interfaces documentadas
+-   [x] Ciclo de vida especificado
+-   [x] Estratégia de segurança
+-   [x] Logging definido

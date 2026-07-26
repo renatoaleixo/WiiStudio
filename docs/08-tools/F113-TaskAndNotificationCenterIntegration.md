@@ -1,7 +1,7 @@
 # F113 - Task and Notification Center Integration
 
 > Feature ID: F113  
-> Status: Ready for Development  
+> Status: Implemented and Homologated  
 > Priority: High  
 > Epic: Operations / UX Feedback  
 > Area: Task Manager, Notification Center, Logging, Diagnostics, UI Shell
@@ -304,15 +304,15 @@ Sucesso importante deve gerar notificação de sucesso.
 
 # Critérios de Aceite
 
-- [ ] Tarefas reais aparecem no Task Manager.
-- [ ] Notificações reais aparecem no Notification Center.
-- [ ] Contadores deixam de ficar sempre em zero.
-- [ ] Operações longas mostram progresso.
-- [ ] Operações finalizadas entram no histórico.
-- [ ] Falhas geram notificação persistente.
-- [ ] Cancelamento é refletido na UI.
-- [ ] Status Bar mostra resumo.
-- [ ] Testes cobrem serviços com fakes.
+- [x] Tarefas reais aparecem no Task Manager.
+- [x] Notificações reais aparecem no Notification Center.
+- [x] Contadores deixam de ficar sempre em zero.
+- [x] Operações longas mostram progresso.
+- [x] Operações finalizadas entram no histórico.
+- [x] Falhas geram notificação persistente.
+- [x] Cancelamento é refletido na UI.
+- [x] Status Bar mostra resumo.
+- [x] Testes cobrem serviços com fakes.
 
 ---
 

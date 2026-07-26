@@ -182,8 +182,8 @@ Exemplo:
 
 # Checklist
 
--   [ ] Adapters definidos
--   [ ] ProcessRunner criado
--   [ ] Logging centralizado
--   [ ] Exceções específicas
--   [ ] Interfaces respeitadas
+-   [x] Adapters definidos
+-   [x] ProcessRunner criado
+-   [x] Logging centralizado
+-   [x] Exceções específicas
+-   [x] Interfaces respeitadas

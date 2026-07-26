@@ -1,7 +1,7 @@
 # F089 - Update Security
 
 > Feature ID: F089
-> Status: Ready for Development
+> Status: Implemented and Homologated
 > Priority: High
 > Epic: Security & Permissions
 
@@ -257,16 +257,16 @@ Registrar:
 
 # Critérios de Aceite
 
-- [ ] Fluxo de update definido.
-- [ ] Metadata de update definida.
-- [ ] Integridade definida.
-- [ ] Assinatura futura prevista.
-- [ ] Downgrade tratado.
-- [ ] Rollback previsto.
-- [ ] Plugins considerados.
-- [ ] GameTDB/metadados considerados.
-- [ ] Notification Center integrado.
-- [ ] Auditoria definida.
+- [x] Fluxo de update definido.
+- [x] Metadata de update definida.
+- [x] Integridade definida.
+- [x] Assinatura futura prevista.
+- [x] Downgrade tratado.
+- [x] Rollback previsto.
+- [x] Plugins considerados.
+- [x] GameTDB/metadados considerados.
+- [x] Notification Center integrado.
+- [x] Auditoria definida.
 
 ---
 

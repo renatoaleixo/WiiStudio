@@ -1,7 +1,7 @@
 # F106 - Polkit Policy Installer
 
 > Feature ID: F106  
-> Status: Ready for Development  
+> Status: Implemented and Homologated  
 > Priority: Critical  
 > Epic: Device Access / Linux Privileged Access  
 > Area: Linux, Security, Diagnostics, Installer, Device Manager  
@@ -432,16 +432,16 @@ Policy instalada com sucesso. Você já pode tentar acessar o dispositivo novame
 
 # Critérios de Aceite
 
-- [ ] Linux detecta policy instalada.
-- [ ] Linux detecta policy ausente.
-- [ ] Linux detecta policy inválida.
-- [ ] UI orienta instalação.
-- [ ] Instalação exige confirmação.
-- [ ] Instalação usa autenticação do sistema.
-- [ ] Policy instalada é validada após instalação.
-- [ ] Diagnóstico mostra status da policy.
-- [ ] Retry após instalação funciona.
-- [ ] Nenhuma senha é armazenada ou trafegada pelo WiiStudio.
+- [x] Linux detecta policy instalada.
+- [x] Linux detecta policy ausente.
+- [x] Linux detecta policy inválida.
+- [x] UI orienta instalação.
+- [x] Instalação exige confirmação.
+- [x] Instalação usa autenticação do sistema.
+- [x] Policy instalada é validada após instalação.
+- [x] Diagnóstico mostra status da policy.
+- [x] Retry após instalação funciona.
+- [x] Nenhuma senha é armazenada ou trafegada pelo WiiStudio.
 
 ---
 

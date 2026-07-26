@@ -1,7 +1,7 @@
 # F044 - Iconography
 
 > Feature ID: F044
-> Status: Ready for Development
+> Status: Implemented and Homologated
 > Priority: High
 > Epic: Design System
 
@@ -89,11 +89,11 @@ Nunca utilizar imagens bitmap para ícones da interface.
 
 ## Critérios de Aceite
 
-- [ ] Biblioteca oficial definida.
-- [ ] Tamanhos padronizados.
-- [ ] Estados documentados.
-- [ ] Compatível com temas.
-- [ ] Tokens reutilizáveis.
+- [x] Biblioteca oficial definida.
+- [x] Tamanhos padronizados.
+- [x] Estados documentados.
+- [x] Compatível com temas.
+- [x] Tokens reutilizáveis.
 
 ## Testes
 

@@ -1,6 +1,6 @@
 # F020 - Asset Manager
 
-> Feature ID: F020 Status: Ready for Development Priority: Critical
+> Feature ID: F020 Status: Implemented and Homologated Priority: Critical
 > Epic: Metadata & Assets
 
 # Objetivo
@@ -178,11 +178,11 @@ Todos os erros devem gerar logs estruturados.
 
 # Critérios de Aceite
 
--   [ ] API única para assets.
--   [ ] Cache transparente.
--   [ ] Reconstrução de índice.
--   [ ] Limpeza seletiva.
--   [ ] Estatísticas disponíveis.
+-   [x] API única para assets.
+-   [x] Cache transparente.
+-   [x] Reconstrução de índice.
+-   [x] Limpeza seletiva.
+-   [x] Estatísticas disponíveis.
 
 ------------------------------------------------------------------------
 

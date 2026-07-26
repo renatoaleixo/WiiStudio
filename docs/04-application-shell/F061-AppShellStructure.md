@@ -1,7 +1,7 @@
 # F061 - App Shell Structure
 
 > Feature ID: F061
-> Status: Ready for Development
+> Status: Implemented and Homologated
 > Priority: Critical
 > Epic: Application Shell
 
@@ -527,20 +527,20 @@ Obrigatório:
 
 # Critérios de Aceite
 
-- [ ] App Shell definido.
-- [ ] Regiões oficiais documentadas.
-- [ ] ShellViewModel especificado.
-- [ ] NavigationService integrado.
-- [ ] DialogHost integrado.
-- [ ] NotificationHost integrado.
-- [ ] StatusBar integrada.
-- [ ] Sidebar integrada.
-- [ ] Workspace com carregamento dinâmico.
-- [ ] Responsividade prevista.
-- [ ] Light/Dark suportado.
-- [ ] Acessibilidade considerada.
-- [ ] Sem lógica de negócio no Shell.
-- [ ] Sem valores hardcoded.
+- [x] App Shell definido.
+- [x] Regiões oficiais documentadas.
+- [x] ShellViewModel especificado.
+- [x] NavigationService integrado.
+- [x] DialogHost integrado.
+- [x] NotificationHost integrado.
+- [x] StatusBar integrada.
+- [x] Sidebar integrada.
+- [x] Workspace com carregamento dinâmico.
+- [x] Responsividade prevista.
+- [x] Light/Dark suportado.
+- [x] Acessibilidade considerada.
+- [x] Sem lógica de negócio no Shell.
+- [x] Sem valores hardcoded.
 
 ---
 

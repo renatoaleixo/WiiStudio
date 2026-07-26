@@ -1,7 +1,7 @@
 # F081 - Security Foundation
 
 > Feature ID: F081
-> Status: Ready for Development
+> Status: Implemented and Homologated
 > Priority: Critical
 > Epic: Security & Permissions
 
@@ -267,17 +267,17 @@ Não permitir:
 
 # Critérios de Aceite
 
-- [ ] Princípios de segurança definidos.
-- [ ] Áreas sensíveis mapeadas.
-- [ ] Entrada externa definida.
-- [ ] Path Security referenciada.
-- [ ] External Process Security referenciada.
-- [ ] Plugin Security referenciada.
-- [ ] Sensitive Settings referenciada.
-- [ ] Log Redaction referenciada.
-- [ ] Backup Security referenciada.
-- [ ] Update Security referenciada.
-- [ ] Regras para Codex definidas.
+- [x] Princípios de segurança definidos.
+- [x] Áreas sensíveis mapeadas.
+- [x] Entrada externa definida.
+- [x] Path Security referenciada.
+- [x] External Process Security referenciada.
+- [x] Plugin Security referenciada.
+- [x] Sensitive Settings referenciada.
+- [x] Log Redaction referenciada.
+- [x] Backup Security referenciada.
+- [x] Update Security referenciada.
+- [x] Regras para Codex definidas.
 
 ---
 

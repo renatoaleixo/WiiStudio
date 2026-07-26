@@ -1,7 +1,7 @@
 # F121 - WBFS Format Command Catalog
 
 > Feature ID: F121  
-> Status: Ready for Development  
+> Status: Implemented and Homologated  
 > Priority: Critical  
 > Epic: USB Device Operations / Destructive Command Safety  
 > Area: Wiimms, WBFS, Privileged Access, Device Manager, Diagnostics  
@@ -600,18 +600,18 @@ Nenhum teste automatizado pode formatar disco real.
 
 # Critérios de Aceite
 
-- [ ] Comando oficial `wwt --force --verbose --progress FORMAT <TARGET>` definido.
-- [ ] Comando de teste `wwt --test --verbose FORMAT <TARGET>` definido.
-- [ ] Argumentos permitidos documentados.
-- [ ] Argumentos proibidos documentados.
-- [ ] Alvo montado é tratado.
-- [ ] Disco do sistema é bloqueado.
-- [ ] Fluxo Linux/Windows/macOS definido.
-- [ ] Validação pós-formatação definida.
-- [ ] WBFS vazio é confirmado por `LIST`.
-- [ ] Rollback é explicado como não garantido.
-- [ ] Mensagens de erro definidas.
-- [ ] Testes usam fakes e não formatam disco real.
+- [x] Comando oficial `wwt --force --verbose --progress FORMAT <TARGET>` definido.
+- [x] Comando de teste `wwt --test --verbose FORMAT <TARGET>` definido.
+- [x] Argumentos permitidos documentados.
+- [x] Argumentos proibidos documentados.
+- [x] Alvo montado é tratado.
+- [x] Disco do sistema é bloqueado.
+- [x] Fluxo Linux/Windows/macOS definido.
+- [x] Validação pós-formatação definida.
+- [x] WBFS vazio é confirmado por `LIST`.
+- [x] Rollback é explicado como não garantido.
+- [x] Mensagens de erro definidas.
+- [x] Testes usam fakes e não formatam disco real.
 
 ---
 

@@ -1,7 +1,7 @@
 # F067 - Panel System
 
 > Feature ID: F067
-> Status: Ready for Development
+> Status: Implemented and Homologated
 > Priority: High
 > Epic: Application Shell
 
@@ -437,19 +437,19 @@ Obrigatório:
 
 # Critérios de Aceite
 
-- [ ] Tipos oficiais de painéis definidos.
-- [ ] Estados dos painéis documentados.
-- [ ] Right Panel definido.
-- [ ] Bottom Panel definido.
-- [ ] Overlay Panel definido.
-- [ ] Panel Service especificado.
-- [ ] Integração com Workspace definida.
-- [ ] Integração com Navigation definida.
-- [ ] Responsividade documentada.
-- [ ] Compatível com Light/Dark.
-- [ ] Acessibilidade validada.
-- [ ] Sem lógica de negócio na View.
-- [ ] Sem valores hardcoded.
+- [x] Tipos oficiais de painéis definidos.
+- [x] Estados dos painéis documentados.
+- [x] Right Panel definido.
+- [x] Bottom Panel definido.
+- [x] Overlay Panel definido.
+- [x] Panel Service especificado.
+- [x] Integração com Workspace definida.
+- [x] Integração com Navigation definida.
+- [x] Responsividade documentada.
+- [x] Compatível com Light/Dark.
+- [x] Acessibilidade validada.
+- [x] Sem lógica de negócio na View.
+- [x] Sem valores hardcoded.
 
 ---
 

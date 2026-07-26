@@ -181,8 +181,8 @@ Registrar:
 
 # Checklist
 
--   [ ] Interface definida
--   [ ] Fluxo documentado
--   [ ] Tratamento de erros
--   [ ] Logging
--   [ ] UX definida
+-   [x] Interface definida
+-   [x] Fluxo documentado
+-   [x] Tratamento de erros
+-   [x] Logging
+-   [x] UX definida

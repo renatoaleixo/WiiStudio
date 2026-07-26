@@ -1,7 +1,7 @@
 # F095 - ProcessRunner Testing
 
 > Feature ID: F095
-> Status: Ready for Development
+> Status: Implemented and Homologated
 > Priority: Critical
 > Epic: Testing & Quality
 
@@ -239,18 +239,18 @@ Testar obrigatoriamente:
 
 # Critérios de Aceite
 
-- [ ] Fake executor definido.
-- [ ] Sucesso testado.
-- [ ] Falha testada.
-- [ ] Timeout testado.
-- [ ] Cancelamento testado.
-- [ ] stdout/stderr testados.
-- [ ] Executável inválido testado.
-- [ ] Argumentos inseguros testados.
-- [ ] Redaction testada.
-- [ ] Plugins testados.
-- [ ] Task Manager testado.
-- [ ] Wiimms real opcional.
+- [x] Fake executor definido.
+- [x] Sucesso testado.
+- [x] Falha testada.
+- [x] Timeout testado.
+- [x] Cancelamento testado.
+- [x] stdout/stderr testados.
+- [x] Executável inválido testado.
+- [x] Argumentos inseguros testados.
+- [x] Redaction testada.
+- [x] Plugins testados.
+- [x] Task Manager testado.
+- [x] Wiimms real opcional.
 
 ---
 

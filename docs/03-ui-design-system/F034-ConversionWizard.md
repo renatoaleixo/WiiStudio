@@ -1,6 +1,6 @@
 # F034 - Conversion Wizard
 
-> Feature ID: F034 Status: Ready for Development Priority: Critical
+> Feature ID: F034 Status: Implemented and Homologated Priority: Critical
 > Epic: User Interface
 
 # Objetivo
@@ -165,11 +165,11 @@ public interface IConversionWizardService
 
 # Critérios de Aceite
 
--   [ ] Fluxo guiado completo.
--   [ ] Pipeline selecionado automaticamente.
--   [ ] Estimativa de tempo e espaço.
--   [ ] Conversão em tempo real.
--   [ ] Integração completa com Conversion Engine.
+-   [x] Fluxo guiado completo.
+-   [x] Pipeline selecionado automaticamente.
+-   [x] Estimativa de tempo e espaço.
+-   [x] Conversão em tempo real.
+-   [x] Integração completa com Conversion Engine.
 
 ------------------------------------------------------------------------
 

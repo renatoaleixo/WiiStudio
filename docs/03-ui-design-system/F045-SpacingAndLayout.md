@@ -1,7 +1,7 @@
 # F045 - Spacing & Layout
 
 > Feature ID: F045
-> Status: Ready for Development
+> Status: Implemented and Homologated
 > Priority: Critical
 > Epic: Design System
 
@@ -326,16 +326,16 @@ Layout.SidebarWidth
 
 # Critérios de Aceite
 
-- [ ] Escala de espaçamento definida.
-- [ ] Tokens de layout definidos.
-- [ ] Grid System documentado.
-- [ ] Breakpoints definidos.
-- [ ] Responsividade documentada.
-- [ ] Padding e margin oficiais definidos.
-- [ ] Regras para telas, forms, dialogs, cards e grids definidas.
-- [ ] Sem valores hardcoded em novas Views.
-- [ ] Compatível com Light/Dark.
-- [ ] Documentação suficiente para o Codex implementar.
+- [x] Escala de espaçamento definida.
+- [x] Tokens de layout definidos.
+- [x] Grid System documentado.
+- [x] Breakpoints definidos.
+- [x] Responsividade documentada.
+- [x] Padding e margin oficiais definidos.
+- [x] Regras para telas, forms, dialogs, cards e grids definidas.
+- [x] Sem valores hardcoded em novas Views.
+- [x] Compatível com Light/Dark.
+- [x] Documentação suficiente para o Codex implementar.
 
 ---
 

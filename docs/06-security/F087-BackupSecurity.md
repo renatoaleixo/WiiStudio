@@ -1,7 +1,7 @@
 # F087 - Backup Security
 
 > Feature ID: F087
-> Status: Ready for Development
+> Status: Implemented and Homologated
 > Priority: High
 > Epic: Security & Permissions
 
@@ -292,18 +292,18 @@ Registrar:
 
 # Critérios de Aceite
 
-- [ ] Destino validado.
-- [ ] Espaço validado.
-- [ ] Manifesto definido.
-- [ ] Hash por item definido.
-- [ ] Criação segura definida.
-- [ ] Restauração segura definida.
-- [ ] Confirmação destrutiva definida.
-- [ ] Rollback previsto.
-- [ ] Paths seguros definidos.
-- [ ] Plugins considerados.
-- [ ] Logs redigidos.
-- [ ] Auditoria definida.
+- [x] Destino validado.
+- [x] Espaço validado.
+- [x] Manifesto definido.
+- [x] Hash por item definido.
+- [x] Criação segura definida.
+- [x] Restauração segura definida.
+- [x] Confirmação destrutiva definida.
+- [x] Rollback previsto.
+- [x] Paths seguros definidos.
+- [x] Plugins considerados.
+- [x] Logs redigidos.
+- [x] Auditoria definida.
 
 ---
 

@@ -1,7 +1,7 @@
 # F107 - CrossPlatformUsbDeviceProvider
 
 > Feature ID: F107  
-> Status: Ready for Development  
+> Status: Implemented and Homologated  
 > Priority: Critical  
 > Epic: Device Manager / Cross-Platform Infrastructure  
 > Area: Linux, Windows, macOS, USB Detection, WBFS, Diagnostics  
@@ -382,17 +382,17 @@ Obrigatório:
 
 # Critérios de Aceite
 
-- [ ] `CrossPlatformUsbDeviceProvider` criado.
-- [ ] Linux provider implementado/definido.
-- [ ] Windows provider implementado/definido.
-- [ ] macOS provider implementado/definido.
-- [ ] Discos físicos são listados quando permitido.
-- [ ] Partições são listadas.
-- [ ] FAT32/NTFS/exFAT são detectados quando possível.
-- [ ] WBFS candidate é detectado.
-- [ ] Permissão insuficiente é reportada.
-- [ ] Device Manager exibe diagnóstico.
-- [ ] Testes cobrem Linux, Windows e macOS com fakes.
+- [x] `CrossPlatformUsbDeviceProvider` criado.
+- [x] Linux provider implementado/definido.
+- [x] Windows provider implementado/definido.
+- [x] macOS provider implementado/definido.
+- [x] Discos físicos são listados quando permitido.
+- [x] Partições são listadas.
+- [x] FAT32/NTFS/exFAT são detectados quando possível.
+- [x] WBFS candidate é detectado.
+- [x] Permissão insuficiente é reportada.
+- [x] Device Manager exibe diagnóstico.
+- [x] Testes cobrem Linux, Windows e macOS com fakes.
 
 ---
 

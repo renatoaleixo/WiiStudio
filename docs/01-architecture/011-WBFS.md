@@ -166,8 +166,8 @@ public interface IWbfsService
 
 # Checklist
 
--   [ ] Fluxo de leitura
--   [ ] Fluxo de escrita
--   [ ] Estratégia de validação
--   [ ] Compatibilidade documentada
--   [ ] Interface definida
+-   [x] Fluxo de leitura
+-   [x] Fluxo de escrita
+-   [x] Estratégia de validação
+-   [x] Compatibilidade documentada
+-   [x] Interface definida

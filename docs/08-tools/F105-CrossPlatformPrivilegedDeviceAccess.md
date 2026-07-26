@@ -1,7 +1,7 @@
 # F105 - Cross-Platform Privileged Device Access
 
 > Feature ID: F105  
-> Status: Ready for Development  
+> Status: Implemented and Homologated  
 > Priority: Critical  
 > Epic: Device Access / Security / External Tools  
 > Area: Infrastructure, Security, Diagnostics, Device Manager, External Tool Manager
@@ -929,21 +929,21 @@ macOS privileged helper
 
 # Critérios de Aceite
 
-- [ ] Linux reconhece policy Polkit instalada.
-- [ ] Linux informa quando policy está ausente.
-- [ ] Linux reaproveita autorização quando o sistema permitir.
-- [ ] Windows informa corretamente quando precisa de Administrador.
-- [ ] macOS informa corretamente quando precisa de permissão/elevado.
-- [ ] Diagnóstico mostra estado de permissão por plataforma.
-- [ ] `PrivilegedAccessService` ou `DevicePermissionService` definido.
-- [ ] Sistema operacional é detectado em runtime.
-- [ ] Nenhuma senha é armazenada.
-- [ ] Nenhuma senha trafega pelo WiiStudio.
-- [ ] Somente `wit`/`wwt` são permitidos inicialmente.
-- [ ] Caminho do executável é validado.
-- [ ] Timeout e cancelamento funcionam.
-- [ ] Retry após autorização funciona.
-- [ ] Testes unitários cobrem Linux, Windows e macOS por abstração.
+- [x] Linux reconhece policy Polkit instalada.
+- [x] Linux informa quando policy está ausente.
+- [x] Linux reaproveita autorização quando o sistema permitir.
+- [x] Windows informa corretamente quando precisa de Administrador.
+- [x] macOS informa corretamente quando precisa de permissão/elevado.
+- [x] Diagnóstico mostra estado de permissão por plataforma.
+- [x] `PrivilegedAccessService` ou `DevicePermissionService` definido.
+- [x] Sistema operacional é detectado em runtime.
+- [x] Nenhuma senha é armazenada.
+- [x] Nenhuma senha trafega pelo WiiStudio.
+- [x] Somente `wit`/`wwt` são permitidos inicialmente.
+- [x] Caminho do executável é validado.
+- [x] Timeout e cancelamento funcionam.
+- [x] Retry após autorização funciona.
+- [x] Testes unitários cobrem Linux, Windows e macOS por abstração.
 
 ---
 

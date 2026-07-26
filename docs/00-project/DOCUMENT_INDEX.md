@@ -226,6 +226,7 @@ design system, application shell, plugin SDK, segurança, testes e documentaçã
 - `DEFINITION_OF_DONE.md`
 - `FOLDER_STRUCTURE.md`
 - `FINALIZATION_REFERENCE.md`
+- `HOMOLOGATION_ACCEPTANCE.md`
 - `MIGRATION_PLAN_TO_FINAL_FOLDERS.md`
 
 ---

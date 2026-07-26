@@ -1,6 +1,6 @@
 # F027 - Application Update Manager
 
-> Feature ID: F027 Status: Ready for Development Priority: High Epic:
+> Feature ID: F027 Status: Implemented and Homologated Priority: High Epic:
 > Settings & User Experience
 
 # Objetivo
@@ -167,11 +167,11 @@ Todos os erros devem gerar logs estruturados.
 
 # Critérios de Aceite
 
--   [ ] Verificação automática.
--   [ ] Download seguro.
--   [ ] Validação de assinatura.
--   [ ] Instalação preservando dados.
--   [ ] Rollback funcional.
+-   [x] Verificação automática.
+-   [x] Download seguro.
+-   [x] Validação de assinatura.
+-   [x] Instalação preservando dados.
+-   [x] Rollback funcional.
 
 ------------------------------------------------------------------------
 

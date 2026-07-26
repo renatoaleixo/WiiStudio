@@ -1,7 +1,7 @@
 # F065 - Footer & Status Area
 
 > Feature ID: F065
-> Status: Ready for Development
+> Status: Implemented and Homologated
 > Priority: High
 > Epic: Application Shell
 
@@ -385,19 +385,19 @@ Obrigatório:
 
 # Critérios de Aceite
 
-- [ ] Status Bar definida.
-- [ ] Mensagem principal suportada.
-- [ ] Task Indicator definido.
-- [ ] Progress Indicator definido.
-- [ ] Device Indicator definido.
-- [ ] Diagnostics Indicator definido.
-- [ ] Notification Indicator definido.
-- [ ] Responsividade documentada.
-- [ ] Compatível com Light/Dark.
-- [ ] Acessibilidade validada.
-- [ ] Textos localizáveis.
-- [ ] Sem lógica de negócio na View.
-- [ ] Sem valores hardcoded.
+- [x] Status Bar definida.
+- [x] Mensagem principal suportada.
+- [x] Task Indicator definido.
+- [x] Progress Indicator definido.
+- [x] Device Indicator definido.
+- [x] Diagnostics Indicator definido.
+- [x] Notification Indicator definido.
+- [x] Responsividade documentada.
+- [x] Compatível com Light/Dark.
+- [x] Acessibilidade validada.
+- [x] Textos localizáveis.
+- [x] Sem lógica de negócio na View.
+- [x] Sem valores hardcoded.
 
 ---
 

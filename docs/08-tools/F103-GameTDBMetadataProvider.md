@@ -1,7 +1,7 @@
 # F103 - GameTDB Metadata Provider
 
 > Feature ID: F103  
-> Status: Ready for Development  
+> Status: Implemented and Homologated  
 > Priority: Critical  
 > Epic: Metadata & Assets  
 > Area: Infrastructure, Application, Cache, Diagnostics, UI  
@@ -1033,20 +1033,20 @@ A UI deve:
 
 # Critérios de Aceite
 
-- [ ] `NullGameMetadataProvider` deixa de ser provider padrão.
-- [ ] `GameTdbMetadataProvider` implementado.
-- [ ] `IsAvailableAsync` funciona.
-- [ ] Sincroniza metadados de jogo conhecido, exemplo `RMCP01`.
-- [ ] Sincroniza em lote.
-- [ ] Reutiliza cache quando `ForceRefresh = false`.
-- [ ] `ForceRefresh` busca novamente.
-- [ ] Botão mostra contagem correta.
-- [ ] Metadados aparecem na UI ou ficam acessíveis na biblioteca.
-- [ ] Game ID inválido é rejeitado.
-- [ ] XML inválido é tratado.
-- [ ] Provider indisponível não quebra UI.
-- [ ] Dados personalizados do usuário são preservados.
-- [ ] Testes não dependem de internet real.
+- [x] `NullGameMetadataProvider` deixa de ser provider padrão.
+- [x] `GameTdbMetadataProvider` implementado.
+- [x] `IsAvailableAsync` funciona.
+- [x] Sincroniza metadados de jogo conhecido, exemplo `RMCP01`.
+- [x] Sincroniza em lote.
+- [x] Reutiliza cache quando `ForceRefresh = false`.
+- [x] `ForceRefresh` busca novamente.
+- [x] Botão mostra contagem correta.
+- [x] Metadados aparecem na UI ou ficam acessíveis na biblioteca.
+- [x] Game ID inválido é rejeitado.
+- [x] XML inválido é tratado.
+- [x] Provider indisponível não quebra UI.
+- [x] Dados personalizados do usuário são preservados.
+- [x] Testes não dependem de internet real.
 
 ---
 

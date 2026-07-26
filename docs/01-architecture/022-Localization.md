@@ -156,8 +156,8 @@ Validar:
 
 # Checklist
 
--   [ ] Serviço definido
--   [ ] Estrutura criada
--   [ ] Persistência documentada
--   [ ] Fallback definido
--   [ ] Testes especificados
+-   [x] Serviço definido
+-   [x] Estrutura criada
+-   [x] Persistência documentada
+-   [x] Fallback definido
+-   [x] Testes especificados

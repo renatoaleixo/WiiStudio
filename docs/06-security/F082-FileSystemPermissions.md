@@ -1,7 +1,7 @@
 # F082 - File System Permissions
 
 > Feature ID: F082
-> Status: Ready for Development
+> Status: Implemented and Homologated
 > Priority: Critical
 > Epic: Security & Permissions
 
@@ -304,16 +304,16 @@ Registrar:
 
 # Critérios de Aceite
 
-- [ ] Escopos oficiais definidos.
-- [ ] Serviço de permissão definido.
-- [ ] Leitura validada.
-- [ ] Escrita validada.
-- [ ] Exclusão protegida.
-- [ ] Plugins restritos.
-- [ ] Dispositivos externos considerados.
-- [ ] Mensagens amigáveis definidas.
-- [ ] Auditoria definida.
-- [ ] Path traversal bloqueado.
+- [x] Escopos oficiais definidos.
+- [x] Serviço de permissão definido.
+- [x] Leitura validada.
+- [x] Escrita validada.
+- [x] Exclusão protegida.
+- [x] Plugins restritos.
+- [x] Dispositivos externos considerados.
+- [x] Mensagens amigáveis definidas.
+- [x] Auditoria definida.
+- [x] Path traversal bloqueado.
 
 ---
 

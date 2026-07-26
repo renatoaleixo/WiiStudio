@@ -1,7 +1,7 @@
 # F052 - Toolbar System
 
 > Feature ID: F052
-> Status: Ready for Development
+> Status: Implemented and Homologated
 > Priority: High
 > Epic: Advanced UI Components
 
@@ -313,17 +313,17 @@ Obrigatório:
 
 # Critérios de Aceite
 
-- [ ] Tipos oficiais de Toolbar definidos.
-- [ ] Agrupamento de comandos documentado.
-- [ ] Overflow suportado.
-- [ ] Tooltips definidos.
-- [ ] Integração com Commands prevista.
-- [ ] Integração com Command Palette prevista.
-- [ ] Integração com Keyboard Shortcuts prevista.
-- [ ] Compatível com Light/Dark.
-- [ ] Navegação por teclado funcional.
-- [ ] Sem estilos inline.
-- [ ] Sem lógica de negócio na View.
+- [x] Tipos oficiais de Toolbar definidos.
+- [x] Agrupamento de comandos documentado.
+- [x] Overflow suportado.
+- [x] Tooltips definidos.
+- [x] Integração com Commands prevista.
+- [x] Integração com Command Palette prevista.
+- [x] Integração com Keyboard Shortcuts prevista.
+- [x] Compatível com Light/Dark.
+- [x] Navegação por teclado funcional.
+- [x] Sem estilos inline.
+- [x] Sem lógica de negócio na View.
 
 ---
 

@@ -1,6 +1,6 @@
 # F024 - Preferences & Profiles
 
-> Feature ID: F024 Status: Ready for Development Priority: High Epic:
+> Feature ID: F024 Status: Implemented and Homologated Priority: High Epic:
 > Settings & User Experience
 
 # Objetivo
@@ -175,11 +175,11 @@ public interface IProfileService
 
 # Critérios de Aceite
 
--   [ ] Criar perfis.
--   [ ] Alternar perfis.
--   [ ] Persistência automática.
--   [ ] Importação/exportação.
--   [ ] Migração entre versões.
+-   [x] Criar perfis.
+-   [x] Alternar perfis.
+-   [x] Persistência automática.
+-   [x] Importação/exportação.
+-   [x] Migração entre versões.
 
 ------------------------------------------------------------------------
 

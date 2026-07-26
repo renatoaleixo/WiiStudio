@@ -1,7 +1,7 @@
 # F056 - Badges & Status Indicators
 
 > Feature ID: F056
-> Status: Ready for Development
+> Status: Implemented and Homologated
 > Priority: High
 > Epic: Advanced UI Components
 
@@ -456,18 +456,18 @@ public enum OperationStatus
 
 # Critérios de Aceite
 
-- [ ] Tipos oficiais definidos.
-- [ ] Severidades oficiais definidas.
-- [ ] Status por domínio documentados.
-- [ ] Badges compatíveis com Light/Dark.
-- [ ] Chips removíveis definidos.
-- [ ] Status Dot definido.
-- [ ] Uso em DataGrid documentado.
-- [ ] Uso em Cards documentado.
-- [ ] Textos localizáveis.
-- [ ] Acessibilidade validada.
-- [ ] Sem cores hardcoded.
-- [ ] Não depende apenas de cor.
+- [x] Tipos oficiais definidos.
+- [x] Severidades oficiais definidas.
+- [x] Status por domínio documentados.
+- [x] Badges compatíveis com Light/Dark.
+- [x] Chips removíveis definidos.
+- [x] Status Dot definido.
+- [x] Uso em DataGrid documentado.
+- [x] Uso em Cards documentado.
+- [x] Textos localizáveis.
+- [x] Acessibilidade validada.
+- [x] Sem cores hardcoded.
+- [x] Não depende apenas de cor.
 
 ---
 

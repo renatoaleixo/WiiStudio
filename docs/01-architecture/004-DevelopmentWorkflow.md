@@ -134,11 +134,11 @@ MAJOR.MINOR.PATCH
 
 # Checklist
 
--   [ ] Issue criada
--   [ ] Branch correta
--   [ ] Commits padronizados
--   [ ] Testes
--   [ ] PR
--   [ ] Review
--   [ ] ADR (se necessário)
--   [ ] Merge
+-   [x] Issue criada
+-   [x] Branch correta
+-   [x] Commits padronizados
+-   [x] Testes
+-   [x] PR
+-   [x] Review
+-   [x] ADR (se necessário)
+-   [x] Merge

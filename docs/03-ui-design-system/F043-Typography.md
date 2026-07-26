@@ -1,7 +1,7 @@
 # F043 - Typography
 
 > Feature ID: F043
-> Status: Ready for Development
+> Status: Implemented and Homologated
 > Priority: High
 > Epic: Design System
 
@@ -65,11 +65,11 @@ Nunca definir FontSize diretamente nas Views.
 
 ## Critérios de Aceite
 
-- [ ] Hierarquia tipográfica definida.
-- [ ] Tokens reutilizáveis.
-- [ ] Sem FontSize hardcoded.
-- [ ] Compatível com Light/Dark.
-- [ ] Acessibilidade validada.
+- [x] Hierarquia tipográfica definida.
+- [x] Tokens reutilizáveis.
+- [x] Sem FontSize hardcoded.
+- [x] Compatível com Light/Dark.
+- [x] Acessibilidade validada.
 
 ## Testes
 

@@ -170,10 +170,10 @@ Filtros:
 
 # Checklist
 
--   [ ] Dashboard
--   [ ] Biblioteca
--   [ ] Conversões
--   [ ] Configurações
--   [ ] Drag & Drop
--   [ ] Pesquisa
--   [ ] Acessibilidade
+-   [x] Dashboard
+-   [x] Biblioteca
+-   [x] Conversões
+-   [x] Configurações
+-   [x] Drag & Drop
+-   [x] Pesquisa
+-   [x] Acessibilidade

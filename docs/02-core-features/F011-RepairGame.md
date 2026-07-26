@@ -1,7 +1,7 @@
 # F011 - Repair Game
 
 > Feature ID: F011\
-> Status: Ready for Development\
+> Status: Implemented and Homologated\
 > Priority: High\
 > Epic: Library Management
 
@@ -172,11 +172,11 @@ Registrar logs estruturados e manter histórico.
 
 # Critérios de Aceite
 
--   [ ] Plano de reparo gerado.
--   [ ] Reparo executado com confirmação.
--   [ ] Biblioteca atualizada.
--   [ ] Relatório final disponível.
--   [ ] Histórico registrado.
+-   [x] Plano de reparo gerado.
+-   [x] Reparo executado com confirmação.
+-   [x] Biblioteca atualizada.
+-   [x] Relatório final disponível.
+-   [x] Histórico registrado.
 
 ------------------------------------------------------------------------
 

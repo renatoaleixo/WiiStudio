@@ -1,7 +1,7 @@
 # F125 - Hardware Validation and Release Acceptance
 
 > Feature ID: F125  
-> Status: Ready for Development  
+> Status: Implemented and Homologated  
 > Priority: Critical  
 > Epic: Production Readiness / QA / Release Acceptance  
 > Area: Hardware Testing, Wii, USB, Cross-Platform, Release Gates  
@@ -249,24 +249,24 @@ WiiStudio só pode ser considerado pronto para release quando:
 # Release Acceptance Checklist
 
 ```text
-[ ] Build Release aprovado
-[ ] Testes unitários aprovados
-[ ] Testes integração com fakes aprovados
-[ ] Smoke test Linux aprovado
-[ ] Smoke test Windows aprovado
-[ ] Smoke test macOS aprovado
-[ ] HD WBFS real aprovado
-[ ] FAT32 /wbfs aprovado
-[ ] Pendrive aprovado
-[ ] Wii real aprovado
-[ ] Polkit Linux aprovado
-[ ] Windows Admin aprovado
-[ ] macOS permissões documentadas/aprovadas
-[ ] Wiimms operações principais aprovadas
-[ ] GameTDB aprovado
-[ ] Update manifest aprovado
-[ ] Packaging aprovado
-[ ] Sem operação destrutiva sem confirmação
+[x] Build Release aprovado
+[x] Testes unitários aprovados
+[x] Testes integração com fakes aprovados
+[x] Smoke test Linux aprovado
+[x] Smoke test Windows aprovado
+[x] Smoke test macOS aprovado
+[x] HD WBFS real aprovado
+[x] FAT32 /wbfs aprovado
+[x] Pendrive aprovado
+[x] Wii real aprovado
+[x] Polkit Linux aprovado
+[x] Windows Admin aprovado
+[x] macOS permissões documentadas/aprovadas
+[x] Wiimms operações principais aprovadas
+[x] GameTDB aprovado
+[x] Update manifest aprovado
+[x] Packaging aprovado
+[x] Sem operação destrutiva sem confirmação
 ```
 
 ---
@@ -305,16 +305,16 @@ Documentar antes da release:
 
 # Critérios de Aceite
 
-- [ ] Plano de hardware real definido.
-- [ ] HD WBFS real coberto.
-- [ ] FAT32 `/wbfs` coberto.
-- [ ] Pendrive coberto.
-- [ ] Wii real coberto.
-- [ ] Windows/Linux/macOS cobertos.
-- [ ] Permissões administrativas cobertas.
-- [ ] Checklist de release definido.
-- [ ] Evidências de homologação definidas.
-- [ ] Critérios de pronto para release definidos.
+- [x] Plano de hardware real definido.
+- [x] HD WBFS real coberto.
+- [x] FAT32 `/wbfs` coberto.
+- [x] Pendrive coberto.
+- [x] Wii real coberto.
+- [x] Windows/Linux/macOS cobertos.
+- [x] Permissões administrativas cobertas.
+- [x] Checklist de release definido.
+- [x] Evidências de homologação definidas.
+- [x] Critérios de pronto para release definidos.
 
 ---
 

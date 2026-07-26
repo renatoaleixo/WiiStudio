@@ -1,7 +1,7 @@
 # F118 - Diagnostics Repair Actions
 
 > Feature ID: F118  
-> Status: Ready for Development  
+> Status: Implemented and Homologated  
 > Priority: High  
 > Epic: Diagnostics / Repair UX  
 > Area: Advanced Diagnostics, External Tools, Polkit, Settings, Logs  
@@ -281,15 +281,15 @@ E atualizar status.
 
 # Critérios de Aceite
 
-- [ ] Diagnóstico exibe ações de reparo.
-- [ ] Policy Polkit pode ser corrigida via F106.
-- [ ] Caminho do Wiimms pode ser configurado.
-- [ ] Pasta de logs pode ser aberta.
-- [ ] Ferramentas podem ser validadas.
-- [ ] GameTDB pode ser atualizado.
-- [ ] Reparo gera tarefa/notificação.
-- [ ] Diagnóstico atualiza após reparo.
-- [ ] Testes usam fakes.
+- [x] Diagnóstico exibe ações de reparo.
+- [x] Policy Polkit pode ser corrigida via F106.
+- [x] Caminho do Wiimms pode ser configurado.
+- [x] Pasta de logs pode ser aberta.
+- [x] Ferramentas podem ser validadas.
+- [x] GameTDB pode ser atualizado.
+- [x] Reparo gera tarefa/notificação.
+- [x] Diagnóstico atualiza após reparo.
+- [x] Testes usam fakes.
 
 ---
 

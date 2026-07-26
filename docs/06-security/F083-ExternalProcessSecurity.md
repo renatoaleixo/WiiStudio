@@ -1,7 +1,7 @@
 # F083 - External Process Security
 
 > Feature ID: F083
-> Status: Ready for Development
+> Status: Implemented and Homologated
 > Priority: Critical
 > Epic: Security & Permissions
 
@@ -335,18 +335,18 @@ Exemplos:
 
 # Critérios de Aceite
 
-- [ ] Uso obrigatório de ProcessRunner definido.
-- [ ] `Process.Start` direto proibido.
-- [ ] Executável validado.
-- [ ] Argumentos estruturados.
-- [ ] Shell arbitrário bloqueado.
-- [ ] Timeout definido.
-- [ ] Cancelamento definido.
-- [ ] Logs capturados.
-- [ ] Redação de logs definida.
-- [ ] Integração com plugins definida.
-- [ ] Integração com Task Manager definida.
-- [ ] Paths seguros exigidos.
+- [x] Uso obrigatório de ProcessRunner definido.
+- [x] `Process.Start` direto proibido.
+- [x] Executável validado.
+- [x] Argumentos estruturados.
+- [x] Shell arbitrário bloqueado.
+- [x] Timeout definido.
+- [x] Cancelamento definido.
+- [x] Logs capturados.
+- [x] Redação de logs definida.
+- [x] Integração com plugins definida.
+- [x] Integração com Task Manager definida.
+- [x] Paths seguros exigidos.
 
 ---
 

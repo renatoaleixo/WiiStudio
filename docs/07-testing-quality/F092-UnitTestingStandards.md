@@ -1,7 +1,7 @@
 # F092 - Unit Testing Standards
 
 > Feature ID: F092
-> Status: Ready for Development
+> Status: Implemented and Homologated
 > Priority: Critical
 > Epic: Testing & Quality
 
@@ -343,18 +343,18 @@ tests/
 
 # Critérios de Aceite
 
-- [ ] Padrão de nomenclatura definido.
-- [ ] AAA definido.
-- [ ] FluentAssertions definido.
-- [ ] Mocks e fakes definidos.
-- [ ] Builders definidos.
-- [ ] Async tests definidos.
-- [ ] CancellationToken testado.
-- [ ] Domain tests definidos.
-- [ ] Application tests definidos.
-- [ ] ViewModel tests definidos.
-- [ ] Segurança coberta.
-- [ ] Regras para Codex definidas.
+- [x] Padrão de nomenclatura definido.
+- [x] AAA definido.
+- [x] FluentAssertions definido.
+- [x] Mocks e fakes definidos.
+- [x] Builders definidos.
+- [x] Async tests definidos.
+- [x] CancellationToken testado.
+- [x] Domain tests definidos.
+- [x] Application tests definidos.
+- [x] ViewModel tests definidos.
+- [x] Segurança coberta.
+- [x] Regras para Codex definidas.
 
 ---
 

@@ -1,7 +1,7 @@
 # F084 - Plugin Security
 
 > Feature ID: F084
-> Status: Ready for Development
+> Status: Implemented and Homologated
 > Priority: Critical
 > Epic: Security & Permissions
 
@@ -282,17 +282,17 @@ Logs de plugin devem:
 
 # Critérios de Aceite
 
-- [ ] Modelo de segurança de plugins definido.
-- [ ] Manifesto obrigatório.
-- [ ] Permissões obrigatórias.
-- [ ] Isolamento definido.
-- [ ] Quarentena definida.
-- [ ] Desativação automática definida.
-- [ ] Runtime protection definida.
-- [ ] Storage isolado definido.
-- [ ] Integração com Process Security definida.
-- [ ] Integração com File System definida.
-- [ ] Logging seguro definido.
+- [x] Modelo de segurança de plugins definido.
+- [x] Manifesto obrigatório.
+- [x] Permissões obrigatórias.
+- [x] Isolamento definido.
+- [x] Quarentena definida.
+- [x] Desativação automática definida.
+- [x] Runtime protection definida.
+- [x] Storage isolado definido.
+- [x] Integração com Process Security definida.
+- [x] Integração com File System definida.
+- [x] Logging seguro definido.
 
 ---
 

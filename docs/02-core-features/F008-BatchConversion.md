@@ -1,7 +1,7 @@
 # F008 - Batch Conversion
 
 > Feature ID: F008\
-> Status: Ready for Development\
+> Status: Implemented and Homologated\
 > Priority: Critical\
 > Epic: Conversion
 
@@ -217,12 +217,12 @@ configuração).
 
 # Critérios de Aceite
 
--   [ ] Conversão em lote funcional.
--   [ ] Fila persistente (quando habilitada).
--   [ ] Pausar/Retomar funcionando.
--   [ ] Cancelamento individual e global.
--   [ ] Atualização em tempo real.
--   [ ] Recuperação de falhas.
+-   [x] Conversão em lote funcional.
+-   [x] Fila persistente (quando habilitada).
+-   [x] Pausar/Retomar funcionando.
+-   [x] Cancelamento individual e global.
+-   [x] Atualização em tempo real.
+-   [x] Recuperação de falhas.
 
 ------------------------------------------------------------------------
 

@@ -42,11 +42,11 @@ Release
 
 Antes de escrever qualquer código confirme:
 
--   [ ] Existe documento da Feature.
--   [ ] Critérios de aceite definidos.
--   [ ] Dependências identificadas.
--   [ ] Impacto arquitetural analisado.
--   [ ] ADR criada (quando necessário).
+-   [x] Existe documento da Feature.
+-   [x] Critérios de aceite definidos.
+-   [x] Dependências identificadas.
+-   [x] Impacto arquitetural analisado.
+-   [x] ADR criada (quando necessário).
 
 ------------------------------------------------------------------------
 
@@ -180,10 +180,10 @@ Uma Feature somente é considerada pronta quando:
 
 # Checklist Final
 
--   [ ] Documento atualizado
--   [ ] Código implementado
--   [ ] Testes aprovados
--   [ ] Review concluído
--   [ ] Logs implementados
--   [ ] Localização adicionada
--   [ ] Release pronta
+-   [x] Documento atualizado
+-   [x] Código implementado
+-   [x] Testes aprovados
+-   [x] Review concluído
+-   [x] Logs implementados
+-   [x] Localização adicionada
+-   [x] Release pronta

@@ -73,8 +73,8 @@ Utilizar Serilog.
 
 ## Checklist
 
--   [ ] Clean Architecture
--   [ ] SOLID
--   [ ] MVVM
--   [ ] Testes
--   [ ] Logging
+-   [x] Clean Architecture
+-   [x] SOLID
+-   [x] MVVM
+-   [x] Testes
+-   [x] Logging

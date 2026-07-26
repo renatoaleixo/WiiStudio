@@ -1,7 +1,7 @@
 # F048 - Dialogs & Modals
 
 > Feature ID: F048
-> Status: Ready for Development
+> Status: Implemented and Homologated
 > Priority: Critical
 > Epic: Design System
 
@@ -491,19 +491,19 @@ Usar Dialog quando:
 
 # Critérios de Aceite
 
-- [ ] Tipos oficiais de dialogs definidos.
-- [ ] Estrutura visual padronizada.
-- [ ] Serviço `IDialogService` definido.
-- [ ] Confirmation Dialog implementado.
-- [ ] Danger Confirmation Dialog implementado.
-- [ ] Progress Dialog implementado.
-- [ ] Error Dialog implementado.
-- [ ] Compatível com Light/Dark.
-- [ ] Navegação por teclado funcional.
-- [ ] Foco preso corretamente no dialog.
-- [ ] Textos localizáveis.
-- [ ] Sem estilos inline.
-- [ ] Sem lógica de negócio na View.
+- [x] Tipos oficiais de dialogs definidos.
+- [x] Estrutura visual padronizada.
+- [x] Serviço `IDialogService` definido.
+- [x] Confirmation Dialog implementado.
+- [x] Danger Confirmation Dialog implementado.
+- [x] Progress Dialog implementado.
+- [x] Error Dialog implementado.
+- [x] Compatível com Light/Dark.
+- [x] Navegação por teclado funcional.
+- [x] Foco preso corretamente no dialog.
+- [x] Textos localizáveis.
+- [x] Sem estilos inline.
+- [x] Sem lógica de negócio na View.
 
 ---
 

@@ -172,9 +172,9 @@ Até 2.000 jogos sem degradação perceptível.
 
 # Checklist
 
--   [ ] Layout definido
--   [ ] Pesquisa especificada
--   [ ] Filtros definidos
--   [ ] Ações em lote
--   [ ] Estados documentados
--   [ ] Regras de performance
+-   [x] Layout definido
+-   [x] Pesquisa especificada
+-   [x] Filtros definidos
+-   [x] Ações em lote
+-   [x] Estados documentados
+-   [x] Regras de performance

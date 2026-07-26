@@ -1,6 +1,6 @@
 # F016 - Duplicate Detection
 
-> Feature ID: F016 Status: Ready for Development Priority: High Epic:
+> Feature ID: F016 Status: Implemented and Homologated Priority: High Epic:
 > Library Management
 
 # Objetivo
@@ -169,11 +169,11 @@ Exibir:
 
 # Critérios de Aceite
 
--   [ ] Detecta duplicatas em todos os formatos suportados.
--   [ ] Agrupa automaticamente.
--   [ ] Sugere melhor cópia.
--   [ ] Suporta ações em lote.
--   [ ] Gera relatório.
+-   [x] Detecta duplicatas em todos os formatos suportados.
+-   [x] Agrupa automaticamente.
+-   [x] Sugere melhor cópia.
+-   [x] Suporta ações em lote.
+-   [x] Gera relatório.
 
 ------------------------------------------------------------------------
 

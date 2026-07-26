@@ -162,8 +162,8 @@ Local padrão:
 
 # Checklist
 
--   [ ] Schema definido
--   [ ] Migrações documentadas
--   [ ] Índices definidos
--   [ ] Estratégia de backup definida
--   [ ] Cache documentado
+-   [x] Schema definido
+-   [x] Migrações documentadas
+-   [x] Índices definidos
+-   [x] Estratégia de backup definida
+-   [x] Cache documentado

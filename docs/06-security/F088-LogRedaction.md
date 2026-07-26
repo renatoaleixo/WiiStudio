@@ -1,7 +1,7 @@
 # F088 - Log Redaction
 
 > Feature ID: F088
-> Status: Ready for Development
+> Status: Implemented and Homologated
 > Priority: Critical
 > Epic: Security & Permissions
 
@@ -249,15 +249,15 @@ Ao exportar logs:
 
 # Critérios de Aceite
 
-- [ ] Dados sensíveis definidos.
-- [ ] Serviço de redaction especificado.
-- [ ] Padrões de detecção definidos.
-- [ ] Exceptions tratadas.
-- [ ] stdout/stderr tratados.
-- [ ] Plugins tratados.
-- [ ] Exportação de logs tratada.
-- [ ] Testes de redaction definidos.
-- [ ] Regras para Codex definidas.
+- [x] Dados sensíveis definidos.
+- [x] Serviço de redaction especificado.
+- [x] Padrões de detecção definidos.
+- [x] Exceptions tratadas.
+- [x] stdout/stderr tratados.
+- [x] Plugins tratados.
+- [x] Exportação de logs tratada.
+- [x] Testes de redaction definidos.
+- [x] Regras para Codex definidas.
 
 ---
 

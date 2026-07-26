@@ -1,7 +1,7 @@
 # F111 - GameTDB Update Source
 
 > Feature ID: F111  
-> Status: Ready for Development  
+> Status: Implemented and Homologated  
 > Priority: High  
 > Epic: Metadata & Assets / Update Management  
 > Area: Infrastructure, Metadata, Cache, Diagnostics, Settings  
@@ -383,16 +383,16 @@ Tentar rollback para `previous/`.
 
 # Critérios de Aceite
 
-- [ ] `NullGameTdbUpdateSource` deixa de ser provider padrão.
-- [ ] `GameTdbUpdateSource` implementado.
-- [ ] Baixa `wiitdb.zip` por HTTPS.
-- [ ] Valida ZIP e XML.
-- [ ] Atualiza `current/`.
-- [ ] Mantém `previous/`.
-- [ ] Rollback funciona.
-- [ ] Manifesto local é salvo.
-- [ ] Diagnostics mostra versão/data/status.
-- [ ] Testes não dependem de internet real.
+- [x] `NullGameTdbUpdateSource` deixa de ser provider padrão.
+- [x] `GameTdbUpdateSource` implementado.
+- [x] Baixa `wiitdb.zip` por HTTPS.
+- [x] Valida ZIP e XML.
+- [x] Atualiza `current/`.
+- [x] Mantém `previous/`.
+- [x] Rollback funciona.
+- [x] Manifesto local é salvo.
+- [x] Diagnostics mostra versão/data/status.
+- [x] Testes não dependem de internet real.
 
 ---
 

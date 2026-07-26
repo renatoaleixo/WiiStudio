@@ -1,6 +1,6 @@
 # F038 - Dockable Panels
 
-> Feature ID: F038 Status: Ready for Development Priority: Critical
+> Feature ID: F038 Status: Implemented and Homologated Priority: Critical
 > Epic: User Interface
 
 # Objetivo
@@ -177,11 +177,11 @@ Permitir:
 
 # Critérios de Aceite
 
--   [ ] Drag & Drop funcional.
--   [ ] Layout persistente.
--   [ ] Múltiplos layouts.
--   [ ] Multi-monitor.
--   [ ] Auto Hide.
+-   [x] Drag & Drop funcional.
+-   [x] Layout persistente.
+-   [x] Múltiplos layouts.
+-   [x] Multi-monitor.
+-   [x] Auto Hide.
 
 ------------------------------------------------------------------------
 

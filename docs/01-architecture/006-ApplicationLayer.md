@@ -164,8 +164,8 @@ Presentation ↓ Application ↓ Domain ↓ Infrastructure (via interfaces)
 
 # Checklist
 
--   [ ] Commands definidos
--   [ ] Queries definidos
--   [ ] DTOs definidos
--   [ ] Interfaces definidas
--   [ ] Casos de uso documentados
+-   [x] Commands definidos
+-   [x] Queries definidos
+-   [x] DTOs definidos
+-   [x] Interfaces definidas
+-   [x] Casos de uso documentados

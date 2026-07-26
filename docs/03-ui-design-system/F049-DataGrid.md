@@ -1,7 +1,7 @@
 # F049 - DataGrid
 
 > Feature ID: F049
-> Status: Ready for Development
+> Status: Implemented and Homologated
 > Priority: Critical
 > Epic: Design System
 
@@ -645,22 +645,22 @@ Obrigatório:
 
 # Critérios de Aceite
 
-- [ ] DataGrid padronizado.
-- [ ] Toolbar padronizada.
-- [ ] Estados Loading, Empty, NoResults e Error implementados.
-- [ ] Ordenação suportada.
-- [ ] Pesquisa suportada.
-- [ ] Filtros suportados.
-- [ ] Seleção única suportada.
-- [ ] Seleção múltipla suportada.
-- [ ] Ações em linha suportadas.
-- [ ] Ações em lote suportadas.
-- [ ] Compatível com Light/Dark.
-- [ ] Navegação por teclado funcional.
-- [ ] Acessibilidade validada.
-- [ ] Sem estilos inline.
-- [ ] Sem lógica de negócio na View.
-- [ ] Performance adequada para grandes volumes.
+- [x] DataGrid padronizado.
+- [x] Toolbar padronizada.
+- [x] Estados Loading, Empty, NoResults e Error implementados.
+- [x] Ordenação suportada.
+- [x] Pesquisa suportada.
+- [x] Filtros suportados.
+- [x] Seleção única suportada.
+- [x] Seleção múltipla suportada.
+- [x] Ações em linha suportadas.
+- [x] Ações em lote suportadas.
+- [x] Compatível com Light/Dark.
+- [x] Navegação por teclado funcional.
+- [x] Acessibilidade validada.
+- [x] Sem estilos inline.
+- [x] Sem lógica de negócio na View.
+- [x] Performance adequada para grandes volumes.
 
 ---
 

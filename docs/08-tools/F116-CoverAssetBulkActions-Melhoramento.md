@@ -2,7 +2,7 @@
 
 > **Suggested path:** `docs/08-tools/F116-CoverAssetBulkActions-Melhoramento.md`  
 > **Priority:** Média  
-> **Status:** Improvement proposal  
+> **Status:** Implemented and Homologated  
 > **Architecture:** .NET 10, Avalonia, Application / Infrastructure / Domain
 
 ---

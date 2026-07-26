@@ -1,6 +1,6 @@
 # F029 - Logging Center
 
-> Feature ID: F029 Status: Ready for Development Priority: Critical
+> Feature ID: F029 Status: Implemented and Homologated Priority: Critical
 > Epic: Settings & User Experience
 
 # Objetivo
@@ -171,11 +171,11 @@ Todos os erros também devem ser registrados.
 
 # Critérios de Aceite
 
--   [ ] Logs centralizados.
--   [ ] Pesquisa rápida.
--   [ ] Exportação.
--   [ ] Rotação automática.
--   [ ] Mascaramento de dados.
+-   [x] Logs centralizados.
+-   [x] Pesquisa rápida.
+-   [x] Exportação.
+-   [x] Rotação automática.
+-   [x] Mascaramento de dados.
 
 ------------------------------------------------------------------------
 

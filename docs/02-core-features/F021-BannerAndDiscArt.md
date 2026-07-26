@@ -1,6 +1,6 @@
 # F021 - Banner & Disc Art
 
-> Feature ID: F021 Status: Ready for Development Priority: Medium Epic:
+> Feature ID: F021 Status: Implemented and Homologated Priority: Medium Epic:
 > Metadata & Assets
 
 # Objetivo
@@ -170,11 +170,11 @@ Exibir:
 
 # Critérios de Aceite
 
--   [ ] Download individual.
--   [ ] Download em lote.
--   [ ] Cache reutilizado.
--   [ ] Atualização incremental.
--   [ ] Integração com Asset Manager.
+-   [x] Download individual.
+-   [x] Download em lote.
+-   [x] Cache reutilizado.
+-   [x] Atualização incremental.
+-   [x] Integração com Asset Manager.
 
 ------------------------------------------------------------------------
 

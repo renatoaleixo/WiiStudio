@@ -1,7 +1,7 @@
 # F010 - Verify Game Integrity
 
 > Feature ID: F010\
-> Status: Ready for Development\
+> Status: Implemented and Homologated\
 > Priority: High\
 > Epic: Library Management
 
@@ -173,11 +173,11 @@ Todos os erros devem ser registrados em log estruturado.
 
 # Critérios de Aceite
 
--   [ ] Verificação individual.
--   [ ] Verificação em lote.
--   [ ] Relatório exportável.
--   [ ] Integração com Wiimms.
--   [ ] Sugestões de reparo.
+-   [x] Verificação individual.
+-   [x] Verificação em lote.
+-   [x] Relatório exportável.
+-   [x] Integração com Wiimms.
+-   [x] Sugestões de reparo.
 
 ------------------------------------------------------------------------
 

@@ -1,6 +1,6 @@
 # F022 - GameTDB Update Manager
 
-> Feature ID: F022 Status: Ready for Development Priority: High Epic:
+> Feature ID: F022 Status: Implemented and Homologated Priority: High Epic:
 > Metadata & Assets
 
 # Objetivo
@@ -176,12 +176,12 @@ Todos os erros devem gerar logs estruturados.
 
 # Critérios de Aceite
 
--   [ ] Verificação automática.
--   [ ] Atualização manual.
--   [ ] Atualização incremental.
--   [ ] Rollback funcional.
--   [ ] Integração com Metadata Cache.
--   [ ] Logs completos.
+-   [x] Verificação automática.
+-   [x] Atualização manual.
+-   [x] Atualização incremental.
+-   [x] Rollback funcional.
+-   [x] Integração com Metadata Cache.
+-   [x] Logs completos.
 
 ------------------------------------------------------------------------
 

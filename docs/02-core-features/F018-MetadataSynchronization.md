@@ -1,7 +1,7 @@
 # F018 - Metadata Synchronization
 
 > Feature ID: F018
-> Status: Ready for Development
+> Status: Implemented and Homologated
 > Priority: High
 > Epic: Metadata & Assets
 
@@ -190,11 +190,11 @@ Todos devem registrar logs estruturados.
 
 # Critérios de Aceite
 
-- [ ] Sincronização individual.
-- [ ] Sincronização em lote.
-- [ ] Atualização incremental.
-- [ ] Preservação de dados personalizados.
-- [ ] Suporte a múltiplos Providers.
+- [x] Sincronização individual.
+- [x] Sincronização em lote.
+- [x] Atualização incremental.
+- [x] Preservação de dados personalizados.
+- [x] Suporte a múltiplos Providers.
 
 ---
 

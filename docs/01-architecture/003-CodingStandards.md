@@ -129,10 +129,10 @@ Checklist obrigatório:
 
 # Checklist Final
 
--   [ ] Código limpo
--   [ ] Async
--   [ ] DI
--   [ ] MVVM
--   [ ] Testes
--   [ ] Logging
--   [ ] XML Docs
+-   [x] Código limpo
+-   [x] Async
+-   [x] DI
+-   [x] MVVM
+-   [x] Testes
+-   [x] Logging
+-   [x] XML Docs

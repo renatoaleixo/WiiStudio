@@ -1,7 +1,7 @@
 # F047 - Inputs & Forms
 
 > Feature ID: F047
-> Status: Ready for Development
+> Status: Implemented and Homologated
 > Priority: Critical
 > Epic: Design System
 
@@ -385,16 +385,16 @@ Erros globais ou falhas de salvamento devem ser enviados ao Notification Center.
 
 # Critérios de Aceite
 
-- [ ] Componentes de input padronizados.
-- [ ] Formulários com layout consistente.
-- [ ] Validação visual implementada.
-- [ ] Mensagens de erro localizáveis.
-- [ ] Acessibilidade validada.
-- [ ] Integração com MVVM.
-- [ ] Integração com FluentValidation.
-- [ ] Compatível com Light/Dark.
-- [ ] Sem estilos inline.
-- [ ] Sem valores hardcoded.
+- [x] Componentes de input padronizados.
+- [x] Formulários com layout consistente.
+- [x] Validação visual implementada.
+- [x] Mensagens de erro localizáveis.
+- [x] Acessibilidade validada.
+- [x] Integração com MVVM.
+- [x] Integração com FluentValidation.
+- [x] Compatível com Light/Dark.
+- [x] Sem estilos inline.
+- [x] Sem valores hardcoded.
 
 ---
 

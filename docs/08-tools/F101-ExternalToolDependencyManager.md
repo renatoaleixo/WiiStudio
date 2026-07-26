@@ -1,7 +1,7 @@
 # F101 - External Tool Dependency Manager
 
 > Feature ID: F101  
-> Status: Ready for Development  
+> Status: Implemented and Homologated  
 > Priority: Critical  
 > Epic: External Dependencies / Infrastructure  
 > Suggested Area: Core Infrastructure, Diagnostics, Settings, Security
@@ -943,22 +943,22 @@ Se qualquer etapa falhar:
 
 # Critérios de Aceite
 
-- [ ] External Tool Manager definido.
-- [ ] Detecção de `wit` definida.
-- [ ] Detecção de `wwt` definida.
-- [ ] Detecção de NKit definida.
-- [ ] Instalação manual definida.
-- [ ] Instalação automática com confirmação definida.
-- [ ] Checksum obrigatório definido.
-- [ ] Origem confiável definida.
-- [ ] Extração para `tools/` definida.
-- [ ] Persistência em Settings definida.
-- [ ] Diagnóstico de versão definido.
-- [ ] Integração com Security definida.
-- [ ] Integração com ProcessRunner definida.
-- [ ] Integração com Logging definida.
-- [ ] Fallback offline definido.
-- [ ] Testes com fakes definidos.
+- [x] External Tool Manager definido.
+- [x] Detecção de `wit` definida.
+- [x] Detecção de `wwt` definida.
+- [x] Detecção de NKit definida.
+- [x] Instalação manual definida.
+- [x] Instalação automática com confirmação definida.
+- [x] Checksum obrigatório definido.
+- [x] Origem confiável definida.
+- [x] Extração para `tools/` definida.
+- [x] Persistência em Settings definida.
+- [x] Diagnóstico de versão definido.
+- [x] Integração com Security definida.
+- [x] Integração com ProcessRunner definida.
+- [x] Integração com Logging definida.
+- [x] Fallback offline definido.
+- [x] Testes com fakes definidos.
 
 ---
 

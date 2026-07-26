@@ -1,7 +1,7 @@
 # F093 - Integration Testing Standards
 
 > Feature ID: F093
-> Status: Ready for Development
+> Status: Implemented and Homologated
 > Priority: Critical
 > Epic: Testing & Quality
 
@@ -333,16 +333,16 @@ Não testar texto exato quando isso for frágil.
 
 # Critérios de Aceite
 
-- [ ] Escopo de integração definido.
-- [ ] Organização de projeto definida.
-- [ ] Banco temporário definido.
-- [ ] File system temporário definido.
-- [ ] ProcessRunner fake definido.
-- [ ] Plugins de teste definidos.
-- [ ] Rollback testado.
-- [ ] Cleanup obrigatório.
-- [ ] Rede real proibida.
-- [ ] Ferramenta externa real proibida por padrão.
+- [x] Escopo de integração definido.
+- [x] Organização de projeto definida.
+- [x] Banco temporário definido.
+- [x] File system temporário definido.
+- [x] ProcessRunner fake definido.
+- [x] Plugins de teste definidos.
+- [x] Rollback testado.
+- [x] Cleanup obrigatório.
+- [x] Rede real proibida.
+- [x] Ferramenta externa real proibida por padrão.
 
 ---
 

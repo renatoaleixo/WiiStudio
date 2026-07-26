@@ -1,7 +1,7 @@
 # F068 - Window Management
 
 > Feature ID: F068
-> Status: Ready for Development
+> Status: Implemented and Homologated
 > Priority: High
 > Epic: Application Shell
 
@@ -385,18 +385,18 @@ Obrigatório:
 
 # Critérios de Aceite
 
-- [ ] Tamanho inicial definido.
-- [ ] Tamanho mínimo definido.
-- [ ] Estado da janela persistido.
-- [ ] Posição validada.
-- [ ] Maximizado/restaurado suportado.
-- [ ] Fechamento seguro definido.
-- [ ] Tarefas em execução tratadas.
-- [ ] Alterações pendentes tratadas.
-- [ ] Múltiplos monitores considerados.
-- [ ] DPI scaling considerado.
-- [ ] Integração com Dialog System.
-- [ ] Sem lógica de negócio no code-behind.
+- [x] Tamanho inicial definido.
+- [x] Tamanho mínimo definido.
+- [x] Estado da janela persistido.
+- [x] Posição validada.
+- [x] Maximizado/restaurado suportado.
+- [x] Fechamento seguro definido.
+- [x] Tarefas em execução tratadas.
+- [x] Alterações pendentes tratadas.
+- [x] Múltiplos monitores considerados.
+- [x] DPI scaling considerado.
+- [x] Integração com Dialog System.
+- [x] Sem lógica de negócio no code-behind.
 
 ---
 

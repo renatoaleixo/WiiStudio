@@ -2,7 +2,7 @@
 
 > **Suggested path:** `docs/08-tools/F126-DesktopExecutableBrandingAndPackaging.md`  
 > **Priority:** High  
-> **Status:** Ready for technical design  
+> **Status:** Implemented and Homologated  
 > **Architecture:** .NET 10, Avalonia, Application / Infrastructure / Domain  
 > **Area:** Packaging, Desktop UX, Windows, macOS, Release Engineering  
 > **Related:** F122 Application Release and Update Distribution, F124 Packaging Installer and CI/CD
@@ -765,35 +765,35 @@ Notificações runtime não se aplicam.
 
 ## Windows
 
-- [ ] ZIP portátil contém `WiiStudio.exe`.
-- [ ] Usuário não precisa executar `WiiStudio.App.exe`.
-- [ ] `WiiStudio.exe` inicia corretamente.
-- [ ] Recursos Avalonia carregam normalmente.
-- [ ] Ícone oficial aparece no Explorer.
-- [ ] Metadata Product/FileDescription exibe `WiiStudio`.
-- [ ] `RT_ICON` e `RT_GROUP_ICON` existem.
-- [ ] Start Menu/Desktop shortcuts futuros usam `WiiStudio.exe`.
+- [x] ZIP portátil contém `WiiStudio.exe`.
+- [x] Usuário não precisa executar `WiiStudio.App.exe`.
+- [x] `WiiStudio.exe` inicia corretamente.
+- [x] Recursos Avalonia carregam normalmente.
+- [x] Ícone oficial aparece no Explorer.
+- [x] Metadata Product/FileDescription exibe `WiiStudio`.
+- [x] `RT_ICON` e `RT_GROUP_ICON` existem.
+- [x] Start Menu/Desktop shortcuts futuros usam `WiiStudio.exe`.
 
 ## macOS
 
-- [ ] Artefato contém `WiiStudio.app`.
-- [ ] Bundle contém `Contents/MacOS/WiiStudio`.
-- [ ] Bundle contém `Contents/Resources/WiiStudio.icns`.
-- [ ] Bundle contém `Contents/Info.plist`.
-- [ ] `CFBundleName = WiiStudio`.
-- [ ] `CFBundleDisplayName = WiiStudio`.
-- [ ] `CFBundleExecutable = WiiStudio`.
-- [ ] Finder mostra `WiiStudio.app`.
-- [ ] Dock mostra `WiiStudio`.
-- [ ] Recursos Avalonia carregam normalmente.
+- [x] Artefato contém `WiiStudio.app`.
+- [x] Bundle contém `Contents/MacOS/WiiStudio`.
+- [x] Bundle contém `Contents/Resources/WiiStudio.icns`.
+- [x] Bundle contém `Contents/Info.plist`.
+- [x] `CFBundleName = WiiStudio`.
+- [x] `CFBundleDisplayName = WiiStudio`.
+- [x] `CFBundleExecutable = WiiStudio`.
+- [x] Finder mostra `WiiStudio.app`.
+- [x] Dock mostra `WiiStudio`.
+- [x] Recursos Avalonia carregam normalmente.
 
 ## Geral
 
-- [ ] `scripts/release/package.sh` gera nomes finais corretos.
-- [ ] Manifest de update aponta para artefatos finais.
-- [ ] Checksums são gerados após empacotamento.
-- [ ] Linux não sofre regressão.
-- [ ] Smoke tests por plataforma passam.
+- [x] `scripts/release/package.sh` gera nomes finais corretos.
+- [x] Manifest de update aponta para artefatos finais.
+- [x] Checksums são gerados após empacotamento.
+- [x] Linux não sofre regressão.
+- [x] Smoke tests por plataforma passam.
 
 ---
 

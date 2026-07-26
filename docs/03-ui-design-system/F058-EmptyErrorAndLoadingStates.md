@@ -1,7 +1,7 @@
 # F058 - Empty, Error & Loading States
 
 > Feature ID: F058
-> Status: Ready for Development
+> Status: Implemented and Homologated
 > Priority: Critical
 > Epic: Advanced UI Components
 
@@ -444,20 +444,20 @@ Obrigatório:
 
 # Critérios de Aceite
 
-- [ ] Empty State definido.
-- [ ] NoResults State definido.
-- [ ] Loading State definido.
-- [ ] Error State definido.
-- [ ] Partial Error State definido.
-- [ ] Estados aplicáveis a DataGrid.
-- [ ] Estados aplicáveis a Cards.
-- [ ] Estados aplicáveis a Panels.
-- [ ] Retry documentado.
-- [ ] Textos localizáveis.
-- [ ] Compatível com Light/Dark.
-- [ ] Acessibilidade validada.
-- [ ] Sem telas em branco.
-- [ ] Sem estilos inline.
+- [x] Empty State definido.
+- [x] NoResults State definido.
+- [x] Loading State definido.
+- [x] Error State definido.
+- [x] Partial Error State definido.
+- [x] Estados aplicáveis a DataGrid.
+- [x] Estados aplicáveis a Cards.
+- [x] Estados aplicáveis a Panels.
+- [x] Retry documentado.
+- [x] Textos localizáveis.
+- [x] Compatível com Light/Dark.
+- [x] Acessibilidade validada.
+- [x] Sem telas em branco.
+- [x] Sem estilos inline.
 
 ---
 

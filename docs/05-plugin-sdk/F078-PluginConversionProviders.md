@@ -1,7 +1,7 @@
 # F078 - Plugin Conversion Providers
 
 > Feature ID: F078
-> Status: Ready for Development
+> Status: Implemented and Homologated
 > Priority: High
 > Epic: Plugin SDK
 
@@ -280,16 +280,16 @@ Wiimms permanece o provider oficial para operações WBFS, salvo configuração 
 
 # Critérios de Aceite
 
-- [ ] Contrato `IConversionProviderPlugin` definido.
-- [ ] Formatos suportados declarados.
-- [ ] Validação prévia definida.
-- [ ] Progresso definido.
-- [ ] Resultado definido.
-- [ ] Integração com Task Manager definida.
-- [ ] Integração com ProcessRunner definida.
-- [ ] Permissões definidas.
-- [ ] Falha segura definida.
-- [ ] Política de arquivos definida.
+- [x] Contrato `IConversionProviderPlugin` definido.
+- [x] Formatos suportados declarados.
+- [x] Validação prévia definida.
+- [x] Progresso definido.
+- [x] Resultado definido.
+- [x] Integração com Task Manager definida.
+- [x] Integração com ProcessRunner definida.
+- [x] Permissões definidas.
+- [x] Falha segura definida.
+- [x] Política de arquivos definida.
 
 ---
 

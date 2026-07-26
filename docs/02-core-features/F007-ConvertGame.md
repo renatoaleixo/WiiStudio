@@ -1,7 +1,7 @@
 # F007 - Convert Game
 
 > Feature ID: F007\
-> Status: Ready for Development\
+> Status: Implemented and Homologated\
 > Priority: Critical\
 > Epic: Conversion
 
@@ -155,12 +155,12 @@ public interface IGameConversionService
 
 # Critérios de Aceite
 
--   [ ] Conversão individual funcional.
--   [ ] Pipeline escolhido automaticamente.
--   [ ] Progresso em tempo real.
--   [ ] Histórico registrado.
--   [ ] Validação pós-conversão.
--   [ ] Cancelamento suportado.
+-   [x] Conversão individual funcional.
+-   [x] Pipeline escolhido automaticamente.
+-   [x] Progresso em tempo real.
+-   [x] Histórico registrado.
+-   [x] Validação pós-conversão.
+-   [x] Cancelamento suportado.
 
 ------------------------------------------------------------------------
 

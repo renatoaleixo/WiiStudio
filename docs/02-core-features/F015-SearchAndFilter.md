@@ -1,6 +1,6 @@
 # F015 - Search & Filter
 
-> Feature ID: F015 Status: Ready for Development Priority: Critical
+> Feature ID: F015 Status: Implemented and Homologated Priority: Critical
 > Epic: Library Management
 
 # Objetivo
@@ -167,11 +167,11 @@ Todos devem registrar logs estruturados.
 
 # Critérios de Aceite
 
--   [ ] Pesquisa incremental.
--   [ ] Filtros combináveis.
--   [ ] Ordenação dinâmica.
--   [ ] Persistência de filtros favoritos.
--   [ ] Performance dentro da meta.
+-   [x] Pesquisa incremental.
+-   [x] Filtros combináveis.
+-   [x] Ordenação dinâmica.
+-   [x] Persistência de filtros favoritos.
+-   [x] Performance dentro da meta.
 
 ------------------------------------------------------------------------
 

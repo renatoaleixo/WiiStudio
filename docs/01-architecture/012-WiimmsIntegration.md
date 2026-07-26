@@ -186,9 +186,9 @@ Versões do Wiimms devem ser verificadas na inicialização.
 
 # Checklist
 
--   [ ] Descoberta de executáveis
--   [ ] ProcessRunner reutilizado
--   [ ] Parsing documentado
--   [ ] Exceções mapeadas
--   [ ] Logging definido
--   [ ] Testabilidade garantida
+-   [x] Descoberta de executáveis
+-   [x] ProcessRunner reutilizado
+-   [x] Parsing documentado
+-   [x] Exceções mapeadas
+-   [x] Logging definido
+-   [x] Testabilidade garantida

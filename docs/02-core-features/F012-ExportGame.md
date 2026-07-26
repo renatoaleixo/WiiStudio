@@ -1,7 +1,7 @@
 # F012 - Export Game
 
 > Feature ID: F012\
-> Status: Ready for Development\
+> Status: Implemented and Homologated\
 > Priority: High\
 > Epic: Library Management
 
@@ -184,12 +184,12 @@ Todos os erros devem gerar logs estruturados.
 
 # Critérios de Aceite
 
--   [ ] Exportação individual.
--   [ ] Exportação em lote.
--   [ ] Resolução de conflitos.
--   [ ] Validação pós-exportação.
--   [ ] Histórico atualizado.
--   [ ] Cancelamento suportado.
+-   [x] Exportação individual.
+-   [x] Exportação em lote.
+-   [x] Resolução de conflitos.
+-   [x] Validação pós-exportação.
+-   [x] Histórico atualizado.
+-   [x] Cancelamento suportado.
 
 ------------------------------------------------------------------------
 

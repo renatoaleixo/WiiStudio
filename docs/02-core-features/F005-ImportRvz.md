@@ -1,7 +1,7 @@
 # F005 - Import RVZ
 
 > Feature ID: F005\
-> Status: Ready for Development\
+> Status: Implemented and Homologated\
 > Priority: High\
 > Epic: Import
 
@@ -181,11 +181,11 @@ Todas as falhas devem manter a consistência da biblioteca.
 
 # Critérios de Aceite
 
--   [ ] Importa um ou vários arquivos RVZ.
--   [ ] Converte utilizando Provider configurado.
--   [ ] Remove temporários após sucesso.
--   [ ] Atualiza biblioteca automaticamente.
--   [ ] Permite cancelamento em qualquer etapa.
+-   [x] Importa um ou vários arquivos RVZ.
+-   [x] Converte utilizando Provider configurado.
+-   [x] Remove temporários após sucesso.
+-   [x] Atualiza biblioteca automaticamente.
+-   [x] Permite cancelamento em qualquer etapa.
 
 ------------------------------------------------------------------------
 

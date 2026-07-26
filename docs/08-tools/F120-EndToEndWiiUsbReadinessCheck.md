@@ -1,7 +1,7 @@
 # F120 - End-to-End Wii USB Readiness Check
 
 > Feature ID: F120  
-> Status: Ready for Development  
+> Status: Implemented and Homologated  
 > Priority: High  
 > Epic: Diagnostics / Device Readiness  
 > Area: Device Manager, Wiimms, GameTDB, Metadata, Assets, Permissions
@@ -273,16 +273,16 @@ Conteúdo:
 
 # Critérios de Aceite
 
-- [ ] Checklist roda para dispositivo selecionado.
-- [ ] Valida filesystem.
-- [ ] Valida Wiimms.
-- [ ] Valida permissões.
-- [ ] Lista jogos detectados.
-- [ ] Mostra capas/metadados ausentes.
-- [ ] Resultado final é Ready/Warning/NotReady.
-- [ ] Ações de reparo aparecem.
-- [ ] Relatório pode ser exportado.
-- [ ] Testes usam fakes.
+- [x] Checklist roda para dispositivo selecionado.
+- [x] Valida filesystem.
+- [x] Valida Wiimms.
+- [x] Valida permissões.
+- [x] Lista jogos detectados.
+- [x] Mostra capas/metadados ausentes.
+- [x] Resultado final é Ready/Warning/NotReady.
+- [x] Ações de reparo aparecem.
+- [x] Relatório pode ser exportado.
+- [x] Testes usam fakes.
 
 ---
 

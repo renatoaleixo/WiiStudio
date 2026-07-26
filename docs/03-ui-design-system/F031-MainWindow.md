@@ -1,6 +1,6 @@
 # F031 - Main Window
 
-> Feature ID: F031 Status: Ready for Development Priority: Critical
+> Feature ID: F031 Status: Implemented and Homologated Priority: Critical
 > Epic: User Interface
 
 # Objetivo
@@ -137,11 +137,11 @@ public interface IMainWindowService
 
 # Critérios de Aceite
 
--   [ ] Inicialização em menos de 3 segundos.
--   [ ] Layout persistente.
--   [ ] Navegação fluida.
--   [ ] Componentes responsivos.
--   [ ] Atualização em tempo real.
+-   [x] Inicialização em menos de 3 segundos.
+-   [x] Layout persistente.
+-   [x] Navegação fluida.
+-   [x] Componentes responsivos.
+-   [x] Atualização em tempo real.
 
 ------------------------------------------------------------------------
 

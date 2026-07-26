@@ -1,6 +1,6 @@
 # F032 - Library View
 
-> Feature ID: F032 Status: Ready for Development Priority: Critical
+> Feature ID: F032 Status: Implemented and Homologated Priority: Critical
 > Epic: User Interface
 
 # Objetivo
@@ -147,11 +147,11 @@ public interface ILibraryViewService
 
 # Critérios de Aceite
 
--   [ ] Suporte a mais de 10.000 jogos.
--   [ ] Virtualização funcional.
--   [ ] Pesquisa integrada.
--   [ ] Filtros em tempo real.
--   [ ] Seleção múltipla.
+-   [x] Suporte a mais de 10.000 jogos.
+-   [x] Virtualização funcional.
+-   [x] Pesquisa integrada.
+-   [x] Filtros em tempo real.
+-   [x] Seleção múltipla.
 
 ------------------------------------------------------------------------
 

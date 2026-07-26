@@ -1,6 +1,6 @@
 # F014 - Favorite Games
 
-> Feature ID: F014 Status: Ready for Development Priority: Medium Epic:
+> Feature ID: F014 Status: Implemented and Homologated Priority: Medium Epic:
 > Library Management
 
 # Objetivo
@@ -139,10 +139,10 @@ Todos devem registrar logs estruturados.
 
 # Critérios de Aceite
 
--   [ ] Favoritar/desfavoritar instantaneamente.
--   [ ] Persistência entre reinicializações.
--   [ ] Suporte a múltiplos jogos.
--   [ ] Integração com pesquisa e filtros.
+-   [x] Favoritar/desfavoritar instantaneamente.
+-   [x] Persistência entre reinicializações.
+-   [x] Suporte a múltiplos jogos.
+-   [x] Integração com pesquisa e filtros.
 
 ------------------------------------------------------------------------
 

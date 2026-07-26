@@ -1,7 +1,7 @@
 # F094 - UI Testing Strategy
 
 > Feature ID: F094
-> Status: Ready for Development
+> Status: Implemented and Homologated
 > Priority: High
 > Epic: Testing & Quality
 
@@ -321,16 +321,16 @@ Esses testes devem ter checklist.
 
 # Critérios de Aceite
 
-- [ ] Níveis de UI test definidos.
-- [ ] ViewModel tests priorizados.
-- [ ] Navigation tests definidos.
-- [ ] Dialog tests definidos.
-- [ ] Wizard tests definidos.
-- [ ] DataGrid tests definidos.
-- [ ] Theme tests definidos.
-- [ ] Responsive tests definidos.
-- [ ] Accessibility tests definidos.
-- [ ] Testes frágeis evitados.
+- [x] Níveis de UI test definidos.
+- [x] ViewModel tests priorizados.
+- [x] Navigation tests definidos.
+- [x] Dialog tests definidos.
+- [x] Wizard tests definidos.
+- [x] DataGrid tests definidos.
+- [x] Theme tests definidos.
+- [x] Responsive tests definidos.
+- [x] Accessibility tests definidos.
+- [x] Testes frágeis evitados.
 
 ---
 

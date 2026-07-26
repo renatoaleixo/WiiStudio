@@ -1,7 +1,7 @@
 # F009 - Remove Game
 
 > Feature ID: F009\
-> Status: Ready for Development\
+> Status: Implemented and Homologated\
 > Priority: High\
 > Epic: Library Management
 
@@ -185,12 +185,12 @@ Todos os erros devem ser registrados em log estruturado.
 
 # Critérios de Aceite
 
--   [ ] Remoção individual.
--   [ ] Remoção em lote.
--   [ ] Confirmação obrigatória.
--   [ ] Atualização automática da biblioteca.
--   [ ] Histórico atualizado.
--   [ ] Logs registrados.
+-   [x] Remoção individual.
+-   [x] Remoção em lote.
+-   [x] Confirmação obrigatória.
+-   [x] Atualização automática da biblioteca.
+-   [x] Histórico atualizado.
+-   [x] Logs registrados.
 
 ------------------------------------------------------------------------
 

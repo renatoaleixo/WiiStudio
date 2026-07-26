@@ -1,7 +1,7 @@
 # F108 - External Tool Network Downloader
 
 > Feature ID: F108  
-> Status: Ready for Development  
+> Status: Implemented and Homologated  
 > Priority: Critical  
 > Epic: External Dependencies / Security  
 > Area: Infrastructure, Network, External Tool Manager, Settings, Diagnostics  
@@ -394,15 +394,15 @@ Ação:
 
 # Critérios de Aceite
 
-- [ ] Downloader baixa pacote via HTTPS.
-- [ ] Usuário precisa confirmar antes.
-- [ ] Checksum é obrigatório.
-- [ ] Checksum inválido bloqueia instalação.
-- [ ] Fallback manual disponível.
-- [ ] Progresso aparece no Task Manager.
-- [ ] Cancelamento funciona.
-- [ ] Offline é tratado.
-- [ ] Testes não usam internet real.
+- [x] Downloader baixa pacote via HTTPS.
+- [x] Usuário precisa confirmar antes.
+- [x] Checksum é obrigatório.
+- [x] Checksum inválido bloqueia instalação.
+- [x] Fallback manual disponível.
+- [x] Progresso aparece no Task Manager.
+- [x] Cancelamento funciona.
+- [x] Offline é tratado.
+- [x] Testes não usam internet real.
 
 ---
 

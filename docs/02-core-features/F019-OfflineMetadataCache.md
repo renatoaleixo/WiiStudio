@@ -1,7 +1,7 @@
 # F019 - Offline Metadata Cache
 
 > Feature ID: F019\
-> Status: Ready for Development\
+> Status: Implemented and Homologated\
 > Priority: High\
 > Epic: Metadata & Assets
 
@@ -171,11 +171,11 @@ Todos os erros devem gerar logs estruturados.
 
 # Critérios de Aceite
 
--   [ ] Funciona offline
--   [ ] Cache reutilizado automaticamente
--   [ ] Limpeza seletiva
--   [ ] Estatísticas disponíveis
--   [ ] Reconstrução do cache
+-   [x] Funciona offline
+-   [x] Cache reutilizado automaticamente
+-   [x] Limpeza seletiva
+-   [x] Estatísticas disponíveis
+-   [x] Reconstrução do cache
 
 ------------------------------------------------------------------------
 

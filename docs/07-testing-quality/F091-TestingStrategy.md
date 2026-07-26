@@ -1,7 +1,7 @@
 # F091 - Testing Strategy
 
 > Feature ID: F091
-> Status: Ready for Development
+> Status: Implemented and Homologated
 > Priority: Critical
 > Epic: Testing & Quality
 
@@ -338,18 +338,18 @@ Antes de merge:
 
 # Critérios de Aceite
 
-- [ ] Pirâmide de testes definida.
-- [ ] Tipos de teste definidos.
-- [ ] Ferramentas definidas.
-- [ ] Organização de projetos definida.
-- [ ] Convenção de nomes definida.
-- [ ] Testes obrigatórios por feature definidos.
-- [ ] ProcessRunner testável.
-- [ ] File System testável.
-- [ ] SQLite testável.
-- [ ] Plugins testáveis.
-- [ ] Segurança testável.
-- [ ] Regras para Codex definidas.
+- [x] Pirâmide de testes definida.
+- [x] Tipos de teste definidos.
+- [x] Ferramentas definidas.
+- [x] Organização de projetos definida.
+- [x] Convenção de nomes definida.
+- [x] Testes obrigatórios por feature definidos.
+- [x] ProcessRunner testável.
+- [x] File System testável.
+- [x] SQLite testável.
+- [x] Plugins testáveis.
+- [x] Segurança testável.
+- [x] Regras para Codex definidas.
 
 ---
 

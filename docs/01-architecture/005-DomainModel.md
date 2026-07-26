@@ -151,7 +151,7 @@ RMGE01
 
 # Checklist
 
--   [ ] Entidades definidas
--   [ ] Value Objects definidos
--   [ ] Eventos definidos
--   [ ] Regras documentadas
+-   [x] Entidades definidas
+-   [x] Value Objects definidos
+-   [x] Eventos definidos
+-   [x] Regras documentadas

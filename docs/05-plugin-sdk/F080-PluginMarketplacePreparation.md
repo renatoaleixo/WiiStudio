@@ -1,7 +1,7 @@
 # F080 - Plugin Marketplace Preparation
 
 > Feature ID: F080
-> Status: Ready for Development
+> Status: Implemented and Homologated
 > Priority: Medium
 > Epic: Plugin SDK
 
@@ -281,16 +281,16 @@ Regras:
 
 # Critérios de Aceite
 
-- [ ] Metadados de catálogo definidos.
-- [ ] Categorias futuras definidas.
-- [ ] Estados de catálogo definidos.
-- [ ] Instalação manual documentada.
-- [ ] Atualização futura documentada.
-- [ ] Segurança futura definida.
-- [ ] Assinatura futura prevista.
-- [ ] Permissões antes da instalação definidas.
-- [ ] Marketplace não é obrigatório.
-- [ ] Integração com Plugin Manager prevista.
+- [x] Metadados de catálogo definidos.
+- [x] Categorias futuras definidas.
+- [x] Estados de catálogo definidos.
+- [x] Instalação manual documentada.
+- [x] Atualização futura documentada.
+- [x] Segurança futura definida.
+- [x] Assinatura futura prevista.
+- [x] Permissões antes da instalação definidas.
+- [x] Marketplace não é obrigatório.
+- [x] Integração com Plugin Manager prevista.
 
 ---
 

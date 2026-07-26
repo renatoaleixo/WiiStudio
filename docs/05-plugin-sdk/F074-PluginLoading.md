@@ -1,7 +1,7 @@
 # F074 - Plugin Loading
 
 > Feature ID: F074
-> Status: Ready for Development
+> Status: Implemented and Homologated
 > Priority: Critical
 > Epic: Plugin SDK
 
@@ -294,16 +294,16 @@ Registrar:
 
 # Critérios de Aceite
 
-- [ ] Plugin Loader Service definido.
-- [ ] Estados de loading definidos.
-- [ ] PluginContext definido.
-- [ ] Fluxo de carregamento documentado.
-- [ ] Permissões verificadas antes de inicializar.
-- [ ] Falha segura documentada.
-- [ ] Shutdown documentado.
-- [ ] Timeout definido.
-- [ ] Diagnósticos definidos.
-- [ ] Nenhuma falha de plugin derruba aplicação.
+- [x] Plugin Loader Service definido.
+- [x] Estados de loading definidos.
+- [x] PluginContext definido.
+- [x] Fluxo de carregamento documentado.
+- [x] Permissões verificadas antes de inicializar.
+- [x] Falha segura documentada.
+- [x] Shutdown documentado.
+- [x] Timeout definido.
+- [x] Diagnósticos definidos.
+- [x] Nenhuma falha de plugin derruba aplicação.
 
 ---
 

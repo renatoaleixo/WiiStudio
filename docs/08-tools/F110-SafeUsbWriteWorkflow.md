@@ -1,7 +1,7 @@
 # F110 - Safe USB Write Workflow
 
 > Feature ID: F110  
-> Status: Ready for Development  
+> Status: Implemented and Homologated  
 > Priority: Critical  
 > Epic: USB Device Operations / Safety  
 > Area: Device Manager, Wiimms Integration, UX, Security, Task Manager  
@@ -493,18 +493,18 @@ Preservar estado e mostrar resumo parcial.
 
 # Critérios de Aceite
 
-- [ ] Fluxo de confirmação existe.
-- [ ] Dispositivo alvo é exibido claramente.
-- [ ] Espaço livre é validado.
-- [ ] Tipo WBFS/FAT32/NTFS é exibido.
-- [ ] Preview/simulação é mostrado.
-- [ ] Confirmação final é obrigatória.
-- [ ] Operação sem confirmação é bloqueada.
-- [ ] Permissão é validada antes da escrita.
-- [ ] Progresso é exibido.
-- [ ] Cancelamento funciona.
-- [ ] Falha de um passo não corrompe cache/estado.
-- [ ] Testes usam fakes.
+- [x] Fluxo de confirmação existe.
+- [x] Dispositivo alvo é exibido claramente.
+- [x] Espaço livre é validado.
+- [x] Tipo WBFS/FAT32/NTFS é exibido.
+- [x] Preview/simulação é mostrado.
+- [x] Confirmação final é obrigatória.
+- [x] Operação sem confirmação é bloqueada.
+- [x] Permissão é validada antes da escrita.
+- [x] Progresso é exibido.
+- [x] Cancelamento funciona.
+- [x] Falha de um passo não corrompe cache/estado.
+- [x] Testes usam fakes.
 
 ---
 

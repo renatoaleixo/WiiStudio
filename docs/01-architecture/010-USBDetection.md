@@ -165,8 +165,8 @@ Cobrir:
 
 # Checklist
 
--   [ ] Providers definidos
--   [ ] Eventos documentados
--   [ ] Fluxo validado
--   [ ] Estratégia de polling definida
--   [ ] Testes especificados
+-   [x] Providers definidos
+-   [x] Eventos documentados
+-   [x] Fluxo validado
+-   [x] Estratégia de polling definida
+-   [x] Testes especificados

@@ -1,7 +1,7 @@
 # F073 - Plugin Discovery
 
 > Feature ID: F073
-> Status: Ready for Development
+> Status: Implemented and Homologated
 > Priority: Critical
 > Epic: Plugin SDK
 
@@ -263,16 +263,16 @@ Todos os problemas devem ser reportáveis no diagnóstico:
 
 # Critérios de Aceite
 
-- [ ] Diretórios oficiais definidos.
-- [ ] Discovery Service especificado.
-- [ ] PluginDescriptor definido.
-- [ ] Estados de descoberta definidos.
-- [ ] Manifestos são validados.
-- [ ] Duplicidades são detectadas.
-- [ ] Plugins desativados são reconhecidos.
-- [ ] Plugins em quarentena são bloqueados.
-- [ ] Diagnóstico é gerado.
-- [ ] Nenhum assembly é carregado durante discovery.
+- [x] Diretórios oficiais definidos.
+- [x] Discovery Service especificado.
+- [x] PluginDescriptor definido.
+- [x] Estados de descoberta definidos.
+- [x] Manifestos são validados.
+- [x] Duplicidades são detectadas.
+- [x] Plugins desativados são reconhecidos.
+- [x] Plugins em quarentena são bloqueados.
+- [x] Diagnóstico é gerado.
+- [x] Nenhum assembly é carregado durante discovery.
 
 ---
 

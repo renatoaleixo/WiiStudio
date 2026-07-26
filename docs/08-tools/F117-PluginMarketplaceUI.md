@@ -1,7 +1,7 @@
 # F117 - Plugin Marketplace UI
 
 > Feature ID: F117  
-> Status: Ready for Development  
+> Status: Implemented and Homologated  
 > Priority: High  
 > Epic: Plugin SDK / Marketplace Preparation  
 > Area: UI, Plugin Hosting, Plugin Security, Diagnostics, Settings  
@@ -276,16 +276,16 @@ Mas a primeira versão pode suportar somente instalação local.
 
 # Critérios de Aceite
 
-- [ ] Tela lista plugins instalados.
-- [ ] Plugin válido pode ser instalado localmente.
-- [ ] Manifest inválido é bloqueado.
-- [ ] Usuário vê permissões solicitadas.
-- [ ] Plugin pode ser habilitado/desabilitado.
-- [ ] Plugin pode ser removido.
-- [ ] Logs por plugin são exibidos.
-- [ ] Diagnóstico por plugin é exibido.
-- [ ] Plugin inválido vai para quarentena.
-- [ ] Testes usam plugins fake.
+- [x] Tela lista plugins instalados.
+- [x] Plugin válido pode ser instalado localmente.
+- [x] Manifest inválido é bloqueado.
+- [x] Usuário vê permissões solicitadas.
+- [x] Plugin pode ser habilitado/desabilitado.
+- [x] Plugin pode ser removido.
+- [x] Logs por plugin são exibidos.
+- [x] Diagnóstico por plugin é exibido.
+- [x] Plugin inválido vai para quarentena.
+- [x] Testes usam plugins fake.
 
 ---
 

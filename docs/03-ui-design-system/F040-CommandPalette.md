@@ -1,6 +1,6 @@
 # F040 - Command Palette
 
-> Feature ID: F040 Status: Ready for Development Priority: Critical
+> Feature ID: F040 Status: Implemented and Homologated Priority: Critical
 > Epic: User Interface
 
 # Objetivo
@@ -190,11 +190,11 @@ Todos os erros devem registrar logs estruturados.
 
 # Critérios de Aceite
 
--   [ ] Pesquisa em menos de 100 ms.
--   [ ] Pesquisa fuzzy.
--   [ ] Histórico persistente.
--   [ ] Favoritos.
--   [ ] Extensibilidade por plugins.
+-   [x] Pesquisa em menos de 100 ms.
+-   [x] Pesquisa fuzzy.
+-   [x] Histórico persistente.
+-   [x] Favoritos.
+-   [x] Extensibilidade por plugins.
 
 ------------------------------------------------------------------------
 

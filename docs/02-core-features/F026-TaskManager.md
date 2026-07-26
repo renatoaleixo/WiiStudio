@@ -1,6 +1,6 @@
 # F026 - Task Manager
 
-> Feature ID: F026 Status: Ready for Development Priority: Critical
+> Feature ID: F026 Status: Implemented and Homologated Priority: Critical
 > Epic: Settings & User Experience
 
 # Objetivo
@@ -161,11 +161,11 @@ Todos os erros devem gerar logs estruturados.
 
 # Critérios de Aceite
 
--   [ ] Fila funcional.
--   [ ] Pausa e retomada.
--   [ ] Cancelamento.
--   [ ] Persistência opcional.
--   [ ] Histórico disponível.
+-   [x] Fila funcional.
+-   [x] Pausa e retomada.
+-   [x] Cancelamento.
+-   [x] Persistência opcional.
+-   [x] Histórico disponível.
 
 ------------------------------------------------------------------------
 

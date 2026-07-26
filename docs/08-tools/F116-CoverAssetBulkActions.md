@@ -1,7 +1,7 @@
 # F116 - Cover Asset Bulk Actions
 
 > Feature ID: F116  
-> Status: Ready for Development  
+> Status: Implemented and Homologated  
 > Priority: High  
 > Epic: Metadata & Assets / Library UX  
 > Area: UI, Application, Cache, GameTDB, Batch Operations  
@@ -169,11 +169,11 @@ Permitir escolher:
     [x] Frente
     [x] Verso / Full Cover
     [x] Disco
-    [ ] Banner
+    [x] Banner
     [x] Thumbnail
   Opções:
-    [ ] Forçar atualização
-    [ ] Limpar antes de baixar
+    [x] Forçar atualização
+    [x] Limpar antes de baixar
   [Executar]
 ```
 
@@ -350,15 +350,15 @@ Interrompe próximos itens, mantém assets já processados.
 
 # Critérios de Aceite
 
-- [ ] Usuário consegue escolher tipos de assets em lote.
-- [ ] Usuário consegue forçar refresh.
-- [ ] Usuário consegue limpar cache dos selecionados.
-- [ ] Usuário consegue trocar idioma e baixar novamente.
-- [ ] Lote mostra progresso.
-- [ ] Lote mostra resumo correto.
-- [ ] Falha parcial não interrompe todos os jogos.
-- [ ] UI atualiza após cada asset processado.
-- [ ] Testes usam provider/cache fake.
+- [x] Usuário consegue escolher tipos de assets em lote.
+- [x] Usuário consegue forçar refresh.
+- [x] Usuário consegue limpar cache dos selecionados.
+- [x] Usuário consegue trocar idioma e baixar novamente.
+- [x] Lote mostra progresso.
+- [x] Lote mostra resumo correto.
+- [x] Falha parcial não interrompe todos os jogos.
+- [x] UI atualiza após cada asset processado.
+- [x] Testes usam provider/cache fake.
 
 ---
 

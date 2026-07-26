@@ -1,7 +1,7 @@
 # F099 - Regression Testing
 
 > Feature ID: F099
-> Status: Ready for Development
+> Status: Implemented and Homologated
 > Priority: Critical
 > Epic: Testing & Quality
 
@@ -228,16 +228,16 @@ ExternalTool
 
 # Critérios de Aceite
 
-- [ ] Quando criar regressão definido.
-- [ ] Organização definida.
-- [ ] Nomenclatura definida.
-- [ ] Metadados definidos.
-- [ ] Segurança coberta.
-- [ ] Banco coberto.
-- [ ] Plugins cobertos.
-- [ ] UI coberta.
-- [ ] Pipeline considerado.
-- [ ] Regras para Codex definidas.
+- [x] Quando criar regressão definido.
+- [x] Organização definida.
+- [x] Nomenclatura definida.
+- [x] Metadados definidos.
+- [x] Segurança coberta.
+- [x] Banco coberto.
+- [x] Plugins cobertos.
+- [x] UI coberta.
+- [x] Pipeline considerado.
+- [x] Regras para Codex definidas.
 
 ---
 

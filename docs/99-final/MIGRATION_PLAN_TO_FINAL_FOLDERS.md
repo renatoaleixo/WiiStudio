@@ -286,21 +286,21 @@ mkdir -p docs/99-final
 
 # Checklist
 
-- [ ] Pastas criadas.
-- [ ] Project docs movidos.
-- [ ] Architecture docs movidos.
-- [ ] Core features movidas.
-- [ ] UI docs movidos.
-- [ ] App Shell movido.
-- [ ] Plugin SDK movido.
-- [ ] Security movido.
-- [ ] Testing movido.
-- [ ] Final docs movidos.
-- [ ] READMEs por pasta criados.
-- [ ] Índice atualizado.
-- [ ] Links revisados.
-- [ ] Zip final criado.
-- [ ] Entrega validada.
+- [x] Pastas criadas.
+- [x] Project docs movidos.
+- [x] Architecture docs movidos.
+- [x] Core features movidas.
+- [x] UI docs movidos.
+- [x] App Shell movido.
+- [x] Plugin SDK movido.
+- [x] Security movido.
+- [x] Testing movido.
+- [x] Final docs movidos.
+- [x] READMEs por pasta criados.
+- [x] Índice atualizado.
+- [x] Links revisados.
+- [x] Zip final criado.
+- [x] Entrega validada.
 
 ---
 

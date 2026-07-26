@@ -1,7 +1,7 @@
 # F119 - First Run Setup Wizard
 
 > Feature ID: F119  
-> Status: Ready for Development  
+> Status: Implemented and Homologated  
 > Priority: High  
 > Epic: Onboarding / Setup  
 > Area: UI, Settings, External Tools, Permissions, GameTDB, Theme, Localization
@@ -236,16 +236,16 @@ Algumas funções podem não funcionar até concluir a configuração.
 
 # Critérios de Aceite
 
-- [ ] Wizard abre na primeira execução.
-- [ ] Usuário configura idioma.
-- [ ] Usuário configura tema.
-- [ ] Usuário configura pastas.
-- [ ] Wizard integra com External Tool Manager.
-- [ ] Wizard integra com permissões.
-- [ ] Wizard integra com GameTDB.
-- [ ] Resumo final é exibido.
-- [ ] `FirstRun.Completed` é salvo.
-- [ ] Wizard pode ser reaberto em Settings.
+- [x] Wizard abre na primeira execução.
+- [x] Usuário configura idioma.
+- [x] Usuário configura tema.
+- [x] Usuário configura pastas.
+- [x] Wizard integra com External Tool Manager.
+- [x] Wizard integra com permissões.
+- [x] Wizard integra com GameTDB.
+- [x] Resumo final é exibido.
+- [x] `FirstRun.Completed` é salvo.
+- [x] Wizard pode ser reaberto em Settings.
 
 ---
 

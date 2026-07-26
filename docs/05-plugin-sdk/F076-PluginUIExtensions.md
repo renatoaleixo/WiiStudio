@@ -1,7 +1,7 @@
 # F076 - Plugin UI Extensions
 
 > Feature ID: F076
-> Status: Ready for Development
+> Status: Implemented and Homologated
 > Priority: High
 > Epic: Plugin SDK
 
@@ -335,16 +335,16 @@ Se uma UI Extension falhar:
 
 # Critérios de Aceite
 
-- [ ] Regiões permitidas definidas.
-- [ ] Regiões proibidas definidas.
-- [ ] `IUiExtensionPlugin` definido.
-- [ ] `IUiExtensionRegistry` definido.
-- [ ] Modelos de extensão definidos.
-- [ ] Permissão `ui-extension` exigida.
-- [ ] Design System obrigatório.
-- [ ] Acessibilidade obrigatória.
-- [ ] Falha segura documentada.
-- [ ] Remoção no unload definida.
+- [x] Regiões permitidas definidas.
+- [x] Regiões proibidas definidas.
+- [x] `IUiExtensionPlugin` definido.
+- [x] `IUiExtensionRegistry` definido.
+- [x] Modelos de extensão definidos.
+- [x] Permissão `ui-extension` exigida.
+- [x] Design System obrigatório.
+- [x] Acessibilidade obrigatória.
+- [x] Falha segura documentada.
+- [x] Remoção no unload definida.
 
 ---
 

@@ -1,6 +1,6 @@
 # F028 - Backup & Restore
 
-> Feature ID: F028 Status: Ready for Development Priority: Critical
+> Feature ID: F028 Status: Implemented and Homologated Priority: Critical
 > Epic: Settings & User Experience
 
 # Objetivo
@@ -193,11 +193,11 @@ Todos devem registrar logs estruturados.
 
 # Critérios de Aceite
 
--   [ ] Backup completo.
--   [ ] Backup parcial.
--   [ ] Restauração seletiva.
--   [ ] Validação de integridade.
--   [ ] Backup automático.
+-   [x] Backup completo.
+-   [x] Backup parcial.
+-   [x] Restauração seletiva.
+-   [x] Validação de integridade.
+-   [x] Backup automático.
 
 ------------------------------------------------------------------------
 

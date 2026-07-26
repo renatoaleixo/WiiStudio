@@ -1,6 +1,6 @@
 # F030 - Advanced Diagnostics
 
-> Feature ID: F030 Status: Ready for Development Priority: Critical
+> Feature ID: F030 Status: Implemented and Homologated Priority: Critical
 > Epic: Settings & User Experience
 
 # Objetivo
@@ -196,11 +196,11 @@ Todos os erros devem registrar logs estruturados.
 
 # Critérios de Aceite
 
--   [ ] Diagnóstico completo do ambiente.
--   [ ] Continuidade após falhas.
--   [ ] Relatório exportável.
--   [ ] Classificação por severidade.
--   [ ] Informações mascaradas quando necessário.
+-   [x] Diagnóstico completo do ambiente.
+-   [x] Continuidade após falhas.
+-   [x] Relatório exportável.
+-   [x] Classificação por severidade.
+-   [x] Informações mascaradas quando necessário.
 
 ------------------------------------------------------------------------
 

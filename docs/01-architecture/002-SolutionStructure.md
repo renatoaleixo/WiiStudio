@@ -102,10 +102,10 @@ tools/ - wit - wwt - nkit
 
 # Checklist
 
--   [ ] Estrutura respeitada
--   [ ] Projetos independentes
--   [ ] Sem dependências circulares
--   [ ] Assets organizados
--   [ ] Ferramentas isoladas
+-   [x] Estrutura respeitada
+-   [x] Projetos independentes
+-   [x] Sem dependências circulares
+-   [x] Assets organizados
+-   [x] Ferramentas isoladas
 
 > Alterações nesta estrutura exigem ADR.
