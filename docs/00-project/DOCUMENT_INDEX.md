@@ -214,6 +214,16 @@ design system, application shell, plugin SDK, segurança, testes e documentaçã
 
 ---
 
+# EP015 - Emulator Integration
+
+- `EMULATOR-INTEGRATION-ROADMAP.md`
+- `F127-DolphinEmulatorIntegration-Melhoramento.md`
+- `F128-EmulatorGameLaunchWorkflow-Melhoramento.md`
+- `F129-EmulatorProfilesAndControllerMapping-Melhoramento.md`
+- `F130-EmulatorCompatibilityAndSaveManagement-Melhoramento.md`
+
+---
+
 # Documentos Finais
 
 - `AI_CONTEXT.md`
