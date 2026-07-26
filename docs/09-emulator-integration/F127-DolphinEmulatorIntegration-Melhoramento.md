@@ -2,7 +2,7 @@
 
 > **Suggested path:** `docs/09-emulator-integration/F127-DolphinEmulatorIntegration-Melhoramento.md`  
 > **Priority:** Future / Product Expansion  
-> **Status:** Proposed technical design  
+> **Status:** Implemented  
 > **Architecture:** .NET 10, Avalonia, Application / Infrastructure / Domain  
 > **Area:** Emulator Integration, External Tools, Game Library, Desktop UX  
 > **Related:** F101, F108, F109, F115, F118, F124, F126
@@ -370,17 +370,17 @@ Logs:
 
 ## 15. Critérios de Aceite
 
-- [ ] Dolphin pode ser configurado manualmente.
-- [ ] WiiStudio valida se o executável é Dolphin.
-- [ ] Painel do jogo exibe **Jogar no PC** quando aplicável.
-- [ ] Jogo local pode ser aberto no Dolphin.
-- [ ] Ausência do Dolphin não quebra o WiiStudio.
-- [ ] Diagnóstico mostra status do Dolphin.
-- [ ] Execução usa `IProcessRunner`.
-- [ ] Argumentos são catalogados/validados.
-- [ ] Nenhuma senha é armazenada.
-- [ ] Nenhum jogo é baixado ou fornecido pelo WiiStudio.
-- [ ] Testes usam fakes.
+- [x] Dolphin pode ser configurado manualmente.
+- [x] WiiStudio valida se o executável é Dolphin.
+- [x] Painel do jogo exibe **Jogar no PC** quando aplicável.
+- [x] Jogo local pode ser aberto no Dolphin.
+- [x] Ausência do Dolphin não quebra o WiiStudio.
+- [x] Diagnóstico mostra status do Dolphin.
+- [x] Execução usa `IProcessRunner`.
+- [x] Argumentos são catalogados/validados.
+- [x] Nenhuma senha é armazenada.
+- [x] Nenhum jogo é baixado ou fornecido pelo WiiStudio.
+- [x] Testes usam fakes.
 
 ---
 

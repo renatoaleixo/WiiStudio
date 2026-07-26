@@ -7,6 +7,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using WiiStudio.Application.Commands;
 using WiiStudio.Application.DTOs;
+using WiiStudio.Application.ExternalTools;
 using WiiStudio.Application.Interfaces;
 using WiiStudio.Application.UseCases;
 using WiiStudio.Domain.Entities;
@@ -55,6 +56,8 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly IFirstRunSetupService _firstRunSetupService;
     private readonly IWiiUsbReadinessService _wiiUsbReadinessService;
     private readonly IUsbFormatPreparationService _usbFormatPreparationService;
+    private readonly IEmulatorGameLaunchWorkflowService _emulatorLaunchWorkflowService;
+    private readonly IExternalToolManager _externalToolManager;
     private Guid? _activeLibraryDriveId;
     private CancellationTokenSource? _coverBatchCancellation;
     private bool _isApplyingDeviceSnapshot;
@@ -247,6 +250,18 @@ public sealed partial class MainViewModel : ObservableObject
     private GameDetailsDto? _selectedGameDetails;
 
     [ObservableProperty]
+    private bool _canLaunchSelectedGameInEmulator;
+
+    [ObservableProperty]
+    private string _emulatorLaunchSummary = "Selecione um jogo local para jogar no PC.";
+
+    [ObservableProperty]
+    private string? _dolphinExecutablePath;
+
+    [ObservableProperty]
+    private string _dolphinStatusSummary = "Dolphin ainda não validado.";
+
+    [ObservableProperty]
     private string _selectedAssetLanguage = "PT";
 
     [ObservableProperty]
@@ -313,7 +328,9 @@ public sealed partial class MainViewModel : ObservableObject
         IThemeService themeService,
         IFirstRunSetupService firstRunSetupService,
         IWiiUsbReadinessService wiiUsbReadinessService,
-        IUsbFormatPreparationService usbFormatPreparationService)
+        IUsbFormatPreparationService usbFormatPreparationService,
+        IEmulatorGameLaunchWorkflowService emulatorLaunchWorkflowService,
+        IExternalToolManager externalToolManager)
     {
         _commandPaletteService = commandPaletteService;
         _batchCoverDownloadService = batchCoverDownloadService;
@@ -351,6 +368,8 @@ public sealed partial class MainViewModel : ObservableObject
         _firstRunSetupService = firstRunSetupService;
         _wiiUsbReadinessService = wiiUsbReadinessService;
         _usbFormatPreparationService = usbFormatPreparationService;
+        _emulatorLaunchWorkflowService = emulatorLaunchWorkflowService;
+        _externalToolManager = externalToolManager;
         shellCommandExecutor.SetHandler(HandleShellCommandAsync);
 
         foreach (var module in _mainWindowService.Modules)
@@ -591,6 +610,7 @@ public sealed partial class MainViewModel : ObservableObject
         await RefreshDashboardAsync(cancellationToken);
         await RefreshDockLayoutsAsync(cancellationToken);
         await RefreshThemesAsync(cancellationToken);
+        await RefreshEmulatorSettingsAsync(cancellationToken);
         await RefreshStatusBarAsync(cancellationToken);
 
         var firstRun = await _firstRunSetupService.GetStatusAsync(cancellationToken);
@@ -759,6 +779,60 @@ public sealed partial class MainViewModel : ObservableObject
         ThemeEngineState = snapshot.State;
         ThemeSummary = $"Tema {snapshot.ActiveTheme.Name}";
         await RefreshThemesAsync(cancellationToken);
+    }
+
+    [RelayCommand]
+    private async Task ValidateDolphinPathAsync(CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(DolphinExecutablePath))
+        {
+            await RefreshEmulatorSettingsAsync(cancellationToken);
+            StatusMessage = "Dolphin será detectado automaticamente se estiver no PATH.";
+            return;
+        }
+
+        IsBusy = true;
+        try
+        {
+            var status = await _externalToolManager.ConfigureManualPathAsync(
+                new ExternalToolManualPathRequest("dolphin", DolphinExecutablePath),
+                cancellationToken);
+
+            ApplyDolphinStatus(status);
+            StatusMessage = status.State is ExternalToolState.Configured or ExternalToolState.Installed
+                ? "Dolphin configurado com sucesso."
+                : DolphinStatusSummary;
+
+            if (SelectedGame is not null)
+            {
+                await RefreshSelectedEmulatorPreviewAsync(SelectedGame.Id, cancellationToken);
+            }
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            DolphinStatusSummary = $"Falha ao validar Dolphin: {exception.Message}";
+            StatusMessage = "Não foi possível validar o Dolphin.";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task RefreshEmulatorSettingsAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            var settings = await _settingsService.GetAsync(cancellationToken);
+            DolphinExecutablePath = settings.DolphinExecutablePath;
+            var status = await _externalToolManager.CheckAsync("dolphin", cancellationToken);
+            ApplyDolphinStatus(status);
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            DolphinStatusSummary = $"Não foi possível validar Dolphin: {exception.Message}";
+        }
     }
 
     [RelayCommand]
@@ -2382,6 +2456,8 @@ public sealed partial class MainViewModel : ObservableObject
         if (game is null)
         {
             SelectedGameDetails = null;
+            CanLaunchSelectedGameInEmulator = false;
+            EmulatorLaunchSummary = "Selecione um jogo local para jogar no PC.";
             OnPropertyChanged(nameof(SelectedGameHistorySummary));
             return;
         }
@@ -2395,6 +2471,7 @@ public sealed partial class MainViewModel : ObservableObject
             }
 
             SelectedGameDetails = details;
+            await RefreshSelectedEmulatorPreviewAsync(game.Id, cancellationToken);
             foreach (var action in details.ActionAvailability ?? [])
             {
                 SelectedGameActions.Add(new GameDetailsActionItemViewModel(action));
@@ -2410,9 +2487,68 @@ public sealed partial class MainViewModel : ObservableObject
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
             SelectedGameDetails = null;
+            CanLaunchSelectedGameInEmulator = false;
+            EmulatorLaunchSummary = $"Não foi possível preparar emulação para {game.Id}.";
             StatusMessage = $"Não foi possível carregar detalhes de {game.Id}.";
             OnPropertyChanged(nameof(SelectedGameHistorySummary));
         }
+    }
+
+    [RelayCommand]
+    private async Task LaunchSelectedGameInEmulatorAsync(CancellationToken cancellationToken)
+    {
+        if (SelectedGame is null)
+        {
+            StatusMessage = "Selecione um jogo para jogar no PC.";
+            return;
+        }
+
+        IsBusy = true;
+        try
+        {
+            var result = await _emulatorLaunchWorkflowService.ExecuteAsync(
+                new EmulatorLaunchExecutionRequest(SelectedGame.Id),
+                cancellationToken);
+
+            StatusMessage = result.Started
+                ? $"Jogo enviado ao Dolphin: {SelectedGame.Title}."
+                : result.ErrorMessage ?? "Não foi possível iniciar o jogo no emulador.";
+            await RefreshSelectedEmulatorPreviewAsync(SelectedGame.Id, cancellationToken);
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            StatusMessage = $"Falha ao iniciar no emulador: {exception.Message}";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    private async Task RefreshSelectedEmulatorPreviewAsync(string gameId, CancellationToken cancellationToken)
+    {
+        var preview = await _emulatorLaunchWorkflowService.CreatePreviewAsync(
+            new EmulatorLaunchRequest(gameId),
+            cancellationToken);
+
+        CanLaunchSelectedGameInEmulator = preview.CanLaunch;
+        EmulatorLaunchSummary = preview.CanLaunch
+            ? $"Pronto para abrir no Dolphin{(string.IsNullOrWhiteSpace(preview.EmulatorVersion) ? string.Empty : $" {preview.EmulatorVersion}")}."
+            : preview.BlockReason ?? "Jogo indisponível para emulação.";
+    }
+
+    private void ApplyDolphinStatus(ExternalToolStatus status)
+    {
+        DolphinExecutablePath = status.ExecutablePath ?? DolphinExecutablePath;
+        DolphinStatusSummary = status.State switch
+        {
+            ExternalToolState.Configured or ExternalToolState.Installed =>
+                $"Dolphin pronto{(string.IsNullOrWhiteSpace(status.Version) ? string.Empty : $" - versão {status.Version}")}.",
+            ExternalToolState.InvalidPath => "Caminho do Dolphin inválido.",
+            ExternalToolState.InvalidVersion => "O executável selecionado não parece ser uma instalação válida do Dolphin.",
+            ExternalToolState.NotInstalled => "Dolphin não encontrado. Informe o caminho do executável ou instale o emulador.",
+            _ => $"Dolphin: {status.State}."
+        };
     }
 
     private void ApplySelectionState()

@@ -194,8 +194,16 @@ public sealed class JsonThemeService : IThemeService
             WitExecutablePath = settings.WitExecutablePath,
             WwtExecutablePath = settings.WwtExecutablePath,
             NKitExecutablePath = settings.NKitExecutablePath,
+            DolphinExecutablePath = settings.DolphinExecutablePath,
+            WitVersion = settings.WitVersion,
+            WwtVersion = settings.WwtVersion,
+            NKitVersion = settings.NKitVersion,
+            DolphinVersion = settings.DolphinVersion,
+            ExternalToolsLastCheckAt = settings.ExternalToolsLastCheckAt,
             CoverCachePath = settings.CoverCachePath,
-            MetadataCachePath = settings.MetadataCachePath
+            MetadataCachePath = settings.MetadataCachePath,
+            FirstRunCompleted = settings.FirstRunCompleted,
+            FirstRunCompletedAt = settings.FirstRunCompletedAt
         };
     }
 }

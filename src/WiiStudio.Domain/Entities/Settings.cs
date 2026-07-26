@@ -24,11 +24,15 @@ public sealed class Settings
 
     public string? NKitExecutablePath { get; init; }
 
+    public string? DolphinExecutablePath { get; init; }
+
     public string? WitVersion { get; init; }
 
     public string? WwtVersion { get; init; }
 
     public string? NKitVersion { get; init; }
+
+    public string? DolphinVersion { get; init; }
 
     public DateTimeOffset? ExternalToolsLastCheckAt { get; init; }
 

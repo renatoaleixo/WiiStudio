@@ -7,7 +7,8 @@ public sealed class ProcessRequest
         IReadOnlyList<string> arguments,
         TimeSpan timeout,
         Action<string>? onStandardOutputLine = null,
-        Action<string>? onStandardErrorLine = null)
+        Action<string>? onStandardErrorLine = null,
+        bool waitForExit = true)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(executablePath);
         ArgumentNullException.ThrowIfNull(arguments);
@@ -22,6 +23,7 @@ public sealed class ProcessRequest
         Timeout = timeout;
         OnStandardOutputLine = onStandardOutputLine;
         OnStandardErrorLine = onStandardErrorLine;
+        WaitForExit = waitForExit;
     }
 
     public string ExecutablePath { get; }
@@ -33,4 +35,6 @@ public sealed class ProcessRequest
     public Action<string>? OnStandardOutputLine { get; }
 
     public Action<string>? OnStandardErrorLine { get; }
+
+    public bool WaitForExit { get; }
 }

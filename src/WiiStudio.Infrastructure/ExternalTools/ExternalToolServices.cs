@@ -112,6 +112,7 @@ public sealed class ExternalToolLocator : IExternalToolLocator
             ExternalToolDefinitionProvider.WitToolId => settings.WitExecutablePath,
             ExternalToolDefinitionProvider.WwtToolId => settings.WwtExecutablePath,
             ExternalToolDefinitionProvider.NKitToolId => settings.NKitExecutablePath,
+            ExternalToolDefinitionProvider.DolphinToolId => settings.DolphinExecutablePath,
             _ => null
         };
     }
@@ -818,6 +819,7 @@ public sealed class ExternalToolManager : IExternalToolManager
             ExternalToolDefinitionProvider.WitToolId => CopySettings(settings, witExecutablePath: status.ExecutablePath, witVersion: status.Version),
             ExternalToolDefinitionProvider.WwtToolId => CopySettings(settings, wwtExecutablePath: status.ExecutablePath, wwtVersion: status.Version),
             ExternalToolDefinitionProvider.NKitToolId => CopySettings(settings, nKitExecutablePath: status.ExecutablePath, nKitVersion: status.Version),
+            ExternalToolDefinitionProvider.DolphinToolId => CopySettings(settings, dolphinExecutablePath: status.ExecutablePath, dolphinVersion: status.Version),
             _ => settings
         };
     }
@@ -827,9 +829,11 @@ public sealed class ExternalToolManager : IExternalToolManager
         string? witExecutablePath = null,
         string? wwtExecutablePath = null,
         string? nKitExecutablePath = null,
+        string? dolphinExecutablePath = null,
         string? witVersion = null,
         string? wwtVersion = null,
         string? nKitVersion = null,
+        string? dolphinVersion = null,
         DateTimeOffset? externalToolsLastCheckAt = null)
     {
         return new AppSettings
@@ -845,12 +849,16 @@ public sealed class ExternalToolManager : IExternalToolManager
             WitExecutablePath = witExecutablePath ?? settings.WitExecutablePath,
             WwtExecutablePath = wwtExecutablePath ?? settings.WwtExecutablePath,
             NKitExecutablePath = nKitExecutablePath ?? settings.NKitExecutablePath,
+            DolphinExecutablePath = dolphinExecutablePath ?? settings.DolphinExecutablePath,
             WitVersion = witVersion ?? settings.WitVersion,
             WwtVersion = wwtVersion ?? settings.WwtVersion,
             NKitVersion = nKitVersion ?? settings.NKitVersion,
+            DolphinVersion = dolphinVersion ?? settings.DolphinVersion,
             ExternalToolsLastCheckAt = externalToolsLastCheckAt ?? settings.ExternalToolsLastCheckAt,
             CoverCachePath = settings.CoverCachePath,
-            MetadataCachePath = settings.MetadataCachePath
+            MetadataCachePath = settings.MetadataCachePath,
+            FirstRunCompleted = settings.FirstRunCompleted,
+            FirstRunCompletedAt = settings.FirstRunCompletedAt
         };
     }
 
@@ -882,7 +890,7 @@ public sealed class ExternalToolManager : IExternalToolManager
 
     private static string ParseVersion(string output)
     {
-        var match = System.Text.RegularExpressions.Regex.Match(output, @"\d+(?:\.\d+)+(?:[a-zA-Z0-9.-]*)?");
+        var match = System.Text.RegularExpressions.Regex.Match(output, @"\d+(?:\.\d+)*(?:[a-zA-Z0-9.-]*)?");
         return match.Success ? match.Value : output.Trim();
     }
 }

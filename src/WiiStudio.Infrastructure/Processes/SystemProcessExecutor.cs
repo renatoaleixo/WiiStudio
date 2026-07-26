@@ -14,6 +14,12 @@ public sealed class SystemProcessExecutor : IProcessExecutor
 
         process.Start();
 
+        if (!request.WaitForExit)
+        {
+            stopwatch.Stop();
+            return new ProcessResult(0, string.Empty, string.Empty, stopwatch.Elapsed);
+        }
+
         var standardOutputTask = ReadToEndAsync(process.StandardOutput, request.OnStandardOutputLine, linkedSource.Token);
         var standardErrorTask = ReadToEndAsync(process.StandardError, request.OnStandardErrorLine, linkedSource.Token);
 
@@ -61,8 +67,8 @@ public sealed class SystemProcessExecutor : IProcessExecutor
         var startInfo = new ProcessStartInfo
         {
             FileName = request.ExecutablePath,
-            RedirectStandardError = true,
-            RedirectStandardOutput = true,
+            RedirectStandardError = request.WaitForExit,
+            RedirectStandardOutput = request.WaitForExit,
             UseShellExecute = false
         };
 

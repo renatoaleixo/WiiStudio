@@ -53,6 +53,7 @@ public sealed class DiagnosticsServiceTests
             check.Status == DiagnosticsStatus.Healthy &&
             check.Message.Contains("https://www.gametdb.com/wiitdb.zip"));
         report.Checks.Should().Contain(check => check.Name == "external-tool:nkit" && check.Status == DiagnosticsStatus.Warning);
+        report.Checks.Should().Contain(check => check.Name == "external-tool:dolphin" && check.Status == DiagnosticsStatus.Warning);
     }
 
     [Fact]
@@ -242,7 +243,8 @@ public sealed class DiagnosticsServiceTests
             [
                 new("wiimms-wit", "Wiimms WIT", ExternalToolState.Configured, "/opt/wiimms/wit", "3.5", "test", null, DateTimeOffset.UtcNow),
                 new("wiimms-wwt", "Wiimms WWT", ExternalToolState.Configured, "/opt/wiimms/wwt", "3.5", "test", null, DateTimeOffset.UtcNow),
-                new("nkit", "NKit Legacy", ExternalToolState.NotInstalled, null, null, null, "externalTools.notInstalled", DateTimeOffset.UtcNow)
+                new("nkit", "NKit Legacy", ExternalToolState.NotInstalled, null, null, null, "externalTools.notInstalled", DateTimeOffset.UtcNow),
+                new("dolphin", "Dolphin Emulator", ExternalToolState.NotInstalled, null, null, null, "externalTools.notInstalled", DateTimeOffset.UtcNow)
             ];
 
             return Task.FromResult(statuses);

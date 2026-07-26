@@ -127,6 +127,7 @@ public sealed class JsonSettingsService : ISettingsService
         ValidateOptionalPath(settings.WitExecutablePath, nameof(settings.WitExecutablePath));
         ValidateOptionalPath(settings.WwtExecutablePath, nameof(settings.WwtExecutablePath));
         ValidateOptionalPath(settings.NKitExecutablePath, nameof(settings.NKitExecutablePath));
+        ValidateOptionalPath(settings.DolphinExecutablePath, nameof(settings.DolphinExecutablePath));
         ValidateOptionalPath(settings.CoverCachePath, nameof(settings.CoverCachePath));
         ValidateOptionalPath(settings.MetadataCachePath, nameof(settings.MetadataCachePath));
     }

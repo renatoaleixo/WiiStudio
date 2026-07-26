@@ -6,6 +6,7 @@
   <StreamGeometry x:Key="WiiIcon.Folder">M3 5h7l2 2h9v12H3V5Zm2 4v8h14V9H5Z</StreamGeometry>
   <StreamGeometry x:Key="WiiIcon.Import">M11 3h2v9l3.5-3.5 1.41 1.41L12 15.83 6.09 9.91 7.5 8.5 11 12V3ZM4 17h16v2H4v-2Z</StreamGeometry>
   <StreamGeometry x:Key="WiiIcon.Convert">M7 7h9.17l-2.58-2.59L15 3l5 5-5 5-1.41-1.41L16.17 9H7V7Zm10 10H7.83l2.58 2.59L9 21l-5-5 5-5 1.41 1.41L7.83 15H17v2Z</StreamGeometry>
+  <StreamGeometry x:Key="WiiIcon.Play">M8 5v14l11-7L8 5Z</StreamGeometry>
   <StreamGeometry x:Key="WiiIcon.Settings">M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm0 2a2 2 0 1 1 0 4 2 2 0 0 1 0-4Zm8.94 2.75-.86-.5c.04-.25.06-.5.06-.75s-.02-.5-.06-.75l.86-.5-2-3.46-.88.51a7 7 0 0 0-1.3-.75V5.5h-4v1.05a7 7 0 0 0-1.3.75l-.88-.51-2 3.46.86.5c-.04.25-.06.5-.06.75s.02.5.06.75l-.86.5 2 3.46.88-.51c.4.31.84.57 1.3.75v1.05h4v-1.05c.46-.18.9-.44 1.3-.75l.88.51 2-3.46Z</StreamGeometry>
   <StreamGeometry x:Key="WiiIcon.Warning">M12 3 2 21h20L12 3Zm0 4.2L18.6 19H5.4L12 7.2ZM11 10h2v5h-2v-5Zm0 6h2v2h-2v-2Z</StreamGeometry>
   <StreamGeometry x:Key="WiiIcon.Error">M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm-1 5h2v7h-2V7Zm0 9h2v2h-2v-2Z</StreamGeometry>

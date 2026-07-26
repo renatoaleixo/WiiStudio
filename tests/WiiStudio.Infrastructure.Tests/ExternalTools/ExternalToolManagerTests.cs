@@ -61,6 +61,37 @@ public sealed class ExternalToolManagerTests : IDisposable
     }
 
     [Fact]
+    public async Task ConfigureManualPathAsync_ShouldValidateAndPersistDolphinSettings()
+    {
+        var dolphinPath = CreateExecutable("manual/dolphin-emu");
+        var settings = new FakeSettingsService(new AppSettings());
+        var manager = CreateManager(settings, [Definition(ExternalToolDefinitionProvider.DolphinToolId, "dolphin-emu", [])], new FakeProcessRunner("Dolphin Emulator 2409"));
+
+        var status = await manager.ConfigureManualPathAsync(new ExternalToolManualPathRequest(ExternalToolDefinitionProvider.DolphinToolId, dolphinPath));
+
+        status.State.Should().Be(ExternalToolState.Configured);
+        status.DisplayName.Should().Be("dolphin-emu");
+        settings.Current.DolphinExecutablePath.Should().Be(dolphinPath);
+        settings.Current.DolphinVersion.Should().Be("2409");
+        settings.Current.ExternalToolsLastCheckAt.Should().NotBeNull();
+    }
+
+    [Fact]
+    public async Task Locator_ShouldPreferConfiguredDolphinPathFromSettings()
+    {
+        var dolphinPath = CreateExecutable("configured/dolphin-emu");
+        var settings = new FakeSettingsService(new AppSettings { DolphinExecutablePath = dolphinPath });
+        var locator = new ExternalToolLocator(settings, new SafePathService());
+        var definition = Definition(ExternalToolDefinitionProvider.DolphinToolId, "dolphin-emu", ["missing"]);
+
+        var result = await locator.LocateAsync(definition);
+
+        result.Found.Should().BeTrue();
+        result.ExecutablePath.Should().Be(dolphinPath);
+        result.DetectionSource.Should().Be("settings");
+    }
+
+    [Fact]
     public async Task InstallAsync_ShouldInstallLocalNKitPackageAfterConfirmation()
     {
         var packagePath = CreateNKitPackage("NKit_v1.4.zip");

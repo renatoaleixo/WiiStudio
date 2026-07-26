@@ -11,6 +11,7 @@ using WiiStudio.Infrastructure.Backups;
 using WiiStudio.Infrastructure.Commands;
 using WiiStudio.Infrastructure.Covers;
 using WiiStudio.Infrastructure.Diagnostics;
+using WiiStudio.Infrastructure.Emulators;
 using WiiStudio.Infrastructure.Database;
 using WiiStudio.Infrastructure.ExternalTools;
 using WiiStudio.Infrastructure.Export;
@@ -66,6 +67,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IFirstRunSetupService, FirstRunSetupService>();
         services.AddSingleton<IWiiUsbReadinessService, WiiUsbReadinessService>();
         services.AddSingleton<IReleaseValidationService, ReleaseValidationService>();
+        services.AddSingleton<IEmulatorGameLaunchWorkflowService, EmulatorGameLaunchWorkflowService>();
         services.AddSingleton<IApplicationUpdateService, ApplicationUpdateService>();
         services.AddSingleton<IBackupService, ZipBackupService>();
         services.AddSingleton<ILoggingCenter, JsonLineLoggingCenter>();
