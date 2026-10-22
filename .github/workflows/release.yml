@@ -54,7 +54,7 @@ jobs:
           test -f /usr/share/polkit-1/actions/com.wiistudio.device.policy
           sudo dpkg --remove wiistudio
           test ! -e /opt/wiistudio/WiiStudio
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with: { name: release-linux, path: 'artifacts/release/${{ steps.version.outputs.value }}/linux', if-no-files-found: error }
 
   package-windows:
@@ -79,7 +79,7 @@ jobs:
           Start-Process $installer -ArgumentList "/VERYSILENT /SUPPRESSMSGBOXES /DIR=`"$target`"" -Wait
           if (-not (Test-Path (Join-Path $target 'WiiStudio.exe'))) { throw 'Installed executable missing.' }
           Start-Process (Join-Path $target 'unins000.exe') -ArgumentList '/VERYSILENT /SUPPRESSMSGBOXES' -Wait
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with: { name: release-windows, path: 'artifacts/release/${{ steps.version.outputs.value }}/windows', if-no-files-found: error }
 
   package-macos:
@@ -104,7 +104,7 @@ jobs:
             rm -rf "$RUNNER_TEMP/WiiStudio.app"
             hdiutil detach "$mount"
           done
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with: { name: release-macos, path: 'artifacts/release/${{ steps.version.outputs.value }}/macos', if-no-files-found: error }
 
   finalize:
@@ -129,7 +129,7 @@ jobs:
         run: |
           scripts/release/package.sh "${{ steps.version.outputs.value }}" finalize
           scripts/release/smoke-test.sh "${{ steps.version.outputs.value }}"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with: { name: 'wiistudio-release-${{ steps.version.outputs.value }}', path: 'artifacts/release/${{ steps.version.outputs.value }}', if-no-files-found: error }
       - if: startsWith(github.ref, 'refs/tags/v')
         env: { GH_TOKEN: '${{ github.token }}' }
