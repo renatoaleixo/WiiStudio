@@ -32,7 +32,7 @@ public sealed class NKitService : INKitService
         Directory.CreateDirectory(outputDirectory);
         var outputPath = Path.Combine(outputDirectory, Path.GetFileNameWithoutExtension(sourcePath) + ".iso");
         var result = await processRunner.RunAsync(
-            new ProcessRequest(status.ExecutablePath, [sourcePath, outputDirectory], RestoreTimeout),
+            NKitProcessRequestFactory.Create(status.ExecutablePath, [sourcePath, outputDirectory], RestoreTimeout),
             cancellationToken);
 
         if (!result.IsSuccess)

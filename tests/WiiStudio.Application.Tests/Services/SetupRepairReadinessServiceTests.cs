@@ -42,6 +42,24 @@ public sealed class SetupRepairReadinessServiceTests
     }
 
     [Fact]
+    public async Task DiagnosticsRepairService_ShouldOfferLocalNKitInstallation()
+    {
+        var toolManager = new FakeExternalToolManager { NKitInstallSucceeds = true };
+        var service = CreateRepairService(externalToolManager: toolManager);
+        var check = new DiagnosticsCheckResult("external-tool:nkit", DiagnosticsStatus.Warning, "missing");
+
+        var actions = await service.GetAvailableActionsAsync(check, CancellationToken.None);
+        var result = await service.ExecuteAsync(
+            new DiagnosticRepairRequest(DiagnosticsRepairService.InstallLocalNKitAction, UserConfirmed: true),
+            CancellationToken.None);
+
+        actions.First().ActionId.Should().Be(DiagnosticsRepairService.InstallLocalNKitAction);
+        actions.First().RequiresConfirmation.Should().BeTrue();
+        result.Success.Should().BeTrue();
+        toolManager.NKitInstallRequested.Should().BeTrue();
+    }
+
+    [Fact]
     public async Task DiagnosticsRepairService_ShouldBlockUnknownAction()
     {
         var service = CreateRepairService();
@@ -246,11 +264,13 @@ public sealed class SetupRepairReadinessServiceTests
         }
     }
 
-    private static DiagnosticsRepairService CreateRepairService(FakeDiagnosticsRepairHistoryStore? historyStore = null)
+    private static DiagnosticsRepairService CreateRepairService(
+        FakeDiagnosticsRepairHistoryStore? historyStore = null,
+        FakeExternalToolManager? externalToolManager = null)
     {
         return new DiagnosticsRepairService(
             new FakePolkitPolicyInstaller(),
-            new FakeExternalToolManager(),
+            externalToolManager ?? new FakeExternalToolManager(),
             new FakeGameTdbUpdateService(),
             new FakeDiagnosticsService(),
             new FakeTaskManager(),
@@ -297,6 +317,10 @@ public sealed class SetupRepairReadinessServiceTests
     {
         public bool ToolsReady { get; init; } = true;
 
+        public bool NKitInstallSucceeds { get; init; }
+
+        public bool NKitInstallRequested { get; private set; }
+
         public Task<IReadOnlyList<ExternalToolStatus>> CheckAllAsync(CancellationToken cancellationToken = default)
         {
             return Task.FromResult<IReadOnlyList<ExternalToolStatus>>([CreateStatus("wiimms-wit"), CreateStatus("wiimms-wwt")]);
@@ -309,6 +333,19 @@ public sealed class SetupRepairReadinessServiceTests
 
         public Task<ExternalToolInstallResult> InstallAsync(ExternalToolInstallRequest request, CancellationToken cancellationToken = default)
         {
+            if (request.ToolId == "nkit" && NKitInstallSucceeds)
+            {
+                NKitInstallRequested = true;
+                return Task.FromResult(new ExternalToolInstallResult(
+                    "nkit",
+                    true,
+                    ExternalToolState.Installed,
+                    "/tools/nkit/RecoverToISO.exe",
+                    "1.4",
+                    null,
+                    []));
+            }
+
             return Task.FromResult(ExternalToolInstallResult.Failed(request.ToolId, "not-implemented"));
         }
 

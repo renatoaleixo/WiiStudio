@@ -9,6 +9,7 @@ using WiiStudio.Infrastructure.AppUpdates;
 using WiiStudio.Infrastructure.Backups;
 using WiiStudio.Infrastructure.Covers;
 using WiiStudio.Infrastructure.Emulators;
+using WiiStudio.Infrastructure.ExternalTools;
 using WiiStudio.Infrastructure.Favorites;
 using WiiStudio.Infrastructure.GameTdb;
 using WiiStudio.Infrastructure.Logging;
@@ -274,7 +275,11 @@ public sealed class DiagnosticsService : IDiagnosticsService
     private static DiagnosticsCheckResult MapExternalToolStatus(ExternalToolStatus status)
     {
         var isRequired = status.ToolId is "wiimms-wit" or "wiimms-wwt";
-        var healthy = status.State is ExternalToolState.Installed or ExternalToolState.Configured;
+        var toolAvailable = status.State is ExternalToolState.Installed or ExternalToolState.Configured;
+        var nkitRuntimeMissing = status.ToolId == ExternalToolDefinitionProvider.NKitToolId
+            && toolAvailable
+            && !NKitProcessRequestFactory.IsRuntimeAvailable();
+        var healthy = toolAvailable && !nkitRuntimeMissing;
         var statusValue = healthy
             ? DiagnosticsStatus.Healthy
             : isRequired
@@ -285,9 +290,13 @@ public sealed class DiagnosticsService : IDiagnosticsService
             : statusValue == DiagnosticsStatus.Warning
                 ? DiagnosticsSeverity.Warning
                 : DiagnosticsSeverity.Information;
-        var message = healthy
-            ? $"{status.DisplayName} is available."
-            : $"{status.DisplayName} is {status.State}.";
+        var message = nkitRuntimeMissing
+            ? "NKit Legacy foi instalado, mas o runtime Mono precisa ser instalado."
+            : healthy
+            ? $"{status.DisplayName} está disponível."
+            : status.State == ExternalToolState.DownloadUnavailable && status.ToolId == ExternalToolDefinitionProvider.NKitToolId
+                    ? "NKit Legacy ainda não foi instalado. Use a ação Instalar NKit local."
+                    : $"{status.DisplayName} está no estado {status.State}.";
 
         return new DiagnosticsCheckResult(
             $"external-tool:{status.ToolId}",

@@ -8,6 +8,7 @@ public sealed class DiagnosticsRepairService : IDiagnosticsRepairService
 {
     public const string InstallPolkitPolicyAction = "repair.install-polkit-policy";
     public const string ValidateExternalToolsAction = "repair.validate-external-tools";
+    public const string InstallLocalNKitAction = "repair.install-local-nkit";
     public const string UpdateGameTdbAction = "repair.update-gametdb";
 
     private static readonly DiagnosticRepairAction InstallPolkitPolicy = new(
@@ -25,6 +26,14 @@ public sealed class DiagnosticsRepairService : IDiagnosticsRepairService
         RequiresConfirmation: false,
         IsDestructive: false,
         DiagnosticRepairRiskLevel.Safe);
+
+    private static readonly DiagnosticRepairAction InstallLocalNKit = new(
+        InstallLocalNKitAction,
+        "Instalar NKit local",
+        "Valida o pacote NKit v1.4 incluído no WiiStudio e instala após confirmação.",
+        RequiresConfirmation: true,
+        IsDestructive: false,
+        DiagnosticRepairRiskLevel.RequiresConfirmation);
 
     private static readonly DiagnosticRepairAction UpdateGameTdb = new(
         UpdateGameTdbAction,
@@ -74,6 +83,17 @@ public sealed class DiagnosticsRepairService : IDiagnosticsRepairService
 
         var name = item.Name.ToLowerInvariant();
         var actions = new List<DiagnosticRepairAction>();
+        if (string.Equals(name, "external-tool:nkit", StringComparison.OrdinalIgnoreCase)
+            && item.Message.Contains("Mono", StringComparison.OrdinalIgnoreCase))
+        {
+            return Task.FromResult<IReadOnlyList<DiagnosticRepairAction>>([]);
+        }
+
+        if (string.Equals(name, "external-tool:nkit", StringComparison.OrdinalIgnoreCase))
+        {
+            actions.Add(InstallLocalNKit);
+        }
+
         if (name.Contains("polkit", StringComparison.OrdinalIgnoreCase))
         {
             actions.Add(InstallPolkitPolicy);
@@ -180,6 +200,9 @@ public sealed class DiagnosticsRepairService : IDiagnosticsRepairService
         return actionId switch
         {
             InstallPolkitPolicyAction => CreatePolkitInstallMessage(await _polkitPolicyInstaller.InstallAsync(cancellationToken)),
+            InstallLocalNKitAction => CreateExternalToolInstallMessage(await _externalToolManager.InstallAsync(
+                new ExternalToolInstallRequest("nkit", UserConfirmed: true),
+                cancellationToken)),
             ValidateExternalToolsAction => $"Ferramentas verificadas: {(await _externalToolManager.CheckAllAsync(cancellationToken)).Count}.",
             UpdateGameTdbAction => (await _gameTdbUpdateService.UpdateAsync(new GameTdbUpdateOptions(Force: true), cancellationToken)).Message,
             _ => throw new InvalidOperationException($"Ação de reparo desconhecida: {actionId}.")
@@ -202,11 +225,22 @@ public sealed class DiagnosticsRepairService : IDiagnosticsRepairService
         throw new InvalidOperationException(message);
     }
 
+    private static string CreateExternalToolInstallMessage(ExternalToolInstallResult result)
+    {
+        if (result.Success)
+        {
+            return $"NKit Legacy {result.Version ?? string.Empty} instalado e validado.".Trim();
+        }
+
+        throw new InvalidOperationException(result.ErrorMessageKey ?? "Falha ao instalar o NKit Legacy.");
+    }
+
     private static DiagnosticRepairAction GetCatalogAction(string actionId)
     {
         return actionId switch
         {
             InstallPolkitPolicyAction => InstallPolkitPolicy,
+            InstallLocalNKitAction => InstallLocalNKit,
             ValidateExternalToolsAction => ValidateExternalTools,
             UpdateGameTdbAction => UpdateGameTdb,
             _ => throw new InvalidOperationException($"Ação de reparo desconhecida: {actionId}.")
