@@ -133,8 +133,16 @@ public sealed class WwtServiceTests
     [Fact]
     public async Task ListGamesAsync_ShouldWrapPkexecTimeoutAsWiimmsCommandException()
     {
-        var processRunner = new TimeoutAfterPermissionDeniedProcessRunner();
-        var service = new WwtService(processRunner, new FakeWiimmsToolLocator("/opt/wiimms/wwt"), NullLogger<WwtService>.Instance);
+        var processRunner = new FakeProcessRunner(new ProcessResult(
+            48,
+            string.Empty,
+            "Can't open file: /dev/sdc1\n-> Permission denied [13]",
+            TimeSpan.FromMilliseconds(10)));
+        var service = new WwtService(
+            processRunner,
+            new FakeWiimmsToolLocator("/opt/wiimms/wwt"),
+            NullLogger<WwtService>.Instance,
+            new TimeoutPrivilegedAccessService());
 
         var act = () => service.ListGamesAsync(CreateRawDrive(), CancellationToken.None);
 
@@ -271,27 +279,6 @@ public sealed class WwtServiceTests
         public Task<IReadOnlyList<TaskInfo>> GetHistoryAsync(CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<TaskInfo>>([]);
     }
 
-    private sealed class TimeoutAfterPermissionDeniedProcessRunner : IProcessRunner
-    {
-        private int callCount;
-
-        public Task<ProcessResult> RunAsync(ProcessRequest request, CancellationToken cancellationToken)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            callCount++;
-            if (callCount == 1)
-            {
-                return Task.FromResult(new ProcessResult(
-                    48,
-                    string.Empty,
-                    "Can't open file: /dev/sdc1\n-> Permission denied [13]",
-                    TimeSpan.FromMilliseconds(10)));
-            }
-
-            throw new TimeoutException($"Process '{request.ExecutablePath}' exceeded timeout {request.Timeout}.");
-        }
-    }
-
     private sealed class FakePrivilegedAccessService : IPrivilegedAccessService
     {
         private readonly PrivilegedProcessResult _result;
@@ -318,6 +305,23 @@ public sealed class WwtServiceTests
             cancellationToken.ThrowIfCancellationRequested();
             LastRequest = request;
             return Task.FromResult(_result);
+        }
+    }
+
+    private sealed class TimeoutPrivilegedAccessService : IPrivilegedAccessService
+    {
+        public Task<PrivilegedAccessStatus> CheckStatusAsync(
+            PrivilegedAccessRequest request,
+            CancellationToken cancellationToken = default)
+        {
+            throw new NotSupportedException();
+        }
+
+        public Task<PrivilegedProcessResult> RunKnownToolAsync(
+            PrivilegedToolRequest request,
+            CancellationToken cancellationToken = default)
+        {
+            throw new TimeoutException($"Process '{request.ExecutablePath}' exceeded timeout {request.Timeout}.");
         }
     }
 

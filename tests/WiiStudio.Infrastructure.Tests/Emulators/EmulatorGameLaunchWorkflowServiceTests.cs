@@ -99,7 +99,9 @@ public sealed class EmulatorGameLaunchWorkflowServiceTests : IDisposable
 
         result.Started.Should().BeTrue();
         processRunner.LastRequest.Should().NotBeNull();
-        processRunner.LastRequest!.ExecutablePath.Should().Be("/usr/bin/flatpak");
+        var expectedFlatpakPath = new[] { "/usr/bin/flatpak", "/usr/local/bin/flatpak" }
+            .FirstOrDefault(File.Exists) ?? "flatpak";
+        processRunner.LastRequest!.ExecutablePath.Should().Be(expectedFlatpakPath);
         processRunner.LastRequest.Arguments.Should().Equal(
             "run",
             $"--filesystem={Path.GetDirectoryName(gamePath)}:ro",

@@ -144,7 +144,16 @@ public sealed class WwtService : IWwtService
         var result = await RunProcessOrTimeoutResultAsync(request, cancellationToken);
         if (!result.IsSuccess && HasPermissionDenied(result))
         {
-            var privilegedResult = await RunPrivilegedFallbackAsync(request, operationName, cancellationToken);
+            ProcessResult? privilegedResult;
+            try
+            {
+                privilegedResult = await RunPrivilegedFallbackAsync(request, operationName, cancellationToken);
+            }
+            catch (TimeoutException exception)
+            {
+                privilegedResult = new ProcessResult(124, string.Empty, exception.Message, request.Timeout);
+            }
+
             if (privilegedResult is not null)
             {
                 result = privilegedResult;
