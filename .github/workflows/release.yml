@@ -17,7 +17,7 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-dotnet@v4
         with: { dotnet-version: 10.0.x }
       - run: dotnet restore WiiStudio.sln
@@ -28,7 +28,7 @@ jobs:
     needs: verify
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-dotnet@v4
         with: { dotnet-version: 10.0.x }
       - id: version
@@ -61,7 +61,7 @@ jobs:
     needs: verify
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-dotnet@v4
         with: { dotnet-version: 10.0.x }
       - id: version
@@ -86,7 +86,7 @@ jobs:
     needs: verify
     runs-on: macos-15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-dotnet@v4
         with: { dotnet-version: 10.0.x }
       - id: version
@@ -111,7 +111,7 @@ jobs:
     needs: [package-linux, package-windows, package-macos]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - id: version
         shell: bash
         run: |
