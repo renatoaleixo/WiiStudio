@@ -455,6 +455,8 @@ public sealed class ExternalToolInstaller : IExternalToolInstaller
         }
 
         Guid? taskId = null;
+        string? tempDirectory = null;
+        string? stagingDirectory = null;
         try
         {
             taskId = await EnqueueDownloadTaskAsync(definition, cancellationToken);
@@ -471,7 +473,7 @@ public sealed class ExternalToolInstaller : IExternalToolInstaller
 
             await UpdateDownloadTaskAsync(taskId, 0.98, ManagedTaskStatus.Running, cancellationToken);
             var finalDirectory = GetInstallDirectory(request.ToolId, definition.PackageSource.Version);
-            var tempDirectory = Path.Combine(options.TemporaryDirectory, $"{request.ToolId}-{Guid.NewGuid():N}");
+            tempDirectory = Path.Combine(options.TemporaryDirectory, $"{request.ToolId}-{Guid.NewGuid():N}");
             Directory.CreateDirectory(tempDirectory);
 
             var extraction = await archiveExtractor.ExtractAsync(package.FilePath, tempDirectory, cancellationToken);
@@ -488,13 +490,17 @@ public sealed class ExternalToolInstaller : IExternalToolInstaller
                 return ExternalToolInstallResult.Failed(request.ToolId, "externalTools.install.executableMissing");
             }
 
+            var finalParent = Path.GetDirectoryName(finalDirectory) ?? options.ToolsRootDirectory;
+            Directory.CreateDirectory(finalParent);
+            stagingDirectory = Path.Combine(finalParent, $".{Path.GetFileName(finalDirectory)}.install-{Guid.NewGuid():N}");
+            CopyDirectory(tempDirectory, stagingDirectory, cancellationToken);
             if (Directory.Exists(finalDirectory))
             {
                 Directory.Delete(finalDirectory, recursive: true);
             }
 
-            Directory.CreateDirectory(Path.GetDirectoryName(finalDirectory) ?? options.ToolsRootDirectory);
-            Directory.Move(tempDirectory, finalDirectory);
+            Directory.Move(stagingDirectory, finalDirectory);
+            stagingDirectory = null;
             var finalExecutable = Path.Combine(finalDirectory, Path.GetRelativePath(tempDirectory, executablePath));
 
             logger.LogInformation("Installed external tool {ToolId} to {InstallDirectory}", request.ToolId, finalDirectory);
@@ -519,6 +525,50 @@ public sealed class ExternalToolInstaller : IExternalToolInstaller
             logger.LogWarning(ex, "Failed to install external tool {ToolId}", request.ToolId);
             await FailDownloadTaskAsync(taskId, "externalTools.install.failed");
             return ExternalToolInstallResult.Failed(request.ToolId, "externalTools.install.failed");
+        }
+        finally
+        {
+            TryDeleteDirectory(tempDirectory);
+            TryDeleteDirectory(stagingDirectory);
+        }
+    }
+
+    private static void CopyDirectory(string sourceDirectory, string destinationDirectory, CancellationToken cancellationToken)
+    {
+        Directory.CreateDirectory(destinationDirectory);
+        foreach (var directory in Directory.EnumerateDirectories(sourceDirectory, "*", SearchOption.AllDirectories))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            Directory.CreateDirectory(Path.Combine(destinationDirectory, Path.GetRelativePath(sourceDirectory, directory)));
+        }
+
+        foreach (var file in Directory.EnumerateFiles(sourceDirectory, "*", SearchOption.AllDirectories))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var destination = Path.Combine(destinationDirectory, Path.GetRelativePath(sourceDirectory, file));
+            Directory.CreateDirectory(Path.GetDirectoryName(destination)!);
+            File.Copy(file, destination, overwrite: false);
+        }
+    }
+
+    private static void TryDeleteDirectory(string? directory)
+    {
+        if (string.IsNullOrWhiteSpace(directory) || !Directory.Exists(directory))
+        {
+            return;
+        }
+
+        try
+        {
+            Directory.Delete(directory, recursive: true);
+        }
+        catch (IOException)
+        {
+            // A failed cleanup must not replace the installation result.
+        }
+        catch (UnauthorizedAccessException)
+        {
+            // A failed cleanup must not replace the installation result.
         }
     }
 
