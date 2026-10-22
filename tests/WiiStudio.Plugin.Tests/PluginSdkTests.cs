@@ -243,6 +243,65 @@ public sealed class PluginSdkTests : IDisposable
     }
 
     [Fact]
+    public async Task Remote_install_rejects_archive_entry_outside_extraction_directory()
+    {
+        var escapedFileName = $"wiistudio-zip-slip-{Guid.NewGuid():N}.txt";
+        var escapedPath = Path.Combine(Path.GetTempPath(), "wiistudio-plugin-remote", escapedFileName);
+        byte[] packageBytes;
+        using (var memory = new MemoryStream())
+        {
+            using (var archive = new ZipArchive(memory, ZipArchiveMode.Create, leaveOpen: true))
+            {
+                var entry = archive.CreateEntry($"../{escapedFileName}");
+                await using var writer = new StreamWriter(entry.Open(), Encoding.UTF8);
+                await writer.WriteAsync("must not escape");
+            }
+
+            packageBytes = memory.ToArray();
+        }
+
+        var checksum = Convert.ToHexString(SHA256.HashData(packageBytes)).ToLowerInvariant();
+        var http = new FakeHttpMessageHandler();
+        http.AddJson("https://plugins.example/catalog.json", $$"""
+        {
+          "schemaVersion": 1,
+          "plugins": [
+            {
+              "pluginId": "com.example.zipslip",
+              "name": "Unsafe Archive",
+              "description": "Traversal test.",
+              "author": "Example",
+              "version": "1.0.0",
+              "minWiiStudioVersion": "1.0.0",
+              "packageUrl": "https://plugins.example/com.example.zipslip.zip",
+              "sha256": "{{checksum}}",
+              "permissions": ["AccessMetadata"],
+              "riskLevel": "Low",
+              "trustLevel": "Community",
+              "status": "Active"
+            }
+          ],
+          "revocations": []
+        }
+        """);
+        http.AddBytes("https://plugins.example/com.example.zipslip.zip", packageBytes);
+        var service = CreateRemoteManagementService(http);
+
+        try
+        {
+            var result = await service.InstallRemoteAsync("com.example.zipslip");
+
+            result.Success.Should().BeFalse();
+            result.Errors.Should().Contain(error => error.Contains("caminho inseguro", StringComparison.OrdinalIgnoreCase));
+            File.Exists(escapedPath).Should().BeFalse();
+        }
+        finally
+        {
+            File.Delete(escapedPath);
+        }
+    }
+
+    [Fact]
     public async Task Remote_catalog_rejects_http_package_url()
     {
         var http = new FakeHttpMessageHandler();
