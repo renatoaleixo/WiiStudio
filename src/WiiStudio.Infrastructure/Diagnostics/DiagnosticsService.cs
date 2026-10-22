@@ -53,6 +53,7 @@ public sealed class DiagnosticsService : IDiagnosticsService
     private readonly IPolkitPolicyInstaller _polkitPolicyInstaller;
     private readonly IUsbDeviceProvider _usbDeviceProvider;
     private readonly ILogger<DiagnosticsService> _logger;
+    private readonly IEmulatorProfileService? _emulatorProfileService;
 
     public DiagnosticsService(
         IWitService witService,
@@ -75,7 +76,8 @@ public sealed class DiagnosticsService : IDiagnosticsService
         IDevicePermissionService devicePermissionService,
         IPolkitPolicyInstaller polkitPolicyInstaller,
         IUsbDeviceProvider usbDeviceProvider,
-        ILogger<DiagnosticsService> logger)
+        ILogger<DiagnosticsService> logger,
+        IEmulatorProfileService? emulatorProfileService = null)
     {
         _witService = witService;
         _toolLocator = toolLocator;
@@ -98,6 +100,7 @@ public sealed class DiagnosticsService : IDiagnosticsService
         _polkitPolicyInstaller = polkitPolicyInstaller;
         _usbDeviceProvider = usbDeviceProvider;
         _logger = logger;
+        _emulatorProfileService = emulatorProfileService;
     }
 
     public async Task<DiagnosticsReport> RunAsync(CancellationToken cancellationToken)
@@ -316,18 +319,33 @@ public sealed class DiagnosticsService : IDiagnosticsService
         return checks;
     }
 
-    private Task<IReadOnlyList<DiagnosticsCheckResult>> CheckConfigurationAsync(CancellationToken cancellationToken)
+    private async Task<IReadOnlyList<DiagnosticsCheckResult>> CheckConfigurationAsync(CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        IReadOnlyList<DiagnosticsCheckResult> checks =
-        [
+        var checks = new List<DiagnosticsCheckResult>
+        {
             CheckPathExists("settings-file", _settingsOptions.FilePath, isRequired: false),
             CheckPathExists("profiles-root", _profileOptions.RootDirectory, isRequired: false),
             CheckPathExists("logs-file", _loggingOptions.FilePath, isRequired: false),
             new DiagnosticsCheckResult("diagnostics-enabled", DiagnosticsStatus.Healthy, "Diagnostics are enabled in the application model.", Category: "Configuration")
-        ];
+        };
 
-        return Task.FromResult(checks);
+        if (_emulatorProfileService is not null)
+        {
+            var profiles = await _emulatorProfileService.GetProfilesAsync(cancellationToken);
+            var defaultCount = profiles.Count(profile => profile.IsDefault && string.Equals(profile.EmulatorId, "dolphin", StringComparison.OrdinalIgnoreCase));
+            var healthy = defaultCount == 1;
+            checks.Add(new DiagnosticsCheckResult(
+                "emulator-profiles",
+                healthy ? DiagnosticsStatus.Healthy : DiagnosticsStatus.Unhealthy,
+                healthy
+                    ? $"{profiles.Count} perfil(is) de emulação; perfil padrão válido."
+                    : "Os perfis de emulação não possuem exatamente um perfil padrão do Dolphin.",
+                Category: "Configuration",
+                Severity: healthy ? DiagnosticsSeverity.Information : DiagnosticsSeverity.Error));
+        }
+
+        return checks;
     }
 
     private async Task<IReadOnlyList<DiagnosticsCheckResult>> CheckDevicesAsync(CancellationToken cancellationToken)

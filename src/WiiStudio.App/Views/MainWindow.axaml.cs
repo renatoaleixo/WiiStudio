@@ -54,6 +54,61 @@ public sealed partial class MainWindow : Window
         }
     }
 
+    private async void OnImportEmulatorProfileClicked(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is not MainViewModel viewModel || StorageProvider is null)
+        {
+            return;
+        }
+
+        try
+        {
+            var files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+            {
+                Title = "Importar perfil de emulação",
+                AllowMultiple = false,
+                FileTypeFilter = [CreateJsonFileType()]
+            });
+            var path = files.FirstOrDefault()?.TryGetLocalPath();
+            if (!string.IsNullOrWhiteSpace(path))
+            {
+                await viewModel.ImportEmulatorProfileAsync(path, CancellationToken.None);
+            }
+        }
+        catch (Exception exception)
+        {
+            viewModel.StatusMessage = $"Não foi possível importar o perfil: {exception.Message}";
+        }
+    }
+
+    private async void OnExportEmulatorProfileClicked(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is not MainViewModel viewModel || StorageProvider is null)
+        {
+            return;
+        }
+
+        try
+        {
+            var file = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+            {
+                Title = "Exportar perfil de emulação",
+                SuggestedFileName = "perfil-emulacao.json",
+                DefaultExtension = "json",
+                FileTypeChoices = [CreateJsonFileType()]
+            });
+            var path = file?.TryGetLocalPath();
+            if (!string.IsNullOrWhiteSpace(path))
+            {
+                await viewModel.ExportSelectedEmulatorProfileAsync(path, CancellationToken.None);
+            }
+        }
+        catch (Exception exception)
+        {
+            viewModel.StatusMessage = $"Não foi possível exportar o perfil: {exception.Message}";
+        }
+    }
+
     private async void OnLibrarySelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
         if (DataContext is not MainViewModel viewModel ||
@@ -110,4 +165,9 @@ public sealed partial class MainWindow : Window
             .Select(path => path!)
             .ToArray();
     }
+
+    private static FilePickerFileType CreateJsonFileType() => new("Perfil WiiStudio")
+    {
+        Patterns = ["*.json"]
+    };
 }

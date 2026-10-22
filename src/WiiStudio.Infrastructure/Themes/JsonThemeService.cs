@@ -204,6 +204,8 @@ public sealed class JsonThemeService : IThemeService
             EmulatorCloseAfterLaunch = settings.EmulatorCloseAfterLaunch,
             EmulatorLastId = settings.EmulatorLastId,
             EmulatorLastGameId = settings.EmulatorLastGameId,
+            EmulatorDefaultProfileId = settings.EmulatorDefaultProfileId,
+            EmulatorLastUsedProfileId = settings.EmulatorLastUsedProfileId,
             ExternalToolsLastCheckAt = settings.ExternalToolsLastCheckAt,
             CoverCachePath = settings.CoverCachePath,
             MetadataCachePath = settings.MetadataCachePath,

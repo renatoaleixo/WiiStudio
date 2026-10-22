@@ -44,6 +44,10 @@ public sealed class Settings
 
     public string? EmulatorLastGameId { get; init; }
 
+    public string? EmulatorDefaultProfileId { get; init; }
+
+    public string? EmulatorLastUsedProfileId { get; init; }
+
     public DateTimeOffset? ExternalToolsLastCheckAt { get; init; }
 
     public string? CoverCachePath { get; init; }

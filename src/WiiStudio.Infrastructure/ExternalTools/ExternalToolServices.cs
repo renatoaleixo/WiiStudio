@@ -859,6 +859,8 @@ public sealed class ExternalToolManager : IExternalToolManager
             EmulatorCloseAfterLaunch = settings.EmulatorCloseAfterLaunch,
             EmulatorLastId = settings.EmulatorLastId,
             EmulatorLastGameId = settings.EmulatorLastGameId,
+            EmulatorDefaultProfileId = settings.EmulatorDefaultProfileId,
+            EmulatorLastUsedProfileId = settings.EmulatorLastUsedProfileId,
             ExternalToolsLastCheckAt = externalToolsLastCheckAt ?? settings.ExternalToolsLastCheckAt,
             CoverCachePath = settings.CoverCachePath,
             MetadataCachePath = settings.MetadataCachePath,

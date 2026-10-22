@@ -73,7 +73,7 @@ public sealed class SqliteLibraryRepositoryTests : IDisposable
             versions.Add(reader.GetInt64(0));
         }
 
-        versions.Should().Contain([1, 2, 3]);
+        versions.Should().Contain([1, 2, 3, 4]);
     }
 
     [Fact]
@@ -153,6 +153,24 @@ public sealed class SqliteLibraryRepositoryTests : IDisposable
         entries.Should().ContainSingle();
         entries[0].GameId.Should().Be("RMCP01");
         entries[0].Result.Should().Be("Started");
+    }
+
+    [Fact]
+    public async Task EmulatorProfileRepository_ShouldPersistDefaultAndGameAssignment()
+    {
+        var repository = new SqliteEmulatorProfileRepository(CreateUnitOfWork());
+        var profile = new EmulatorProfileDto(
+            "profile-1", "dolphin", "Padrão", true, "Teclado", true, "Vulkan", "Teste",
+            new Dictionary<string, string>(), DateTimeOffset.UtcNow);
+
+        await repository.UpsertAsync(profile);
+        await repository.UpsertAssignmentAsync(new GameEmulatorProfileAssignmentDto("RMCP01", "dolphin", profile.ProfileId, DateTimeOffset.UtcNow));
+
+        var loaded = await repository.GetByIdAsync(profile.ProfileId);
+        var assignment = await repository.GetAssignmentAsync("rmcp01", "dolphin");
+        loaded.Should().BeEquivalentTo(profile, options => options.Excluding(item => item.UpdatedAt));
+        assignment.Should().NotBeNull();
+        assignment!.ProfileId.Should().Be(profile.ProfileId);
     }
 
     public void Dispose()

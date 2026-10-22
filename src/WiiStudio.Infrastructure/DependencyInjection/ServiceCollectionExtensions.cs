@@ -68,6 +68,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IWiiUsbReadinessService, WiiUsbReadinessService>();
         services.AddSingleton<IReleaseValidationService, ReleaseValidationService>();
         services.AddSingleton<IEmulatorGameLaunchWorkflowService, EmulatorGameLaunchWorkflowService>();
+        services.AddSingleton<IEmulatorProfileService, EmulatorProfileService>();
         services.AddSingleton<IApplicationUpdateService, ApplicationUpdateService>();
         services.AddSingleton<IBackupService, ZipBackupService>();
         services.AddSingleton<ILoggingCenter, JsonLineLoggingCenter>();
@@ -132,6 +133,8 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IGameAssetRepository, SqliteGameAssetRepository>();
         services.AddSingleton<IImportHistoryRepository, SqliteImportHistoryRepository>();
         services.AddSingleton<IEmulatorLaunchHistoryRepository, SqliteEmulatorLaunchHistoryRepository>();
+        services.AddSingleton<IEmulatorProfileRepository, SqliteEmulatorProfileRepository>();
+        services.AddSingleton<IControllerDetectionService, ControllerDetectionService>();
         services.AddSingleton<IProcessRunner, ProcessRunner>();
         services.AddSingleton<IProcessExecutor, SystemProcessExecutor>();
         services.AddSingleton<IExternalToolDefinitionProvider, ExternalToolDefinitionProvider>();

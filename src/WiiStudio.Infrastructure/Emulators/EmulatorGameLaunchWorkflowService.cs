@@ -25,6 +25,8 @@ public sealed class EmulatorGameLaunchWorkflowService : IEmulatorGameLaunchWorkf
     private readonly INotificationService? notificationService;
     private readonly IEmulatorLaunchHistoryRepository? launchHistoryRepository;
     private readonly ILoggingCenter? loggingCenter;
+    private readonly IEmulatorProfileService? emulatorProfileService;
+    private readonly IControllerDetectionService? controllerDetectionService;
 
     public EmulatorGameLaunchWorkflowService(
         IGameLibraryService gameLibraryService,
@@ -34,7 +36,9 @@ public sealed class EmulatorGameLaunchWorkflowService : IEmulatorGameLaunchWorkf
         ITaskManager? taskManager = null,
         INotificationService? notificationService = null,
         IEmulatorLaunchHistoryRepository? launchHistoryRepository = null,
-        ILoggingCenter? loggingCenter = null)
+        ILoggingCenter? loggingCenter = null,
+        IEmulatorProfileService? emulatorProfileService = null,
+        IControllerDetectionService? controllerDetectionService = null)
     {
         this.gameLibraryService = gameLibraryService;
         this.externalToolManager = externalToolManager;
@@ -44,6 +48,8 @@ public sealed class EmulatorGameLaunchWorkflowService : IEmulatorGameLaunchWorkf
         this.notificationService = notificationService;
         this.launchHistoryRepository = launchHistoryRepository;
         this.loggingCenter = loggingCenter;
+        this.emulatorProfileService = emulatorProfileService;
+        this.controllerDetectionService = controllerDetectionService;
     }
 
     public async Task<EmulatorLaunchPreview> CreatePreviewAsync(
@@ -92,7 +98,25 @@ public sealed class EmulatorGameLaunchWorkflowService : IEmulatorGameLaunchWorkf
                 gamePath.NormalizedPath,
                 request.EmulatorId,
                 emulator.Version,
+                null,
+                null,
+                null,
                 []);
+        }
+
+        EmulatorProfileDto? profile = null;
+        var warnings = new List<string>();
+        if (emulatorProfileService is not null)
+        {
+            profile = await emulatorProfileService.ResolveForGameAsync(game.Id, request.EmulatorId, cancellationToken);
+            if (controllerDetectionService is not null)
+            {
+                var controller = await controllerDetectionService.CheckAsync(profile.ExpectedController, cancellationToken);
+                if (controller.IsAvailable is not true)
+                {
+                    warnings.Add(controller.Message);
+                }
+            }
         }
 
         return new EmulatorLaunchPreview(
@@ -103,7 +127,10 @@ public sealed class EmulatorGameLaunchWorkflowService : IEmulatorGameLaunchWorkf
             gamePath.NormalizedPath,
             request.EmulatorId,
             emulator.Version,
-            []);
+            profile?.ProfileId,
+            profile?.Name ?? "Padrão",
+            profile?.ExpectedController,
+            warnings);
     }
 
     public async Task<EmulatorLaunchResult> ExecuteAsync(
@@ -135,6 +162,11 @@ public sealed class EmulatorGameLaunchWorkflowService : IEmulatorGameLaunchWorkf
         Guid? taskId = await EnqueueLaunchTaskAsync(preview, cancellationToken);
         try
         {
+            foreach (var warning in preview.Warnings)
+            {
+                await PublishAsync(NotificationType.Warning, "Verifique o controle", warning, cancellationToken);
+            }
+
             await processRunner.RunAsync(
                 new ProcessRequest(
                     emulator.ExecutablePath,
@@ -168,10 +200,10 @@ public sealed class EmulatorGameLaunchWorkflowService : IEmulatorGameLaunchWorkf
     }
 
     private static EmulatorLaunchPreview Blocked(string gameId, string emulatorId, string reason) =>
-        new(false, reason, gameId, null, null, emulatorId, null, []);
+        new(false, reason, gameId, null, null, emulatorId, null, null, null, null, []);
 
     private static EmulatorLaunchPreview Blocked(GameDto game, string emulatorId, string reason) =>
-        new(false, reason, game.Id, game.Title, game.FilePath, emulatorId, null, []);
+        new(false, reason, game.Id, game.Title, game.FilePath, emulatorId, null, null, null, null, []);
 
     private static bool IsDolphin(string emulatorId) =>
         string.Equals(emulatorId, ExternalToolDefinitionProvider.DolphinToolId, StringComparison.OrdinalIgnoreCase);

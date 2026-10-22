@@ -21,7 +21,7 @@ public sealed class SqliteGameLibraryRepository : IGameLibraryRepository, ILibra
         await _unitOfWork.InitializeAsync(cancellationToken);
         await using var connection = _unitOfWork.CreateConnection();
         await connection.OpenAsync(cancellationToken);
-        await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+        await using var transaction = (SqliteTransaction)await connection.BeginTransactionAsync(cancellationToken);
 
         foreach (var game in games)
         {
@@ -446,5 +446,166 @@ public sealed class SqliteEmulatorLaunchHistoryRepository : IEmulatorLaunchHisto
         }
 
         return entries;
+    }
+}
+
+public sealed class SqliteEmulatorProfileRepository : IEmulatorProfileRepository
+{
+    private readonly SqliteLibraryUnitOfWork _unitOfWork;
+
+    public SqliteEmulatorProfileRepository(SqliteLibraryUnitOfWork unitOfWork)
+    {
+        _unitOfWork = unitOfWork;
+    }
+
+    public async Task<IReadOnlyList<EmulatorProfileDto>> GetProfilesAsync(CancellationToken cancellationToken = default)
+    {
+        await _unitOfWork.InitializeAsync(cancellationToken);
+        await using var connection = _unitOfWork.CreateConnection();
+        await connection.OpenAsync(cancellationToken);
+        await using var command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT ProfileId, EmulatorId, Name, IsDefault, ExpectedController, Fullscreen,
+                   GraphicsBackend, Notes, OptionsJson, UpdatedAt
+            FROM EmulatorProfiles
+            ORDER BY IsDefault DESC, Name COLLATE NOCASE;
+            """;
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        var profiles = new List<EmulatorProfileDto>();
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            profiles.Add(ReadProfile(reader));
+        }
+
+        return profiles;
+    }
+
+    public async Task<EmulatorProfileDto?> GetByIdAsync(string profileId, CancellationToken cancellationToken = default)
+    {
+        await _unitOfWork.InitializeAsync(cancellationToken);
+        await using var connection = _unitOfWork.CreateConnection();
+        await connection.OpenAsync(cancellationToken);
+        await using var command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT ProfileId, EmulatorId, Name, IsDefault, ExpectedController, Fullscreen,
+                   GraphicsBackend, Notes, OptionsJson, UpdatedAt
+            FROM EmulatorProfiles WHERE ProfileId = $profileId;
+            """;
+        command.Parameters.AddWithValue("$profileId", profileId);
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        return await reader.ReadAsync(cancellationToken) ? ReadProfile(reader) : null;
+    }
+
+    public async Task UpsertAsync(EmulatorProfileDto profile, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(profile);
+        await _unitOfWork.InitializeAsync(cancellationToken);
+        await using var connection = _unitOfWork.CreateConnection();
+        await connection.OpenAsync(cancellationToken);
+        await using var transaction = (SqliteTransaction)await connection.BeginTransactionAsync(cancellationToken);
+        if (profile.IsDefault)
+        {
+            await using var clearDefault = connection.CreateCommand();
+            clearDefault.Transaction = transaction;
+            clearDefault.CommandText = "UPDATE EmulatorProfiles SET IsDefault = 0 WHERE EmulatorId = $emulatorId;";
+            clearDefault.Parameters.AddWithValue("$emulatorId", profile.EmulatorId);
+            await clearDefault.ExecuteNonQueryAsync(cancellationToken);
+        }
+
+        await using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = """
+            INSERT INTO EmulatorProfiles
+                (ProfileId, EmulatorId, Name, IsDefault, ExpectedController, Fullscreen, GraphicsBackend, Notes, OptionsJson, UpdatedAt)
+            VALUES
+                ($profileId, $emulatorId, $name, $isDefault, $expectedController, $fullscreen, $graphicsBackend, $notes, $optionsJson, $updatedAt)
+            ON CONFLICT(ProfileId) DO UPDATE SET
+                EmulatorId = excluded.EmulatorId,
+                Name = excluded.Name,
+                IsDefault = excluded.IsDefault,
+                ExpectedController = excluded.ExpectedController,
+                Fullscreen = excluded.Fullscreen,
+                GraphicsBackend = excluded.GraphicsBackend,
+                Notes = excluded.Notes,
+                OptionsJson = excluded.OptionsJson,
+                UpdatedAt = excluded.UpdatedAt;
+            """;
+        command.Parameters.AddWithValue("$profileId", profile.ProfileId);
+        command.Parameters.AddWithValue("$emulatorId", profile.EmulatorId);
+        command.Parameters.AddWithValue("$name", profile.Name);
+        command.Parameters.AddWithValue("$isDefault", profile.IsDefault ? 1 : 0);
+        command.Parameters.AddWithValue("$expectedController", (object?)profile.ExpectedController ?? DBNull.Value);
+        command.Parameters.AddWithValue("$fullscreen", profile.Fullscreen ? 1 : 0);
+        command.Parameters.AddWithValue("$graphicsBackend", (object?)profile.GraphicsBackend ?? DBNull.Value);
+        command.Parameters.AddWithValue("$notes", (object?)profile.Notes ?? DBNull.Value);
+        command.Parameters.AddWithValue("$optionsJson", JsonSerializer.Serialize(profile.Options));
+        command.Parameters.AddWithValue("$updatedAt", profile.UpdatedAt.ToString("O"));
+        await command.ExecuteNonQueryAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+    }
+
+    public async Task DeleteAsync(string profileId, CancellationToken cancellationToken = default)
+    {
+        await _unitOfWork.InitializeAsync(cancellationToken);
+        await using var connection = _unitOfWork.CreateConnection();
+        await connection.OpenAsync(cancellationToken);
+        await using var command = connection.CreateCommand();
+        command.CommandText = "DELETE FROM EmulatorProfiles WHERE ProfileId = $profileId;";
+        command.Parameters.AddWithValue("$profileId", profileId);
+        await command.ExecuteNonQueryAsync(cancellationToken);
+    }
+
+    public async Task<GameEmulatorProfileAssignmentDto?> GetAssignmentAsync(
+        string gameId,
+        string emulatorId,
+        CancellationToken cancellationToken = default)
+    {
+        await _unitOfWork.InitializeAsync(cancellationToken);
+        await using var connection = _unitOfWork.CreateConnection();
+        await connection.OpenAsync(cancellationToken);
+        await using var command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT GameId, EmulatorId, ProfileId, UpdatedAt
+            FROM GameEmulatorProfiles
+            WHERE GameId = $gameId AND EmulatorId = $emulatorId;
+            """;
+        command.Parameters.AddWithValue("$gameId", gameId.Trim().ToUpperInvariant());
+        command.Parameters.AddWithValue("$emulatorId", emulatorId);
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        return await reader.ReadAsync(cancellationToken)
+            ? new GameEmulatorProfileAssignmentDto(reader.GetString(0), reader.GetString(1), reader.GetString(2), DateTimeOffset.Parse(reader.GetString(3)))
+            : null;
+    }
+
+    public async Task UpsertAssignmentAsync(GameEmulatorProfileAssignmentDto assignment, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(assignment);
+        await _unitOfWork.InitializeAsync(cancellationToken);
+        await using var connection = _unitOfWork.CreateConnection();
+        await connection.OpenAsync(cancellationToken);
+        await using var command = connection.CreateCommand();
+        command.CommandText = """
+            INSERT INTO GameEmulatorProfiles (GameId, EmulatorId, ProfileId, UpdatedAt)
+            VALUES ($gameId, $emulatorId, $profileId, $updatedAt)
+            ON CONFLICT(GameId, EmulatorId) DO UPDATE SET
+                ProfileId = excluded.ProfileId,
+                UpdatedAt = excluded.UpdatedAt;
+            """;
+        command.Parameters.AddWithValue("$gameId", assignment.GameId.Trim().ToUpperInvariant());
+        command.Parameters.AddWithValue("$emulatorId", assignment.EmulatorId);
+        command.Parameters.AddWithValue("$profileId", assignment.ProfileId);
+        command.Parameters.AddWithValue("$updatedAt", assignment.UpdatedAt.ToString("O"));
+        await command.ExecuteNonQueryAsync(cancellationToken);
+    }
+
+    private static EmulatorProfileDto ReadProfile(SqliteDataReader reader)
+    {
+        var options = JsonSerializer.Deserialize<Dictionary<string, string>>(reader.GetString(8))
+            ?? new Dictionary<string, string>();
+        return new EmulatorProfileDto(
+            reader.GetString(0), reader.GetString(1), reader.GetString(2), reader.GetInt32(3) == 1,
+            reader.IsDBNull(4) ? null : reader.GetString(4), reader.GetInt32(5) == 1,
+            reader.IsDBNull(6) ? null : reader.GetString(6), reader.IsDBNull(7) ? null : reader.GetString(7),
+            options, DateTimeOffset.Parse(reader.GetString(9)));
     }
 }

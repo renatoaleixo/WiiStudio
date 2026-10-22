@@ -2,7 +2,7 @@
 
 > **Suggested path:** `docs/09-emulator-integration/F129-EmulatorProfilesAndControllerMapping-Melhoramento.md`  
 > **Priority:** Future / Product Expansion  
-> **Status:** Proposed technical design  
+> **Status:** Implemented
 > **Architecture:** .NET 10, Avalonia, Application / Infrastructure / Domain  
 > **Area:** Emulator Profiles, Controller UX, Settings  
 > **Related:** F127, F128, F119, F113, F114, F118
@@ -233,13 +233,13 @@ Logs:
 
 ## 13. Critérios de Aceite
 
-- [ ] Usuário cria perfil.
-- [ ] Usuário define perfil padrão.
-- [ ] Usuário associa perfil a jogo.
-- [ ] Fluxo de launch lê perfil.
-- [ ] Perfil não quebra execução sem Dolphin.
-- [ ] Configurações avançadas abrem Dolphin em vez de editar arquivo diretamente.
-- [ ] Testes usam repositório fake.
+- [x] Usuário cria perfil.
+- [x] Usuário define perfil padrão.
+- [x] Usuário associa perfil a jogo.
+- [x] Fluxo de launch lê perfil.
+- [x] Perfil não quebra execução sem Dolphin.
+- [x] Configurações avançadas abrem Dolphin em vez de editar arquivo diretamente.
+- [x] Testes usam repositório fake.
 
 ---
 

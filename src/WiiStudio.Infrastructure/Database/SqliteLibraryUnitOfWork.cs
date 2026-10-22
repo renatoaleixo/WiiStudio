@@ -133,6 +133,30 @@ public sealed class SqliteLibraryUnitOfWork : ILibraryUnitOfWork
                 ErrorMessage TEXT NULL
             );
             """, cancellationToken);
+        await ExecuteAsync(connection, """
+            CREATE TABLE IF NOT EXISTS EmulatorProfiles (
+                ProfileId TEXT PRIMARY KEY,
+                EmulatorId TEXT NOT NULL,
+                Name TEXT NOT NULL,
+                IsDefault INTEGER NOT NULL DEFAULT 0,
+                ExpectedController TEXT NULL,
+                Fullscreen INTEGER NOT NULL DEFAULT 0,
+                GraphicsBackend TEXT NULL,
+                Notes TEXT NULL,
+                OptionsJson TEXT NOT NULL,
+                UpdatedAt TEXT NOT NULL
+            );
+            """, cancellationToken);
+        await ExecuteAsync(connection, """
+            CREATE TABLE IF NOT EXISTS GameEmulatorProfiles (
+                GameId TEXT NOT NULL,
+                EmulatorId TEXT NOT NULL,
+                ProfileId TEXT NOT NULL,
+                UpdatedAt TEXT NOT NULL,
+                PRIMARY KEY (GameId, EmulatorId),
+                FOREIGN KEY (ProfileId) REFERENCES EmulatorProfiles(ProfileId) ON DELETE RESTRICT
+            );
+            """, cancellationToken);
         await ExecuteAsync(connection, "CREATE INDEX IF NOT EXISTS IX_Games_GameId ON Games(GameId);", cancellationToken);
         await ExecuteAsync(connection, "CREATE INDEX IF NOT EXISTS IX_Games_Title ON Games(Title);", cancellationToken);
         await ExecuteAsync(connection, "CREATE INDEX IF NOT EXISTS IX_Games_IsFavorite ON Games(IsFavorite);", cancellationToken);
@@ -142,9 +166,12 @@ public sealed class SqliteLibraryUnitOfWork : ILibraryUnitOfWork
         await ExecuteAsync(connection, "CREATE INDEX IF NOT EXISTS IX_ImportHistory_CreatedAt ON ImportHistory(CreatedAt);", cancellationToken);
         await ExecuteAsync(connection, "CREATE INDEX IF NOT EXISTS IX_EmulatorLaunchHistory_GameId ON EmulatorLaunchHistory(GameId);", cancellationToken);
         await ExecuteAsync(connection, "CREATE INDEX IF NOT EXISTS IX_EmulatorLaunchHistory_StartedAt ON EmulatorLaunchHistory(StartedAt);", cancellationToken);
+        await ExecuteAsync(connection, "CREATE UNIQUE INDEX IF NOT EXISTS IX_EmulatorProfiles_Default ON EmulatorProfiles(EmulatorId) WHERE IsDefault = 1;", cancellationToken);
+        await ExecuteAsync(connection, "CREATE INDEX IF NOT EXISTS IX_GameEmulatorProfiles_ProfileId ON GameEmulatorProfiles(ProfileId);", cancellationToken);
         await ExecuteAsync(connection, "INSERT OR IGNORE INTO SchemaMigrations (Version, AppliedAt) VALUES (1, $appliedAt);", cancellationToken, ("$appliedAt", DateTimeOffset.UtcNow.ToString("O")));
         await ExecuteAsync(connection, "INSERT OR IGNORE INTO SchemaMigrations (Version, AppliedAt) VALUES (2, $appliedAt);", cancellationToken, ("$appliedAt", DateTimeOffset.UtcNow.ToString("O")));
         await ExecuteAsync(connection, "INSERT OR IGNORE INTO SchemaMigrations (Version, AppliedAt) VALUES (3, $appliedAt);", cancellationToken, ("$appliedAt", DateTimeOffset.UtcNow.ToString("O")));
+        await ExecuteAsync(connection, "INSERT OR IGNORE INTO SchemaMigrations (Version, AppliedAt) VALUES (4, $appliedAt);", cancellationToken, ("$appliedAt", DateTimeOffset.UtcNow.ToString("O")));
 
         _initialized = true;
     }

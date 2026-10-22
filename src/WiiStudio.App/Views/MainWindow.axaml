@@ -658,7 +658,7 @@
                           BorderThickness="1"
                           CornerRadius="{StaticResource WiiRadiusMedium}"
                           Padding="{StaticResource WiiInsetSm}">
-                    <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto" RowSpacing="6">
+                    <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="6">
                       <TextBlock Text="Ações e histórico" Foreground="{DynamicResource WiiBrushTextPrimary}" FontWeight="SemiBold" />
                       <Grid Grid.Row="1" ColumnDefinitions="Auto,*" ColumnSpacing="8">
                         <Button Command="{Binding LaunchSelectedGameInEmulatorCommand}"
@@ -677,7 +677,15 @@
                                    TextWrapping="Wrap"
                                    VerticalAlignment="Center" />
                       </Grid>
-                      <ItemsControl Grid.Row="2" ItemsSource="{Binding SelectedGameActions}">
+                      <Grid Grid.Row="2" ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                        <TextBlock Text="{Binding SelectedGameEmulatorProfile.Name, StringFormat='Perfil de emulação: {0}', FallbackValue='Perfil de emulação: Padrão'}"
+                                   Foreground="{DynamicResource WiiBrushTextSecondary}"
+                                   VerticalAlignment="Center" />
+                        <Button Grid.Column="1" Command="{Binding ExecuteShellCommandCommand}" CommandParameter="navigation.settings" Classes="tertiary small">
+                          <TextBlock Text="Alterar perfil" />
+                        </Button>
+                      </Grid>
+                      <ItemsControl Grid.Row="3" ItemsSource="{Binding SelectedGameActions}">
                         <ItemsControl.ItemsPanel>
                           <ItemsPanelTemplate>
                             <WrapPanel />
@@ -691,8 +699,8 @@
                           </DataTemplate>
                         </ItemsControl.ItemTemplate>
                       </ItemsControl>
-                      <TextBlock Grid.Row="3" Text="{Binding SelectedGameHistorySummary}" Foreground="{DynamicResource WiiBrushTextMuted}" FontSize="{StaticResource WiiFontSizeMicro}" />
-                      <ItemsControl Grid.Row="4" ItemsSource="{Binding SelectedGameHistory}">
+                      <TextBlock Grid.Row="4" Text="{Binding SelectedGameHistorySummary}" Foreground="{DynamicResource WiiBrushTextMuted}" FontSize="{StaticResource WiiFontSizeMicro}" />
+                      <ItemsControl Grid.Row="5" ItemsSource="{Binding SelectedGameHistory}">
                         <ItemsControl.ItemTemplate>
                           <DataTemplate DataType="vm:GameDetailsHistoryItemViewModel">
                             <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8" Margin="0,2,0,0">
@@ -733,7 +741,7 @@
           </Grid>
 
           <ScrollViewer IsVisible="{Binding IsDevicesModuleSelected}" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-            <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="12">
+            <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="12">
               <Border Classes="contentBlock">
                 <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10">
                   <StackPanel>
@@ -1034,7 +1042,7 @@
                 </Grid>
               </Border>
               <Border Grid.Row="1" Classes="contentBlock">
-                <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="10">
+                <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="10">
                   <TextBlock Text="Emulador" FontSize="{StaticResource WiiFontSizeSubtitle}" FontWeight="SemiBold" Foreground="{DynamicResource WiiBrushTextPrimary}" />
                   <Grid Grid.Row="1" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
                     <TextBox Text="{Binding DolphinExecutablePath, Mode=TwoWay}" Height="34" Watermark="Caminho do executável Dolphin" />
@@ -1068,6 +1076,52 @@
                 </Grid>
               </Border>
               <Border Grid.Row="2" Classes="contentBlock">
+                <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="10">
+                  <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                    <StackPanel>
+                      <TextBlock Text="Perfis de emulação" FontSize="{StaticResource WiiFontSizeSubtitle}" FontWeight="SemiBold" Foreground="{DynamicResource WiiBrushTextPrimary}" />
+                      <TextBlock Text="{Binding EmulatorProfileSummary}" Foreground="{DynamicResource WiiBrushTextSecondary}" TextWrapping="Wrap" />
+                    </StackPanel>
+                    <Button Grid.Column="1" Command="{Binding OpenDolphinConfigurationCommand}" Classes="secondary small" VerticalAlignment="Center">
+                      <TextBlock Text="Configuração avançada do Dolphin" />
+                    </Button>
+                  </Grid>
+                  <Grid Grid.Row="1" ColumnDefinitions="240,*" ColumnSpacing="16">
+                    <StackPanel Spacing="8">
+                      <ComboBox ItemsSource="{Binding EmulatorProfiles}" SelectedItem="{Binding SelectedEmulatorProfile}" Height="34">
+                        <ComboBox.ItemTemplate>
+                          <DataTemplate DataType="dto:EmulatorProfileDto">
+                            <TextBlock Text="{Binding Name}" />
+                          </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                      </ComboBox>
+                      <WrapPanel>
+                        <Button Command="{Binding NewEmulatorProfileCommand}" Classes="secondary small"><TextBlock Text="Novo" /></Button>
+                        <Button Command="{Binding DeleteEmulatorProfileCommand}" Classes="danger small"><TextBlock Text="Remover" /></Button>
+                      </WrapPanel>
+                      <Button Command="{Binding AssignEmulatorProfileToSelectedGamesCommand}" Classes="secondary small" HorizontalAlignment="Stretch">
+                        <TextBlock Text="Aplicar aos jogos selecionados" TextWrapping="Wrap" />
+                      </Button>
+                    </StackPanel>
+                    <Grid Grid.Column="1" RowDefinitions="Auto,Auto,Auto,Auto,Auto" ColumnDefinitions="*,*" ColumnSpacing="10" RowSpacing="8">
+                      <TextBox Text="{Binding EmulatorProfileName, Mode=TwoWay}" Watermark="Nome do perfil" Height="34" />
+                      <ComboBox Grid.Column="1" ItemsSource="{Binding EmulatorControllerOptions}" SelectedItem="{Binding EmulatorExpectedController}" Height="34" />
+                      <ComboBox Grid.Row="1" ItemsSource="{Binding EmulatorGraphicsBackendOptions}" SelectedItem="{Binding EmulatorGraphicsBackend}" Height="34" />
+                      <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Spacing="16" VerticalAlignment="Center">
+                        <CheckBox Content="Tela cheia" IsChecked="{Binding EmulatorProfileFullscreen}" />
+                        <CheckBox Content="Perfil padrão" IsChecked="{Binding EmulatorProfileIsDefault}" />
+                      </StackPanel>
+                      <TextBox Grid.Row="2" Grid.ColumnSpan="2" Text="{Binding EmulatorProfileNotes, Mode=TwoWay}" Watermark="Observações" AcceptsReturn="True" MinHeight="58" TextWrapping="Wrap" />
+                      <WrapPanel Grid.Row="3" Grid.ColumnSpan="2" HorizontalAlignment="Right">
+                        <Button Click="OnImportEmulatorProfileClicked" Classes="secondary small"><TextBlock Text="Importar" /></Button>
+                        <Button Click="OnExportEmulatorProfileClicked" Classes="secondary small"><TextBlock Text="Exportar" /></Button>
+                        <Button Command="{Binding SaveEmulatorProfileCommand}" Classes="primary small"><TextBlock Text="Salvar perfil" /></Button>
+                      </WrapPanel>
+                    </Grid>
+                  </Grid>
+                </Grid>
+              </Border>
+              <Border Grid.Row="3" Classes="contentBlock">
                 <Grid RowDefinitions="Auto,Auto" RowSpacing="10">
                   <TextBlock Text="Layout" FontSize="{StaticResource WiiFontSizeSubtitle}" FontWeight="SemiBold" Foreground="{DynamicResource WiiBrushTextPrimary}" />
                   <Grid Grid.Row="1" ColumnDefinitions="160,180,Auto,Auto,Auto,*" ColumnSpacing="8">
@@ -1779,12 +1833,12 @@
             HorizontalAlignment="Center"
             VerticalAlignment="Center"
             IsVisible="{Binding IsEmulatorLaunchPreviewOpen}">
-      <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="16">
+      <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="16">
         <StackPanel Spacing="4">
           <TextBlock Text="Jogar no PC" FontSize="{StaticResource WiiFontSizeSubtitle}" FontWeight="SemiBold" Foreground="{DynamicResource WiiBrushTextPrimary}" />
           <TextBlock Text="Revise os dados antes de abrir o Dolphin." Foreground="{DynamicResource WiiBrushTextSecondary}" />
         </StackPanel>
-        <Grid Grid.Row="1" ColumnDefinitions="100,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" ColumnSpacing="12" RowSpacing="8">
+        <Grid Grid.Row="1" ColumnDefinitions="100,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto" ColumnSpacing="12" RowSpacing="8">
           <TextBlock Text="Jogo" Foreground="{DynamicResource WiiBrushTextMuted}" />
           <TextBlock Grid.Column="1" Text="{Binding PendingEmulatorLaunchPreview.GameTitle}" Foreground="{DynamicResource WiiBrushTextPrimary}" TextWrapping="Wrap" />
           <TextBlock Grid.Row="1" Text="Game ID" Foreground="{DynamicResource WiiBrushTextMuted}" />
@@ -1796,9 +1850,16 @@
           <TextBlock Grid.Row="4" Text="Versão" Foreground="{DynamicResource WiiBrushTextMuted}" />
           <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding PendingEmulatorLaunchPreview.EmulatorVersion, FallbackValue=Não detectada}" Foreground="{DynamicResource WiiBrushTextPrimary}" />
           <TextBlock Grid.Row="5" Text="Perfil" Foreground="{DynamicResource WiiBrushTextMuted}" />
-          <TextBlock Grid.Row="5" Grid.Column="1" Text="Padrão" Foreground="{DynamicResource WiiBrushTextPrimary}" />
+          <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding PendingEmulatorLaunchPreview.ProfileName, FallbackValue=Padrão}" Foreground="{DynamicResource WiiBrushTextPrimary}" />
+          <TextBlock Grid.Row="6" Text="Controle" Foreground="{DynamicResource WiiBrushTextMuted}" />
+          <TextBlock Grid.Row="6" Grid.Column="1" Text="{Binding PendingEmulatorLaunchPreview.ExpectedController, FallbackValue=Nenhum}" Foreground="{DynamicResource WiiBrushTextPrimary}" />
         </Grid>
-        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+        <ItemsControl Grid.Row="2" ItemsSource="{Binding PendingEmulatorLaunchPreview.Warnings}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate><TextBlock Text="{Binding}" Foreground="{DynamicResource WiiBrushWarning}" TextWrapping="Wrap" /></DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
           <Button Command="{Binding CancelEmulatorLaunchCommand}" Classes="secondary small"><TextBlock Text="Cancelar" /></Button>
           <Button Command="{Binding ConfirmEmulatorLaunchCommand}" Classes="primary small">
             <StackPanel Orientation="Horizontal" Spacing="6">

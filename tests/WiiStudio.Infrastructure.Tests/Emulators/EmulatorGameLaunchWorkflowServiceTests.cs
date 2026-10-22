@@ -111,6 +111,26 @@ public sealed class EmulatorGameLaunchWorkflowServiceTests : IDisposable
         history.Entries.Should().BeEmpty();
     }
 
+    [Fact]
+    public async Task CreatePreviewAsync_ShouldUseAssignedProfileAndWarnAboutMissingController()
+    {
+        var gamePath = CreateFile("games/RMCP01.wbfs");
+        var profile = new EmulatorProfileDto(
+            "wiimote", "dolphin", "Wiimote", false, "Wiimote real", false, "Automático", null,
+            new Dictionary<string, string>(), DateTimeOffset.UtcNow);
+        var service = CreateService(
+            [CreateGame("RMCP01", gamePath)],
+            new FakeExternalToolManager(ExternalToolState.Configured, "/usr/bin/dolphin-emu", "2409"),
+            profileService: new FakeEmulatorProfileService(profile),
+            controllerDetectionService: new FakeControllerDetectionService());
+
+        var preview = await service.CreatePreviewAsync(new EmulatorLaunchRequest("RMCP01"));
+
+        preview.ProfileName.Should().Be("Wiimote");
+        preview.ExpectedController.Should().Be("Wiimote real");
+        preview.Warnings.Should().ContainSingle().Which.Should().Contain("não foi detectado");
+    }
+
     public void Dispose()
     {
         if (Directory.Exists(root))
@@ -123,14 +143,18 @@ public sealed class EmulatorGameLaunchWorkflowServiceTests : IDisposable
         IReadOnlyList<GameDto> games,
         IExternalToolManager externalToolManager,
         IProcessRunner? processRunner = null,
-        IEmulatorLaunchHistoryRepository? historyRepository = null)
+        IEmulatorLaunchHistoryRepository? historyRepository = null,
+        IEmulatorProfileService? profileService = null,
+        IControllerDetectionService? controllerDetectionService = null)
     {
         return new EmulatorGameLaunchWorkflowService(
             new FakeGameLibraryService(games),
             externalToolManager,
             processRunner ?? new FakeProcessRunner(),
             new SafePathService(),
-            launchHistoryRepository: historyRepository);
+            launchHistoryRepository: historyRepository,
+            emulatorProfileService: profileService,
+            controllerDetectionService: controllerDetectionService);
     }
 
     private string CreateFile(string relativePath)
@@ -252,5 +276,27 @@ public sealed class EmulatorGameLaunchWorkflowServiceTests : IDisposable
                 .ToArray();
             return Task.FromResult(entries);
         }
+    }
+
+    private sealed class FakeEmulatorProfileService : IEmulatorProfileService
+    {
+        private readonly EmulatorProfileDto profile;
+
+        public FakeEmulatorProfileService(EmulatorProfileDto profile) => this.profile = profile;
+
+        public Task<EmulatorProfileDto> ResolveForGameAsync(string gameId, string emulatorId = "dolphin", CancellationToken cancellationToken = default) => Task.FromResult(profile);
+        public Task<IReadOnlyList<EmulatorProfileDto>> GetProfilesAsync(CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyList<EmulatorProfileDto>>([profile]);
+        public Task<EmulatorProfileDto> SaveAsync(EmulatorProfileDto item, CancellationToken cancellationToken = default) => Task.FromResult(item);
+        public Task DeleteAsync(string profileId, CancellationToken cancellationToken = default) => Task.CompletedTask;
+        public Task AssignToGameAsync(string gameId, string profileId, CancellationToken cancellationToken = default) => Task.CompletedTask;
+        public Task ExportAsync(string profileId, string filePath, CancellationToken cancellationToken = default) => Task.CompletedTask;
+        public Task<EmulatorProfileDto> ImportAsync(string filePath, CancellationToken cancellationToken = default) => Task.FromResult(profile);
+        public Task OpenEmulatorConfigurationAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
+    }
+
+    private sealed class FakeControllerDetectionService : IControllerDetectionService
+    {
+        public Task<ControllerDetectionResult> CheckAsync(string? expectedController, CancellationToken cancellationToken = default) =>
+            Task.FromResult(new ControllerDetectionResult(false, "O controle esperado para este perfil não foi detectado."));
     }
 }

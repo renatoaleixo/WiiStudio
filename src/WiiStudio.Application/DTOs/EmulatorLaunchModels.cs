@@ -18,6 +18,9 @@ public sealed record EmulatorLaunchPreview(
     string? GameFilePath,
     string EmulatorId,
     string? EmulatorVersion,
+    string? ProfileId,
+    string? ProfileName,
+    string? ExpectedController,
     IReadOnlyList<string> Warnings);
 
 public sealed record EmulatorLaunchResult(

@@ -58,6 +58,7 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly IUsbFormatPreparationService _usbFormatPreparationService;
     private readonly IEmulatorGameLaunchWorkflowService _emulatorLaunchWorkflowService;
     private readonly IExternalToolManager _externalToolManager;
+    private readonly IEmulatorProfileService _emulatorProfileService;
     private Guid? _activeLibraryDriveId;
     private CancellationTokenSource? _coverBatchCancellation;
     private bool _isApplyingDeviceSnapshot;
@@ -271,6 +272,33 @@ public sealed partial class MainViewModel : ObservableObject
     private bool _emulatorCloseAfterLaunch;
 
     [ObservableProperty]
+    private EmulatorProfileDto? _selectedEmulatorProfile;
+
+    [ObservableProperty]
+    private EmulatorProfileDto? _selectedGameEmulatorProfile;
+
+    [ObservableProperty]
+    private string _emulatorProfileName = string.Empty;
+
+    [ObservableProperty]
+    private string _emulatorExpectedController = "Nenhum";
+
+    [ObservableProperty]
+    private string _emulatorGraphicsBackend = "Automático";
+
+    [ObservableProperty]
+    private string? _emulatorProfileNotes;
+
+    [ObservableProperty]
+    private bool _emulatorProfileFullscreen;
+
+    [ObservableProperty]
+    private bool _emulatorProfileIsDefault;
+
+    [ObservableProperty]
+    private string _emulatorProfileSummary = "Carregando perfis de emulação...";
+
+    [ObservableProperty]
     private string? _dolphinExecutablePath;
 
     [ObservableProperty]
@@ -345,7 +373,8 @@ public sealed partial class MainViewModel : ObservableObject
         IWiiUsbReadinessService wiiUsbReadinessService,
         IUsbFormatPreparationService usbFormatPreparationService,
         IEmulatorGameLaunchWorkflowService emulatorLaunchWorkflowService,
-        IExternalToolManager externalToolManager)
+        IExternalToolManager externalToolManager,
+        IEmulatorProfileService emulatorProfileService)
     {
         _commandPaletteService = commandPaletteService;
         _batchCoverDownloadService = batchCoverDownloadService;
@@ -385,6 +414,7 @@ public sealed partial class MainViewModel : ObservableObject
         _usbFormatPreparationService = usbFormatPreparationService;
         _emulatorLaunchWorkflowService = emulatorLaunchWorkflowService;
         _externalToolManager = externalToolManager;
+        _emulatorProfileService = emulatorProfileService;
         shellCommandExecutor.SetHandler(HandleShellCommandAsync);
 
         foreach (var module in _mainWindowService.Modules)
@@ -446,6 +476,8 @@ public sealed partial class MainViewModel : ObservableObject
 
     public ObservableCollection<NotificationItemViewModel> Notifications { get; } = new();
 
+    public ObservableCollection<EmulatorProfileDto> EmulatorProfiles { get; } = new();
+
     public ObservableCollection<string> FirstRunSetupSummary { get; } = new();
 
     public IReadOnlyList<ImportWizardStep> ImportSteps { get; } =
@@ -475,6 +507,12 @@ public sealed partial class MainViewModel : ObservableObject
         FileFormat.Iso,
         FileFormat.Wbfs
     ];
+
+    public IReadOnlyList<string> EmulatorControllerOptions { get; } =
+        ["Nenhum", "Teclado", "Controle USB/Bluetooth", "Wiimote real"];
+
+    public IReadOnlyList<string> EmulatorGraphicsBackendOptions { get; } =
+        ["Automático", "Vulkan", "OpenGL", "Direct3D 11", "Direct3D 12", "Metal"];
 
     public IReadOnlyList<LibraryViewModeOptionViewModel> LibraryViewModes { get; } =
     [
@@ -628,6 +666,7 @@ public sealed partial class MainViewModel : ObservableObject
         await RefreshDockLayoutsAsync(cancellationToken);
         await RefreshThemesAsync(cancellationToken);
         await RefreshEmulatorSettingsAsync(cancellationToken);
+        await RefreshEmulatorProfilesAsync(cancellationToken);
         await RefreshStatusBarAsync(cancellationToken);
 
         var firstRun = await _firstRunSetupService.GetStatusAsync(cancellationToken);
@@ -853,6 +892,171 @@ public sealed partial class MainViewModel : ObservableObject
         {
             DolphinStatusSummary = $"Não foi possível validar Dolphin: {exception.Message}";
         }
+    }
+
+    [RelayCommand]
+    private async Task RefreshEmulatorProfilesAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            var selectedId = SelectedEmulatorProfile?.ProfileId;
+            var profiles = await _emulatorProfileService.GetProfilesAsync(cancellationToken);
+            EmulatorProfiles.Clear();
+            foreach (var profile in profiles)
+            {
+                EmulatorProfiles.Add(profile);
+            }
+
+            SelectedEmulatorProfile = EmulatorProfiles.FirstOrDefault(profile => profile.ProfileId == selectedId)
+                ?? EmulatorProfiles.FirstOrDefault(profile => profile.IsDefault);
+            EmulatorProfileSummary = $"{EmulatorProfiles.Count} perfil(is) disponível(is).";
+            if (SelectedGame is not null)
+            {
+                await RefreshSelectedGameEmulatorProfileAsync(SelectedGame.Id, cancellationToken);
+            }
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            EmulatorProfileSummary = $"Não foi possível carregar os perfis: {exception.Message}";
+        }
+    }
+
+    [RelayCommand]
+    private void NewEmulatorProfile()
+    {
+        SelectedEmulatorProfile = null;
+        EmulatorProfileName = string.Empty;
+        EmulatorExpectedController = "Nenhum";
+        EmulatorGraphicsBackend = "Automático";
+        EmulatorProfileNotes = null;
+        EmulatorProfileFullscreen = false;
+        EmulatorProfileIsDefault = false;
+        EmulatorProfileSummary = "Novo perfil pronto para edição.";
+    }
+
+    [RelayCommand]
+    private async Task SaveEmulatorProfileAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            var saved = await _emulatorProfileService.SaveAsync(
+                new EmulatorProfileDto(
+                    SelectedEmulatorProfile?.ProfileId ?? string.Empty,
+                    "dolphin",
+                    EmulatorProfileName,
+                    EmulatorProfileIsDefault,
+                    EmulatorExpectedController,
+                    EmulatorProfileFullscreen,
+                    EmulatorGraphicsBackend,
+                    EmulatorProfileNotes,
+                    new Dictionary<string, string>(),
+                    DateTimeOffset.UtcNow),
+                cancellationToken);
+            await RefreshEmulatorProfilesAsync(cancellationToken);
+            SelectedEmulatorProfile = EmulatorProfiles.FirstOrDefault(profile => profile.ProfileId == saved.ProfileId);
+            if (saved.IsDefault)
+            {
+                var settings = await _settingsService.GetAsync(cancellationToken);
+                await _settingsService.SaveAsync(CopyEmulatorSettings(settings, defaultProfileId: saved.ProfileId), cancellationToken);
+            }
+            EmulatorProfileSummary = $"Perfil {saved.Name} salvo.";
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            EmulatorProfileSummary = exception.Message;
+        }
+    }
+
+    [RelayCommand]
+    private async Task DeleteEmulatorProfileAsync(CancellationToken cancellationToken)
+    {
+        if (SelectedEmulatorProfile is null)
+        {
+            EmulatorProfileSummary = "Selecione um perfil para remover.";
+            return;
+        }
+
+        try
+        {
+            await _emulatorProfileService.DeleteAsync(SelectedEmulatorProfile.ProfileId, cancellationToken);
+            await RefreshEmulatorProfilesAsync(cancellationToken);
+            EmulatorProfileSummary = "Perfil removido.";
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            EmulatorProfileSummary = exception.Message;
+        }
+    }
+
+    [RelayCommand]
+    private async Task AssignEmulatorProfileToSelectedGamesAsync(CancellationToken cancellationToken)
+    {
+        if (SelectedEmulatorProfile is null)
+        {
+            EmulatorProfileSummary = "Selecione um perfil para aplicar.";
+            return;
+        }
+
+        var gameIds = GetSelectedGameIds();
+        if (gameIds.Count == 0 && SelectedGame is not null)
+        {
+            gameIds = [SelectedGame.Id];
+        }
+
+        if (gameIds.Count == 0)
+        {
+            EmulatorProfileSummary = "Selecione ao menos um jogo na Biblioteca.";
+            return;
+        }
+
+        foreach (var gameId in gameIds)
+        {
+            await _emulatorProfileService.AssignToGameAsync(gameId, SelectedEmulatorProfile.ProfileId, cancellationToken);
+        }
+
+        var settings = await _settingsService.GetAsync(cancellationToken);
+        await _settingsService.SaveAsync(CopyEmulatorSettings(settings, lastProfileId: SelectedEmulatorProfile.ProfileId), cancellationToken);
+
+        if (SelectedGame is not null)
+        {
+            await RefreshSelectedGameEmulatorProfileAsync(SelectedGame.Id, cancellationToken);
+            await RefreshSelectedEmulatorPreviewAsync(SelectedGame.Id, cancellationToken);
+        }
+
+        EmulatorProfileSummary = $"Perfil {SelectedEmulatorProfile.Name} aplicado a {gameIds.Count} jogo(s).";
+    }
+
+    [RelayCommand]
+    private async Task OpenDolphinConfigurationAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _emulatorProfileService.OpenEmulatorConfigurationAsync(cancellationToken);
+            StatusMessage = "Dolphin aberto para configurações avançadas.";
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            StatusMessage = exception.Message;
+        }
+    }
+
+    public async Task ImportEmulatorProfileAsync(string filePath, CancellationToken cancellationToken)
+    {
+        var imported = await _emulatorProfileService.ImportAsync(filePath, cancellationToken);
+        await RefreshEmulatorProfilesAsync(cancellationToken);
+        SelectedEmulatorProfile = EmulatorProfiles.FirstOrDefault(profile => profile.ProfileId == imported.ProfileId);
+        EmulatorProfileSummary = $"Perfil {imported.Name} importado.";
+    }
+
+    public async Task ExportSelectedEmulatorProfileAsync(string filePath, CancellationToken cancellationToken)
+    {
+        if (SelectedEmulatorProfile is null)
+        {
+            throw new InvalidOperationException("Selecione um perfil para exportar.");
+        }
+
+        await _emulatorProfileService.ExportAsync(SelectedEmulatorProfile.ProfileId, filePath, cancellationToken);
+        EmulatorProfileSummary = $"Perfil exportado para {filePath}.";
     }
 
     [RelayCommand]
@@ -2250,6 +2454,21 @@ public sealed partial class MainViewModel : ObservableObject
         }
     }
 
+    partial void OnSelectedEmulatorProfileChanged(EmulatorProfileDto? value)
+    {
+        if (value is null)
+        {
+            return;
+        }
+
+        EmulatorProfileName = value.Name;
+        EmulatorExpectedController = value.ExpectedController ?? "Nenhum";
+        EmulatorGraphicsBackend = value.GraphicsBackend ?? "Automático";
+        EmulatorProfileNotes = value.Notes;
+        EmulatorProfileFullscreen = value.Fullscreen;
+        EmulatorProfileIsDefault = value.IsDefault;
+    }
+
     partial void OnSelectedAssetGameChanged(LibraryGameItem? value)
     {
         if (value is not null && !ReferenceEquals(SelectedGame, value))
@@ -2346,6 +2565,8 @@ public sealed partial class MainViewModel : ObservableObject
                 case ShellModuleId.Settings:
                     await RefreshDockLayoutsAsync(CancellationToken.None);
                     await RefreshThemesAsync(CancellationToken.None);
+                    await RefreshEmulatorSettingsAsync(CancellationToken.None);
+                    await RefreshEmulatorProfilesAsync(CancellationToken.None);
                     break;
                 case ShellModuleId.Assets:
                     StatusMessage = "Selecione jogos na biblioteca para baixar capas ou sincronizar metadados.";
@@ -2624,9 +2845,18 @@ public sealed partial class MainViewModel : ObservableObject
             cancellationToken);
 
         CanLaunchSelectedGameInEmulator = preview.CanLaunch;
+        SelectedGameEmulatorProfile = EmulatorProfiles.FirstOrDefault(profile => profile.ProfileId == preview.ProfileId);
+        var version = string.IsNullOrWhiteSpace(preview.EmulatorVersion) ? string.Empty : $" {preview.EmulatorVersion}";
+        var warning = preview.Warnings.Count == 0 ? "." : $". Aviso: {string.Join(" ", preview.Warnings)}";
         EmulatorLaunchSummary = preview.CanLaunch
-            ? $"Pronto para abrir no Dolphin{(string.IsNullOrWhiteSpace(preview.EmulatorVersion) ? string.Empty : $" {preview.EmulatorVersion}")}."
+            ? $"Pronto para abrir no Dolphin{version} com o perfil {preview.ProfileName ?? "Padrão"}{warning}"
             : preview.BlockReason ?? "Jogo indisponível para emulação.";
+    }
+
+    private async Task RefreshSelectedGameEmulatorProfileAsync(string gameId, CancellationToken cancellationToken)
+    {
+        var profile = await _emulatorProfileService.ResolveForGameAsync(gameId, cancellationToken: cancellationToken);
+        SelectedGameEmulatorProfile = EmulatorProfiles.FirstOrDefault(item => item.ProfileId == profile.ProfileId) ?? profile;
     }
 
     private void ApplyDolphinStatus(ExternalToolStatus status)
@@ -3163,7 +3393,12 @@ public sealed partial class MainViewModel : ObservableObject
             .ToArray();
     }
 
-    private Settings CopyEmulatorSettings(Settings settings, string? lastEmulatorId = null, string? lastGameId = null)
+    private Settings CopyEmulatorSettings(
+        Settings settings,
+        string? lastEmulatorId = null,
+        string? lastGameId = null,
+        string? defaultProfileId = null,
+        string? lastProfileId = null)
     {
         return new Settings
         {
@@ -3188,6 +3423,8 @@ public sealed partial class MainViewModel : ObservableObject
             EmulatorCloseAfterLaunch = EmulatorCloseAfterLaunch,
             EmulatorLastId = lastEmulatorId ?? settings.EmulatorLastId,
             EmulatorLastGameId = lastGameId ?? settings.EmulatorLastGameId,
+            EmulatorDefaultProfileId = defaultProfileId ?? settings.EmulatorDefaultProfileId,
+            EmulatorLastUsedProfileId = lastProfileId ?? PendingEmulatorLaunchPreview?.ProfileId ?? settings.EmulatorLastUsedProfileId,
             ExternalToolsLastCheckAt = settings.ExternalToolsLastCheckAt,
             CoverCachePath = settings.CoverCachePath,
             MetadataCachePath = settings.MetadataCachePath,
