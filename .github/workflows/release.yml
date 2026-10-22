@@ -17,8 +17,8 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
         with: { dotnet-version: 10.0.x }
       - run: dotnet restore WiiStudio.sln
       - run: dotnet build WiiStudio.sln -c Release --no-restore
@@ -28,8 +28,8 @@ jobs:
     needs: verify
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
         with: { dotnet-version: 10.0.x }
       - id: version
         shell: bash
@@ -54,15 +54,15 @@ jobs:
           test -f /usr/share/polkit-1/actions/com.wiistudio.device.policy
           sudo dpkg --remove wiistudio
           test ! -e /opt/wiistudio/WiiStudio
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with: { name: release-linux, path: 'artifacts/release/${{ steps.version.outputs.value }}/linux', if-no-files-found: error }
 
   package-windows:
     needs: verify
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
         with: { dotnet-version: 10.0.x }
       - id: version
         shell: bash
@@ -79,15 +79,15 @@ jobs:
           Start-Process $installer -ArgumentList "/VERYSILENT /SUPPRESSMSGBOXES /DIR=`"$target`"" -Wait
           if (-not (Test-Path (Join-Path $target 'WiiStudio.exe'))) { throw 'Installed executable missing.' }
           Start-Process (Join-Path $target 'unins000.exe') -ArgumentList '/VERYSILENT /SUPPRESSMSGBOXES' -Wait
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with: { name: release-windows, path: 'artifacts/release/${{ steps.version.outputs.value }}/windows', if-no-files-found: error }
 
   package-macos:
     needs: verify
     runs-on: macos-15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
         with: { dotnet-version: 10.0.x }
       - id: version
         shell: bash
@@ -104,24 +104,24 @@ jobs:
             rm -rf "$RUNNER_TEMP/WiiStudio.app"
             hdiutil detach "$mount"
           done
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with: { name: release-macos, path: 'artifacts/release/${{ steps.version.outputs.value }}/macos', if-no-files-found: error }
 
   finalize:
     needs: [package-linux, package-windows, package-macos]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - id: version
         shell: bash
         run: |
           if [[ "$GITHUB_REF_TYPE" == tag ]]; then version="${GITHUB_REF_NAME#v}"; else version="${{ inputs.version }}"; fi
           echo "value=$version" >> "$GITHUB_OUTPUT"
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with: { name: release-linux, path: 'artifacts/release/${{ steps.version.outputs.value }}/linux' }
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with: { name: release-windows, path: 'artifacts/release/${{ steps.version.outputs.value }}/windows' }
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with: { name: release-macos, path: 'artifacts/release/${{ steps.version.outputs.value }}/macos' }
       - env:
           WIISTUDIO_CHANNEL: "${{ inputs.channel || 'stable' }}"
@@ -129,7 +129,7 @@ jobs:
         run: |
           scripts/release/package.sh "${{ steps.version.outputs.value }}" finalize
           scripts/release/smoke-test.sh "${{ steps.version.outputs.value }}"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with: { name: 'wiistudio-release-${{ steps.version.outputs.value }}', path: 'artifacts/release/${{ steps.version.outputs.value }}', if-no-files-found: error }
       - if: startsWith(github.ref, 'refs/tags/v')
         env: { GH_TOKEN: '${{ github.token }}' }
