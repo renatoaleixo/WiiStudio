@@ -1,5 +1,8 @@
 # WiiStudio
 
+[![Licenca: GPL v3](https://img.shields.io/badge/Licen%C3%A7a-GPLv3-blue.svg)](LICENSE)
+[![CI](https://github.com/renatoaleixo/WiiStudio/actions/workflows/ci.yml/badge.svg)](https://github.com/renatoaleixo/WiiStudio/actions/workflows/ci.yml)
+
 WiiStudio é um gerenciador open source de jogos Nintendo Wii, multiplataforma, desenvolvido com .NET 10, Avalonia UI e Clean Architecture.
 
 ## Como surgiu
@@ -54,6 +57,21 @@ dotnet test WiiStudio.sln
 dotnet run --project src/WiiStudio.App
 ```
 
+## Uso responsável
+
+O WiiStudio não distribui jogos, chaves, BIOS, firmware ou outros conteúdos
+protegidos. Use o programa somente com mídias e arquivos que você tenha o
+direito legal de utilizar. Nintendo, Wii e nomes relacionados são marcas de
+seus respectivos proprietários. Este projeto independente não é afiliado,
+patrocinado nem endossado pela Nintendo.
+
+## Contribuindo e segurança
+
+Contribuições são bem-vindas. Antes de enviar uma alteração, consulte
+[`CONTRIBUTING.md`](CONTRIBUTING.md) e o [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md).
+Vulnerabilidades não devem ser publicadas em issues; siga as instruções de
+divulgação responsável em [`SECURITY.md`](SECURITY.md).
+
 ## Release
 
 ```bash
@@ -70,3 +88,10 @@ manifesto, checksums SHA-256 e executa os smoke tests estruturais.
 Homologação final em hardware real está registrada em
 `docs/99-final/HOMOLOGATION_ACCEPTANCE.md`. Novas integrações devem entrar como
 nova fase de roadmap, sem reabrir o aceite de F001-F126.
+
+## Licenca
+
+O código original do WiiStudio é distribuído sob a
+[GNU General Public License v3.0](LICENSE). Ao distribuir uma versão modificada,
+as obrigações da GPL-3.0 também devem ser respeitadas. Componentes de terceiros
+mantêm suas próprias licenças; consulte [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).

@@ -1,0 +1,40 @@
+name: Relatar um problema
+description: Informe um comportamento incorreto ou uma regressao.
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Não publique vulnerabilidades ou dados pessoais aqui. Para segurança, use a política em SECURITY.md.
+  - type: input
+    id: version
+    attributes:
+      label: Versao do WiiStudio
+      placeholder: Ex. main ou 1.0.0
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Sistema operacional
+      options: [Windows, Linux, macOS, Outro]
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Descricao
+      description: O que aconteceu e o que deveria acontecer?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Passos para reproduzir
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs relevantes
+      description: Remova senhas, nomes, caminhos locais e outros dados pessoais.

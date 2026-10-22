@@ -1,0 +1,23 @@
+name: Sugerir uma melhoria
+description: Proponha uma funcionalidade ou melhoria para o WiiStudio.
+title: "[Feature]: "
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problema ou necessidade
+      description: Qual situação esta proposta pretende resolver?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Solucao proposta
+      description: Descreva o comportamento esperado sem incluir conteúdo protegido.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternativas consideradas

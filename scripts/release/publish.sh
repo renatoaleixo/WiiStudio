@@ -14,6 +14,9 @@ dotnet publish "$ROOT_DIR/src/WiiStudio.App/WiiStudio.App.csproj" -c Release -r 
   --self-contained true -p:PublishSingleFile=false -p:PublishTrimmed=false \
   -p:Version="$VERSION" -o "$OUTPUT"
 
+cp "$ROOT_DIR/LICENSE" "$OUTPUT/LICENSE.txt"
+cp "$ROOT_DIR/THIRD_PARTY_NOTICES.md" "$OUTPUT/THIRD_PARTY_NOTICES.md"
+
 if [[ "$RID" == win-* ]]; then
   mv "$OUTPUT/WiiStudio.App.exe" "$OUTPUT/WiiStudio.exe"
 else
