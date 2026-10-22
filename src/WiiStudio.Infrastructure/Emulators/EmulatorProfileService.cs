@@ -155,7 +155,11 @@ public sealed class EmulatorProfileService : IEmulatorProfileService
         }
 
         await processRunner.RunAsync(
-            new ProcessRequest(dolphin.ExecutablePath, [], TimeSpan.FromSeconds(10), waitForExit: false),
+            DolphinProcessRequestFactory.Create(
+                dolphin.ExecutablePath,
+                [],
+                TimeSpan.FromSeconds(10),
+                waitForExit: false),
             cancellationToken);
     }
 

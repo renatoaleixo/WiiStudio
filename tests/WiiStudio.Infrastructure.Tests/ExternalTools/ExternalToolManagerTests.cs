@@ -16,6 +16,28 @@ public sealed class ExternalToolManagerTests : IDisposable
     private readonly string root = Path.Combine(Path.GetTempPath(), "wiistudio-external-tools-tests", Guid.NewGuid().ToString("N"));
 
     [Fact]
+    public void Definitions_ShouldIncludeDolphinFlatpakLauncherOnLinux()
+    {
+        if (!OperatingSystem.IsLinux())
+        {
+            return;
+        }
+
+        var provider = new ExternalToolDefinitionProvider(new ExternalToolOptions
+        {
+            ToolsRootDirectory = Path.Combine(root, "tools")
+        });
+
+        var dolphin = provider.GetDefinitions().Single(tool => tool.ToolId == ExternalToolDefinitionProvider.DolphinToolId);
+
+        dolphin.ExecutableNames.Should().Contain(ExternalToolDefinitionProvider.DolphinFlatpakApplicationId);
+        dolphin.SearchDirectories.Should().Contain(Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+            ".local/share/flatpak/exports/bin"));
+        dolphin.SearchDirectories.Should().Contain("/var/lib/flatpak/exports/bin");
+    }
+
+    [Fact]
     public async Task Locator_ShouldPreferConfiguredPathFromSettings()
     {
         var witPath = CreateExecutable("configured/wit");

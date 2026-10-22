@@ -78,6 +78,37 @@ public sealed class EmulatorGameLaunchWorkflowServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task ExecuteAsync_ShouldLaunchFlatpakDolphinWithReadOnlyGameDirectoryAccess()
+    {
+        if (!OperatingSystem.IsLinux())
+        {
+            return;
+        }
+
+        var gamePath = CreateFile("games/RMCP01.wbfs");
+        var flatpakLauncher = Path.Combine(
+            root,
+            ExternalToolDefinitionProvider.DolphinFlatpakApplicationId);
+        var processRunner = new FakeProcessRunner();
+        var service = CreateService(
+            [CreateGame("RMCP01", gamePath)],
+            new FakeExternalToolManager(ExternalToolState.Configured, flatpakLauncher, "2609a"),
+            processRunner);
+
+        var result = await service.ExecuteAsync(new EmulatorLaunchExecutionRequest("RMCP01"));
+
+        result.Started.Should().BeTrue();
+        processRunner.LastRequest.Should().NotBeNull();
+        processRunner.LastRequest!.ExecutablePath.Should().Be("/usr/bin/flatpak");
+        processRunner.LastRequest.Arguments.Should().Equal(
+            "run",
+            $"--filesystem={Path.GetDirectoryName(gamePath)}:ro",
+            ExternalToolDefinitionProvider.DolphinFlatpakApplicationId,
+            $"--exec={gamePath}");
+        processRunner.LastRequest.WaitForExit.Should().BeFalse();
+    }
+
+    [Fact]
     public async Task ExecuteAsync_ShouldRecordCancelledPreview()
     {
         var gamePath = CreateFile("games/RMCP01.wbfs");

@@ -13,6 +13,7 @@ public sealed class ExternalToolDefinitionProvider : IExternalToolDefinitionProv
     public const string WwtToolId = "wiimms-wwt";
     public const string NKitToolId = "nkit";
     public const string DolphinToolId = "dolphin";
+    public const string DolphinFlatpakApplicationId = "org.DolphinEmu.dolphin-emu";
     public const string NKitPackageSha256 = "e600b0a2dbacf784779ce33b01259f197c5f8cfc7135f1831160d3f98bb431c6";
 
     private readonly ExternalToolOptions options;
@@ -102,7 +103,7 @@ public sealed class ExternalToolDefinitionProvider : IExternalToolDefinitionProv
             return ["Dolphin", "Dolphin.app"];
         }
 
-        return ["dolphin-emu", "dolphin", "Dolphin"];
+        return ["dolphin-emu", "dolphin", "Dolphin", DolphinFlatpakApplicationId];
     }
 
     private static IReadOnlyList<string> DolphinSearchDirectories(string toolsRoot)
@@ -131,7 +132,9 @@ public sealed class ExternalToolDefinitionProvider : IExternalToolDefinitionProv
             directories.Add("/usr/local/bin");
             directories.Add("/snap/bin");
             directories.Add("/var/lib/flatpak/exports/bin");
-            AddIfNotEmpty(directories, Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".local/bin");
+            var userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+            AddIfNotEmpty(directories, userProfile, ".local/bin");
+            AddIfNotEmpty(directories, userProfile, ".local/share/flatpak/exports/bin");
         }
 
         return directories;

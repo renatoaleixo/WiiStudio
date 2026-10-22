@@ -168,11 +168,12 @@ public sealed class EmulatorGameLaunchWorkflowService : IEmulatorGameLaunchWorkf
             }
 
             await processRunner.RunAsync(
-                new ProcessRequest(
+                DolphinProcessRequestFactory.Create(
                     emulator.ExecutablePath,
                     [$"--exec={preview.GameFilePath}"],
                     TimeSpan.FromSeconds(10),
-                    waitForExit: false),
+                    waitForExit: false,
+                    preview.GameFilePath),
                 cancellationToken);
 
             await CompleteTaskAsync(taskId, cancellationToken);
