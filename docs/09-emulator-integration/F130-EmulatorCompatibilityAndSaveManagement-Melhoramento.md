@@ -2,7 +2,7 @@
 
 > **Suggested path:** `docs/09-emulator-integration/F130-EmulatorCompatibilityAndSaveManagement-Melhoramento.md`  
 > **Priority:** Future / Product Expansion  
-> **Status:** Proposed technical design  
+> **Status:** Implemented
 > **Architecture:** .NET 10, Avalonia, Application / Infrastructure / Domain  
 > **Area:** Emulator Compatibility, Saves, Diagnostics, Game Details  
 > **Related:** F115, F127, F128, F129, F113, F114, F118
@@ -246,14 +246,14 @@ Logs:
 
 ## 13. Critérios de Aceite
 
-- [ ] Histórico de execução aparece no painel.
-- [ ] Usuário define compatibilidade local.
-- [ ] Usuário adiciona notas.
-- [ ] Perfil usado é exibido.
-- [ ] Pasta de saves pode ser aberta quando localizada.
-- [ ] Backup de saves exige confirmação.
-- [ ] Nenhum save é apagado.
-- [ ] Testes usam fakes.
+- [x] Histórico de execução aparece no painel.
+- [x] Usuário define compatibilidade local.
+- [x] Usuário adiciona notas.
+- [x] Perfil usado é exibido.
+- [x] Pasta de saves pode ser aberta quando localizada.
+- [x] Backup de saves exige confirmação.
+- [x] Nenhum save é apagado.
+- [x] Testes usam fakes.
 
 ---
 

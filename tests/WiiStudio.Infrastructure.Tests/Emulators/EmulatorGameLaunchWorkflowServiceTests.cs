@@ -118,9 +118,11 @@ public sealed class EmulatorGameLaunchWorkflowServiceTests : IDisposable
         var profile = new EmulatorProfileDto(
             "wiimote", "dolphin", "Wiimote", false, "Wiimote real", false, "Automático", null,
             new Dictionary<string, string>(), DateTimeOffset.UtcNow);
+        var history = new FakeEmulatorLaunchHistoryRepository();
         var service = CreateService(
             [CreateGame("RMCP01", gamePath)],
             new FakeExternalToolManager(ExternalToolState.Configured, "/usr/bin/dolphin-emu", "2409"),
+            historyRepository: history,
             profileService: new FakeEmulatorProfileService(profile),
             controllerDetectionService: new FakeControllerDetectionService());
 
@@ -129,6 +131,8 @@ public sealed class EmulatorGameLaunchWorkflowServiceTests : IDisposable
         preview.ProfileName.Should().Be("Wiimote");
         preview.ExpectedController.Should().Be("Wiimote real");
         preview.Warnings.Should().ContainSingle().Which.Should().Contain("não foi detectado");
+        await service.ExecuteAsync(new EmulatorLaunchExecutionRequest("RMCP01"));
+        history.Entries.Should().ContainSingle().Which.ProfileId.Should().Be("wiimote");
     }
 
     public void Dispose()

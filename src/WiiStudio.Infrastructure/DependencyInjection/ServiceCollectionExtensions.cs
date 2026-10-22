@@ -69,6 +69,8 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IReleaseValidationService, ReleaseValidationService>();
         services.AddSingleton<IEmulatorGameLaunchWorkflowService, EmulatorGameLaunchWorkflowService>();
         services.AddSingleton<IEmulatorProfileService, EmulatorProfileService>();
+        services.AddSingleton<IEmulatorCompatibilityService, EmulatorCompatibilityService>();
+        services.AddSingleton<IEmulatorSaveManagementService, EmulatorSaveManagementService>();
         services.AddSingleton<IApplicationUpdateService, ApplicationUpdateService>();
         services.AddSingleton<IBackupService, ZipBackupService>();
         services.AddSingleton<ILoggingCenter, JsonLineLoggingCenter>();
@@ -124,6 +126,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton(new CommandHistoryStoreOptions());
         services.AddSingleton(new PluginHostOptions());
         services.AddSingleton(new LibraryDatabaseOptions());
+        services.AddSingleton(new EmulatorSaveOptions());
         services.AddSingleton<SqliteLibraryUnitOfWork>();
         services.AddSingleton<ILibraryUnitOfWork>(services => services.GetRequiredService<SqliteLibraryUnitOfWork>());
         services.AddSingleton<SqliteGameLibraryRepository>();
@@ -134,6 +137,8 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IImportHistoryRepository, SqliteImportHistoryRepository>();
         services.AddSingleton<IEmulatorLaunchHistoryRepository, SqliteEmulatorLaunchHistoryRepository>();
         services.AddSingleton<IEmulatorProfileRepository, SqliteEmulatorProfileRepository>();
+        services.AddSingleton<IEmulatorCompatibilityRepository, SqliteEmulatorCompatibilityRepository>();
+        services.AddSingleton<ISaveBackupRepository, SqliteSaveBackupRepository>();
         services.AddSingleton<IControllerDetectionService, ControllerDetectionService>();
         services.AddSingleton<IProcessRunner, ProcessRunner>();
         services.AddSingleton<IProcessExecutor, SystemProcessExecutor>();

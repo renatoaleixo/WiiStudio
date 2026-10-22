@@ -109,6 +109,34 @@ public sealed partial class MainWindow : Window
         }
     }
 
+    private async void OnBackupEmulatorSavesClicked(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is not MainViewModel viewModel || StorageProvider is null)
+        {
+            return;
+        }
+
+        try
+        {
+            var file = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+            {
+                Title = "Backup dos saves do Dolphin",
+                SuggestedFileName = $"saves-{viewModel.SelectedGame?.Id ?? "wii"}.zip",
+                DefaultExtension = "zip",
+                FileTypeChoices = [new FilePickerFileType("Backup ZIP") { Patterns = ["*.zip"] }]
+            });
+            var path = file?.TryGetLocalPath();
+            if (!string.IsNullOrWhiteSpace(path))
+            {
+                await viewModel.BackupSelectedGameSavesAsync(path, CancellationToken.None);
+            }
+        }
+        catch (Exception exception)
+        {
+            viewModel.StatusMessage = $"Não foi possível criar o backup dos saves: {exception.Message}";
+        }
+    }
+
     private async void OnLibrarySelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
         if (DataContext is not MainViewModel viewModel ||

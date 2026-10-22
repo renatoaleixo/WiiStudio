@@ -73,7 +73,7 @@ public sealed class SqliteLibraryRepositoryTests : IDisposable
             versions.Add(reader.GetInt64(0));
         }
 
-        versions.Should().Contain([1, 2, 3, 4]);
+        versions.Should().Contain([1, 2, 3, 4, 5]);
     }
 
     [Fact]
@@ -171,6 +171,22 @@ public sealed class SqliteLibraryRepositoryTests : IDisposable
         loaded.Should().BeEquivalentTo(profile, options => options.Excluding(item => item.UpdatedAt));
         assignment.Should().NotBeNull();
         assignment!.ProfileId.Should().Be(profile.ProfileId);
+    }
+
+    [Fact]
+    public async Task EmulatorCompatibilityAndSaveBackupRepositories_ShouldPersistData()
+    {
+        var unitOfWork = CreateUnitOfWork();
+        var compatibilityRepository = new SqliteEmulatorCompatibilityRepository(unitOfWork);
+        var backupRepository = new SqliteSaveBackupRepository(unitOfWork);
+        var compatibility = new EmulatorCompatibilityDto("RMCP01", "dolphin", LocalCompatibilityStatus.WorksWithIssues, "Áudio irregular", "profile-1", DateTimeOffset.UtcNow);
+        var backup = new SaveBackupEntry(Guid.NewGuid(), "RMCP01", "dolphin", "/saves", "/backups/save.zip", 123, true, null, DateTimeOffset.UtcNow);
+
+        await compatibilityRepository.UpsertAsync(compatibility);
+        await backupRepository.AppendAsync(backup);
+
+        (await compatibilityRepository.GetAsync("rmcp01", "dolphin")).Should().BeEquivalentTo(compatibility, options => options.Excluding(item => item.UpdatedAt));
+        (await backupRepository.GetRecentAsync("RMCP01")).Should().ContainSingle().Which.BackupPath.Should().Be("/backups/save.zip");
     }
 
     public void Dispose()

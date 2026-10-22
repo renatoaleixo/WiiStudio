@@ -397,9 +397,9 @@ public sealed class SqliteEmulatorLaunchHistoryRepository : IEmulatorLaunchHisto
         await using var command = connection.CreateCommand();
         command.CommandText = """
             INSERT INTO EmulatorLaunchHistory
-                (Id, GameId, EmulatorId, FilePath, StartedAt, ExitCode, Result, ErrorMessage)
+                (Id, GameId, EmulatorId, FilePath, StartedAt, ExitCode, Result, ErrorMessage, ProfileId)
             VALUES
-                ($id, $gameId, $emulatorId, $filePath, $startedAt, $exitCode, $result, $errorMessage);
+                ($id, $gameId, $emulatorId, $filePath, $startedAt, $exitCode, $result, $errorMessage, $profileId);
             """;
         command.Parameters.AddWithValue("$id", entry.Id.ToString("N"));
         command.Parameters.AddWithValue("$gameId", entry.GameId);
@@ -409,6 +409,7 @@ public sealed class SqliteEmulatorLaunchHistoryRepository : IEmulatorLaunchHisto
         command.Parameters.AddWithValue("$exitCode", (object?)entry.ExitCode ?? DBNull.Value);
         command.Parameters.AddWithValue("$result", entry.Result);
         command.Parameters.AddWithValue("$errorMessage", (object?)entry.ErrorMessage ?? DBNull.Value);
+        command.Parameters.AddWithValue("$profileId", (object?)entry.ProfileId ?? DBNull.Value);
         await command.ExecuteNonQueryAsync(cancellationToken);
     }
 
@@ -422,7 +423,7 @@ public sealed class SqliteEmulatorLaunchHistoryRepository : IEmulatorLaunchHisto
         await connection.OpenAsync(cancellationToken);
         await using var command = connection.CreateCommand();
         command.CommandText = """
-            SELECT Id, GameId, EmulatorId, FilePath, StartedAt, ExitCode, Result, ErrorMessage
+            SELECT Id, GameId, EmulatorId, FilePath, StartedAt, ExitCode, Result, ErrorMessage, ProfileId
             FROM EmulatorLaunchHistory
             WHERE $gameId IS NULL OR GameId = $gameId
             ORDER BY StartedAt DESC
@@ -442,7 +443,8 @@ public sealed class SqliteEmulatorLaunchHistoryRepository : IEmulatorLaunchHisto
                 DateTimeOffset.Parse(reader.GetString(4)),
                 reader.IsDBNull(5) ? null : reader.GetInt32(5),
                 reader.GetString(6),
-                reader.IsDBNull(7) ? null : reader.GetString(7)));
+                reader.IsDBNull(7) ? null : reader.GetString(7),
+                reader.IsDBNull(8) ? null : reader.GetString(8)));
         }
 
         return entries;
@@ -607,5 +609,131 @@ public sealed class SqliteEmulatorProfileRepository : IEmulatorProfileRepository
             reader.IsDBNull(4) ? null : reader.GetString(4), reader.GetInt32(5) == 1,
             reader.IsDBNull(6) ? null : reader.GetString(6), reader.IsDBNull(7) ? null : reader.GetString(7),
             options, DateTimeOffset.Parse(reader.GetString(9)));
+    }
+}
+
+public sealed class SqliteEmulatorCompatibilityRepository : IEmulatorCompatibilityRepository
+{
+    private readonly SqliteLibraryUnitOfWork unitOfWork;
+
+    public SqliteEmulatorCompatibilityRepository(SqliteLibraryUnitOfWork unitOfWork) => this.unitOfWork = unitOfWork;
+
+    public async Task<EmulatorCompatibilityDto?> GetAsync(string gameId, string emulatorId, CancellationToken cancellationToken = default)
+    {
+        await unitOfWork.InitializeAsync(cancellationToken);
+        await using var connection = unitOfWork.CreateConnection();
+        await connection.OpenAsync(cancellationToken);
+        await using var command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT c.GameId, c.EmulatorId, c.Status, n.Notes, c.PreferredProfileId, c.UpdatedAt
+            FROM GameEmulatorCompatibility c
+            LEFT JOIN GameEmulatorNotes n ON n.GameId = c.GameId AND n.EmulatorId = c.EmulatorId
+            WHERE c.GameId = $gameId AND c.EmulatorId = $emulatorId;
+            """;
+        command.Parameters.AddWithValue("$gameId", gameId.Trim().ToUpperInvariant());
+        command.Parameters.AddWithValue("$emulatorId", emulatorId);
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        return await reader.ReadAsync(cancellationToken)
+            ? new EmulatorCompatibilityDto(
+                reader.GetString(0), reader.GetString(1), Enum.Parse<LocalCompatibilityStatus>(reader.GetString(2)),
+                reader.IsDBNull(3) ? null : reader.GetString(3), reader.IsDBNull(4) ? null : reader.GetString(4),
+                DateTimeOffset.Parse(reader.GetString(5)))
+            : null;
+    }
+
+    public async Task UpsertAsync(EmulatorCompatibilityDto compatibility, CancellationToken cancellationToken = default)
+    {
+        await unitOfWork.InitializeAsync(cancellationToken);
+        await using var connection = unitOfWork.CreateConnection();
+        await connection.OpenAsync(cancellationToken);
+        await using var transaction = (SqliteTransaction)await connection.BeginTransactionAsync(cancellationToken);
+        await using (var command = connection.CreateCommand())
+        {
+            command.Transaction = transaction;
+            command.CommandText = """
+                INSERT INTO GameEmulatorCompatibility (GameId, EmulatorId, Status, PreferredProfileId, UpdatedAt)
+                VALUES ($gameId, $emulatorId, $status, $profileId, $updatedAt)
+                ON CONFLICT(GameId, EmulatorId) DO UPDATE SET Status = excluded.Status, PreferredProfileId = excluded.PreferredProfileId, UpdatedAt = excluded.UpdatedAt;
+                """;
+            AddCompatibilityParameters(command, compatibility);
+            await command.ExecuteNonQueryAsync(cancellationToken);
+        }
+
+        await using (var notes = connection.CreateCommand())
+        {
+            notes.Transaction = transaction;
+            notes.CommandText = """
+                INSERT INTO GameEmulatorNotes (GameId, EmulatorId, Notes, UpdatedAt)
+                VALUES ($gameId, $emulatorId, $notes, $updatedAt)
+                ON CONFLICT(GameId, EmulatorId) DO UPDATE SET Notes = excluded.Notes, UpdatedAt = excluded.UpdatedAt;
+                """;
+            notes.Parameters.AddWithValue("$gameId", compatibility.GameId.Trim().ToUpperInvariant());
+            notes.Parameters.AddWithValue("$emulatorId", compatibility.EmulatorId);
+            notes.Parameters.AddWithValue("$notes", (object?)compatibility.Notes ?? DBNull.Value);
+            notes.Parameters.AddWithValue("$updatedAt", compatibility.UpdatedAt.ToString("O"));
+            await notes.ExecuteNonQueryAsync(cancellationToken);
+        }
+
+        await transaction.CommitAsync(cancellationToken);
+    }
+
+    private static void AddCompatibilityParameters(SqliteCommand command, EmulatorCompatibilityDto item)
+    {
+        command.Parameters.AddWithValue("$gameId", item.GameId.Trim().ToUpperInvariant());
+        command.Parameters.AddWithValue("$emulatorId", item.EmulatorId);
+        command.Parameters.AddWithValue("$status", item.Status.ToString());
+        command.Parameters.AddWithValue("$profileId", (object?)item.PreferredProfileId ?? DBNull.Value);
+        command.Parameters.AddWithValue("$updatedAt", item.UpdatedAt.ToString("O"));
+    }
+}
+
+public sealed class SqliteSaveBackupRepository : ISaveBackupRepository
+{
+    private readonly SqliteLibraryUnitOfWork unitOfWork;
+
+    public SqliteSaveBackupRepository(SqliteLibraryUnitOfWork unitOfWork) => this.unitOfWork = unitOfWork;
+
+    public async Task AppendAsync(SaveBackupEntry entry, CancellationToken cancellationToken = default)
+    {
+        await unitOfWork.InitializeAsync(cancellationToken);
+        await using var connection = unitOfWork.CreateConnection();
+        await connection.OpenAsync(cancellationToken);
+        await using var command = connection.CreateCommand();
+        command.CommandText = """
+            INSERT INTO SaveBackups (Id, GameId, EmulatorId, SourcePath, BackupPath, SizeInBytes, Success, Message, CreatedAt)
+            VALUES ($id, $gameId, $emulatorId, $sourcePath, $backupPath, $size, $success, $message, $createdAt);
+            """;
+        command.Parameters.AddWithValue("$id", entry.Id.ToString("N"));
+        command.Parameters.AddWithValue("$gameId", entry.GameId);
+        command.Parameters.AddWithValue("$emulatorId", entry.EmulatorId);
+        command.Parameters.AddWithValue("$sourcePath", entry.SourcePath);
+        command.Parameters.AddWithValue("$backupPath", entry.BackupPath);
+        command.Parameters.AddWithValue("$size", entry.SizeInBytes);
+        command.Parameters.AddWithValue("$success", entry.Success ? 1 : 0);
+        command.Parameters.AddWithValue("$message", (object?)entry.Message ?? DBNull.Value);
+        command.Parameters.AddWithValue("$createdAt", entry.CreatedAt.ToString("O"));
+        await command.ExecuteNonQueryAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<SaveBackupEntry>> GetRecentAsync(string? gameId = null, int limit = 100, CancellationToken cancellationToken = default)
+    {
+        await unitOfWork.InitializeAsync(cancellationToken);
+        await using var connection = unitOfWork.CreateConnection();
+        await connection.OpenAsync(cancellationToken);
+        await using var command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT Id, GameId, EmulatorId, SourcePath, BackupPath, SizeInBytes, Success, Message, CreatedAt
+            FROM SaveBackups WHERE $gameId IS NULL OR GameId = $gameId ORDER BY CreatedAt DESC LIMIT $limit;
+            """;
+        command.Parameters.AddWithValue("$gameId", string.IsNullOrWhiteSpace(gameId) ? DBNull.Value : gameId.Trim().ToUpperInvariant());
+        command.Parameters.AddWithValue("$limit", Math.Max(1, limit));
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        var entries = new List<SaveBackupEntry>();
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            entries.Add(new SaveBackupEntry(Guid.Parse(reader.GetString(0)), reader.GetString(1), reader.GetString(2), reader.GetString(3), reader.GetString(4), reader.GetInt64(5), reader.GetInt32(6) == 1, reader.IsDBNull(7) ? null : reader.GetString(7), DateTimeOffset.Parse(reader.GetString(8))));
+        }
+
+        return entries;
     }
 }

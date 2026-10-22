@@ -319,7 +319,7 @@
               </Border>
 
               <Border Grid.Column="1" Classes="contentBlock">
-                <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="10">
+                <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto" RowSpacing="10">
                   <TextBlock Text="Sistema" FontSize="{StaticResource WiiFontSizeSubtitle}" FontWeight="SemiBold" Foreground="{DynamicResource WiiBrushTextPrimary}" />
                   <Grid Grid.Row="1" ColumnDefinitions="Auto,*" ColumnSpacing="10">
                     <PathIcon Classes="small" Data="{StaticResource WiiIcon.Device}" Foreground="{DynamicResource WiiBrushAccent}" VerticalAlignment="Center" />
@@ -565,7 +565,7 @@
 
               <Border Grid.Column="1" Classes="contentBlock" MinWidth="300">
                 <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-                <Grid RowDefinitions="Auto,150,Auto,Auto,Auto,Auto,Auto" RowSpacing="10">
+                <Grid RowDefinitions="Auto,150,Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="10">
                   <TextBlock Text="Detalhes" FontSize="{StaticResource WiiFontSizeSubtitle}" FontWeight="SemiBold" Foreground="{DynamicResource WiiBrushTextPrimary}" />
                   <Border Grid.Row="1" CornerRadius="{StaticResource WiiRadiusMedium}" Background="{DynamicResource WiiBrushSurfaceAlt}" BorderBrush="{DynamicResource WiiBrushBorder}" BorderThickness="1" ClipToBounds="True">
                     <Grid>
@@ -713,7 +713,47 @@
                       </ItemsControl>
                     </Grid>
                   </Border>
-                  <ListBox Grid.Row="6" ItemsSource="{Binding CoverAssets}" SelectedItem="{Binding SelectedCoverAsset}" Background="Transparent" BorderThickness="0" ScrollViewer.VerticalScrollBarVisibility="Disabled">
+                  <Border Grid.Row="6"
+                          Background="{DynamicResource WiiBrushSurfaceAlt}"
+                          BorderBrush="{DynamicResource WiiBrushBorder}"
+                          BorderThickness="1"
+                          CornerRadius="{StaticResource WiiRadiusMedium}"
+                          Padding="{StaticResource WiiInsetSm}">
+                    <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="8">
+                      <TextBlock Text="Emulação, compatibilidade e saves" Foreground="{DynamicResource WiiBrushTextPrimary}" FontWeight="SemiBold" />
+                      <TextBlock Grid.Row="1" Text="{Binding EmulatorHistorySummary}" Foreground="{DynamicResource WiiBrushTextSecondary}" TextWrapping="Wrap" />
+                      <Grid Grid.Row="2" ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                        <ComboBox ItemsSource="{Binding CompatibilityOptions}" SelectedItem="{Binding SelectedCompatibilityOption}" Height="34">
+                          <ComboBox.ItemTemplate>
+                            <DataTemplate DataType="vm:CompatibilityOptionViewModel"><TextBlock Text="{Binding Name}" /></DataTemplate>
+                          </ComboBox.ItemTemplate>
+                        </ComboBox>
+                        <Button Grid.Column="1" Command="{Binding SaveEmulatorCompatibilityCommand}" Classes="primary small"><TextBlock Text="Salvar" /></Button>
+                      </Grid>
+                      <TextBox Grid.Row="3" Text="{Binding EmulatorCompatibilityNotes, Mode=TwoWay}" Watermark="Notas locais de compatibilidade" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="58" MaxLength="4000" />
+                      <StackPanel Grid.Row="4" Spacing="6">
+                        <TextBlock Text="{Binding EmulatorSaveSummary}" Foreground="{DynamicResource WiiBrushTextMuted}" FontSize="{StaticResource WiiFontSizeMicro}" TextWrapping="Wrap" />
+                        <CheckBox Content="Confirmo o acesso ou backup da pasta de saves" IsChecked="{Binding EmulatorSaveAccessConfirmed}" />
+                        <WrapPanel>
+                          <Button Command="{Binding LocateEmulatorSavesCommand}" Classes="secondary small"><TextBlock Text="Localizar saves" /></Button>
+                          <Button Command="{Binding OpenEmulatorSavesCommand}" Classes="secondary small"><TextBlock Text="Abrir pasta" /></Button>
+                          <Button Click="OnBackupEmulatorSavesClicked" Classes="secondary small"><TextBlock Text="Backup ZIP" /></Button>
+                        </WrapPanel>
+                      </StackPanel>
+                      <ItemsControl Grid.Row="5" ItemsSource="{Binding EmulatorLaunchHistory}">
+                        <ItemsControl.ItemTemplate>
+                          <DataTemplate DataType="vm:EmulatorLaunchHistoryItemViewModel">
+                            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="6" Margin="0,2,0,0">
+                              <TextBlock Text="{Binding Result}" Foreground="{DynamicResource WiiBrushTextSecondary}" FontSize="{StaticResource WiiFontSizeMicro}" />
+                              <TextBlock Grid.Column="1" Text="{Binding ProfileName}" Foreground="{DynamicResource WiiBrushTextMuted}" FontSize="{StaticResource WiiFontSizeMicro}" TextTrimming="CharacterEllipsis" />
+                              <TextBlock Grid.Column="2" Text="{Binding StartedAt}" Foreground="{DynamicResource WiiBrushTextMuted}" FontSize="{StaticResource WiiFontSizeMicro}" />
+                            </Grid>
+                          </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                      </ItemsControl>
+                    </Grid>
+                  </Border>
+                  <ListBox Grid.Row="7" ItemsSource="{Binding CoverAssets}" SelectedItem="{Binding SelectedCoverAsset}" Background="Transparent" BorderThickness="0" ScrollViewer.VerticalScrollBarVisibility="Disabled">
                     <ListBox.ItemTemplate>
                       <DataTemplate DataType="vm:CoverAssetViewModel">
                         <Grid ColumnDefinitions="54,*,Auto" ColumnSpacing="10" Margin="{StaticResource WiiListItemCompactMargin}" MinHeight="64">
@@ -1026,7 +1066,7 @@
           </Grid>
 
           <ScrollViewer IsVisible="{Binding IsSettingsModuleSelected}" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-            <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="12">
+            <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="12">
               <Border Classes="contentBlock">
                 <Grid RowDefinitions="Auto,Auto" RowSpacing="10">
                   <TextBlock Text="Tema" FontSize="{StaticResource WiiFontSizeSubtitle}" FontWeight="SemiBold" Foreground="{DynamicResource WiiBrushTextPrimary}" />
@@ -1042,7 +1082,7 @@
                 </Grid>
               </Border>
               <Border Grid.Row="1" Classes="contentBlock">
-                <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="10">
+                <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto" RowSpacing="10">
                   <TextBlock Text="Emulador" FontSize="{StaticResource WiiFontSizeSubtitle}" FontWeight="SemiBold" Foreground="{DynamicResource WiiBrushTextPrimary}" />
                   <Grid Grid.Row="1" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
                     <TextBox Text="{Binding DolphinExecutablePath, Mode=TwoWay}" Height="34" Watermark="Caminho do executável Dolphin" />
@@ -1073,6 +1113,7 @@
                       <TextBlock Text="Salvar preferências" />
                     </Button>
                   </Grid>
+                  <TextBox Grid.Row="4" Text="{Binding EmulatorSaveBackupDirectory, Mode=TwoWay}" Height="34" Watermark="Pasta padrão para backups de saves (opcional)" />
                 </Grid>
               </Border>
               <Border Grid.Row="2" Classes="contentBlock">

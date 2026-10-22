@@ -8,6 +8,7 @@ using WiiStudio.Application.Interfaces;
 using WiiStudio.Infrastructure.AppUpdates;
 using WiiStudio.Infrastructure.Backups;
 using WiiStudio.Infrastructure.Covers;
+using WiiStudio.Infrastructure.Emulators;
 using WiiStudio.Infrastructure.Favorites;
 using WiiStudio.Infrastructure.GameTdb;
 using WiiStudio.Infrastructure.Logging;
@@ -54,6 +55,7 @@ public sealed class DiagnosticsService : IDiagnosticsService
     private readonly IUsbDeviceProvider _usbDeviceProvider;
     private readonly ILogger<DiagnosticsService> _logger;
     private readonly IEmulatorProfileService? _emulatorProfileService;
+    private readonly EmulatorSaveOptions? _emulatorSaveOptions;
 
     public DiagnosticsService(
         IWitService witService,
@@ -77,7 +79,8 @@ public sealed class DiagnosticsService : IDiagnosticsService
         IPolkitPolicyInstaller polkitPolicyInstaller,
         IUsbDeviceProvider usbDeviceProvider,
         ILogger<DiagnosticsService> logger,
-        IEmulatorProfileService? emulatorProfileService = null)
+        IEmulatorProfileService? emulatorProfileService = null,
+        EmulatorSaveOptions? emulatorSaveOptions = null)
     {
         _witService = witService;
         _toolLocator = toolLocator;
@@ -101,6 +104,7 @@ public sealed class DiagnosticsService : IDiagnosticsService
         _usbDeviceProvider = usbDeviceProvider;
         _logger = logger;
         _emulatorProfileService = emulatorProfileService;
+        _emulatorSaveOptions = emulatorSaveOptions;
     }
 
     public async Task<DiagnosticsReport> RunAsync(CancellationToken cancellationToken)
@@ -314,6 +318,11 @@ public sealed class DiagnosticsService : IDiagnosticsService
         foreach (var (name, path) in paths)
         {
             checks.Add(await CheckPathWritableAsync(name, path, cancellationToken));
+        }
+
+        if (_emulatorSaveOptions is not null)
+        {
+            checks.Add(await CheckPathWritableAsync("emulator-save-backups", _emulatorSaveOptions.BackupDirectory, cancellationToken));
         }
 
         return checks;

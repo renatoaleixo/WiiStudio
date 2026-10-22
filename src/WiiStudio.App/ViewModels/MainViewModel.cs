@@ -59,6 +59,9 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly IEmulatorGameLaunchWorkflowService _emulatorLaunchWorkflowService;
     private readonly IExternalToolManager _externalToolManager;
     private readonly IEmulatorProfileService _emulatorProfileService;
+    private readonly IEmulatorCompatibilityService _emulatorCompatibilityService;
+    private readonly IEmulatorSaveManagementService _emulatorSaveManagementService;
+    private readonly IEmulatorLaunchHistoryRepository _emulatorLaunchHistoryRepository;
     private Guid? _activeLibraryDriveId;
     private CancellationTokenSource? _coverBatchCancellation;
     private bool _isApplyingDeviceSnapshot;
@@ -272,6 +275,9 @@ public sealed partial class MainViewModel : ObservableObject
     private bool _emulatorCloseAfterLaunch;
 
     [ObservableProperty]
+    private string? _emulatorSaveBackupDirectory;
+
+    [ObservableProperty]
     private EmulatorProfileDto? _selectedEmulatorProfile;
 
     [ObservableProperty]
@@ -297,6 +303,21 @@ public sealed partial class MainViewModel : ObservableObject
 
     [ObservableProperty]
     private string _emulatorProfileSummary = "Carregando perfis de emulação...";
+
+    [ObservableProperty]
+    private CompatibilityOptionViewModel? _selectedCompatibilityOption;
+
+    [ObservableProperty]
+    private string? _emulatorCompatibilityNotes;
+
+    [ObservableProperty]
+    private string _emulatorHistorySummary = "Este jogo ainda não foi executado no emulador.";
+
+    [ObservableProperty]
+    private string _emulatorSaveSummary = "Localização de saves ainda não verificada.";
+
+    [ObservableProperty]
+    private bool _emulatorSaveAccessConfirmed;
 
     [ObservableProperty]
     private string? _dolphinExecutablePath;
@@ -374,7 +395,10 @@ public sealed partial class MainViewModel : ObservableObject
         IUsbFormatPreparationService usbFormatPreparationService,
         IEmulatorGameLaunchWorkflowService emulatorLaunchWorkflowService,
         IExternalToolManager externalToolManager,
-        IEmulatorProfileService emulatorProfileService)
+        IEmulatorProfileService emulatorProfileService,
+        IEmulatorCompatibilityService emulatorCompatibilityService,
+        IEmulatorSaveManagementService emulatorSaveManagementService,
+        IEmulatorLaunchHistoryRepository emulatorLaunchHistoryRepository)
     {
         _commandPaletteService = commandPaletteService;
         _batchCoverDownloadService = batchCoverDownloadService;
@@ -415,6 +439,9 @@ public sealed partial class MainViewModel : ObservableObject
         _emulatorLaunchWorkflowService = emulatorLaunchWorkflowService;
         _externalToolManager = externalToolManager;
         _emulatorProfileService = emulatorProfileService;
+        _emulatorCompatibilityService = emulatorCompatibilityService;
+        _emulatorSaveManagementService = emulatorSaveManagementService;
+        _emulatorLaunchHistoryRepository = emulatorLaunchHistoryRepository;
         shellCommandExecutor.SetHandler(HandleShellCommandAsync);
 
         foreach (var module in _mainWindowService.Modules)
@@ -478,6 +505,8 @@ public sealed partial class MainViewModel : ObservableObject
 
     public ObservableCollection<EmulatorProfileDto> EmulatorProfiles { get; } = new();
 
+    public ObservableCollection<EmulatorLaunchHistoryItemViewModel> EmulatorLaunchHistory { get; } = new();
+
     public ObservableCollection<string> FirstRunSetupSummary { get; } = new();
 
     public IReadOnlyList<ImportWizardStep> ImportSteps { get; } =
@@ -513,6 +542,15 @@ public sealed partial class MainViewModel : ObservableObject
 
     public IReadOnlyList<string> EmulatorGraphicsBackendOptions { get; } =
         ["Automático", "Vulkan", "OpenGL", "Direct3D 11", "Direct3D 12", "Metal"];
+
+    public IReadOnlyList<CompatibilityOptionViewModel> CompatibilityOptions { get; } =
+    [
+        new(LocalCompatibilityStatus.NotTested, "Não testado"),
+        new(LocalCompatibilityStatus.WorksWell, "Funciona bem"),
+        new(LocalCompatibilityStatus.WorksWithIssues, "Funciona com problemas"),
+        new(LocalCompatibilityStatus.DoesNotWork, "Não funciona"),
+        new(LocalCompatibilityStatus.Unknown, "Desconhecido")
+    ];
 
     public IReadOnlyList<LibraryViewModeOptionViewModel> LibraryViewModes { get; } =
     [
@@ -885,6 +923,7 @@ public sealed partial class MainViewModel : ObservableObject
             EmulatorShowPreviewBeforeLaunch = settings.EmulatorShowPreviewBeforeLaunch;
             EmulatorSaveLaunchHistory = settings.EmulatorSaveLaunchHistory;
             EmulatorCloseAfterLaunch = settings.EmulatorCloseAfterLaunch;
+            EmulatorSaveBackupDirectory = settings.EmulatorSaveBackupDirectory;
             var status = await _externalToolManager.CheckAsync("dolphin", cancellationToken);
             ApplyDolphinStatus(status);
         }
@@ -1058,6 +1097,110 @@ public sealed partial class MainViewModel : ObservableObject
         await _emulatorProfileService.ExportAsync(SelectedEmulatorProfile.ProfileId, filePath, cancellationToken);
         EmulatorProfileSummary = $"Perfil exportado para {filePath}.";
     }
+
+    [RelayCommand]
+    private async Task SaveEmulatorCompatibilityAsync(CancellationToken cancellationToken)
+    {
+        if (SelectedGame is null || SelectedCompatibilityOption is null)
+        {
+            StatusMessage = "Selecione um jogo e um status de compatibilidade.";
+            return;
+        }
+
+        var saved = await _emulatorCompatibilityService.SaveAsync(
+            new EmulatorCompatibilityDto(
+                SelectedGame.Id,
+                "dolphin",
+                SelectedCompatibilityOption.Status,
+                EmulatorCompatibilityNotes,
+                SelectedGameEmulatorProfile?.ProfileId,
+                DateTimeOffset.UtcNow),
+            cancellationToken);
+        EmulatorCompatibilityNotes = saved.Notes;
+        StatusMessage = "Compatibilidade local atualizada.";
+    }
+
+    [RelayCommand]
+    private async Task LocateEmulatorSavesAsync(CancellationToken cancellationToken)
+    {
+        if (SelectedGame is null)
+        {
+            EmulatorSaveSummary = "Selecione um jogo para localizar saves.";
+            return;
+        }
+
+        try
+        {
+            var result = await _emulatorSaveManagementService.LocateSavesAsync(SelectedGame.Id, cancellationToken: cancellationToken);
+            EmulatorSaveSummary = result.Found ? $"Saves localizados: {result.SavePath}" : result.Message;
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            EmulatorSaveSummary = exception.Message;
+        }
+    }
+
+    [RelayCommand]
+    private async Task OpenEmulatorSavesAsync(CancellationToken cancellationToken)
+    {
+        if (SelectedGame is null)
+        {
+            return;
+        }
+
+        try
+        {
+            await _emulatorSaveManagementService.OpenSavesFolderAsync(SelectedGame.Id, EmulatorSaveAccessConfirmed, cancellationToken);
+            EmulatorSaveSummary = "Pasta de saves aberta.";
+            EmulatorSaveAccessConfirmed = false;
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            EmulatorSaveSummary = exception.Message;
+        }
+    }
+
+    public async Task BackupSelectedGameSavesAsync(string destinationFile, CancellationToken cancellationToken)
+    {
+        if (SelectedGame is null)
+        {
+            throw new InvalidOperationException("Selecione um jogo para fazer backup dos saves.");
+        }
+
+        var result = await _emulatorSaveManagementService.BackupSavesAsync(
+            new SaveBackupRequest(SelectedGame.Id, "dolphin", destinationFile, EmulatorSaveAccessConfirmed),
+            cancellationToken);
+        EmulatorSaveSummary = result.Message;
+        EmulatorSaveAccessConfirmed = false;
+        await RefreshTasksAsync(cancellationToken);
+        await RefreshNotificationsAsync(cancellationToken);
+    }
+
+    private async Task RefreshEmulationDetailsAsync(string gameId, CancellationToken cancellationToken)
+    {
+        var compatibility = await _emulatorCompatibilityService.GetAsync(gameId, cancellationToken);
+        SelectedCompatibilityOption = CompatibilityOptions.First(option => option.Status == compatibility.Status);
+        EmulatorCompatibilityNotes = compatibility.Notes;
+
+        var history = await _emulatorLaunchHistoryRepository.GetRecentAsync(gameId, 20, cancellationToken);
+        EmulatorLaunchHistory.Clear();
+        foreach (var entry in history)
+        {
+            EmulatorLaunchHistory.Add(new EmulatorLaunchHistoryItemViewModel(entry, ResolveProfileName(entry.ProfileId)));
+        }
+
+        var lastStarted = history.FirstOrDefault(entry => string.Equals(entry.Result, "Started", StringComparison.OrdinalIgnoreCase));
+        EmulatorHistorySummary = lastStarted is null
+            ? "Este jogo ainda não foi executado no emulador."
+            : $"Última execução: {lastStarted.StartedAt.ToLocalTime():g} · Perfil: {ResolveProfileName(lastStarted.ProfileId)}";
+        EmulatorSaveSummary = "Localização de saves ainda não verificada.";
+        EmulatorSaveAccessConfirmed = false;
+    }
+
+    private string ResolveProfileName(string? profileId) =>
+        EmulatorProfiles.FirstOrDefault(profile => profile.ProfileId == profileId)?.Name
+        ?? SelectedGameEmulatorProfile?.Name
+        ?? "Padrão";
 
     [RelayCommand]
     private async Task OpenCommandPaletteAsync(CancellationToken cancellationToken)
@@ -2698,6 +2841,8 @@ public sealed partial class MainViewModel : ObservableObject
         if (game is null)
         {
             SelectedGameDetails = null;
+            EmulatorLaunchHistory.Clear();
+            EmulatorHistorySummary = "Este jogo ainda não foi executado no emulador.";
             CanLaunchSelectedGameInEmulator = false;
             EmulatorLaunchSummary = "Selecione um jogo local para jogar no PC.";
             OnPropertyChanged(nameof(SelectedGameHistorySummary));
@@ -2714,6 +2859,7 @@ public sealed partial class MainViewModel : ObservableObject
 
             SelectedGameDetails = details;
             await RefreshSelectedEmulatorPreviewAsync(game.Id, cancellationToken);
+            await RefreshEmulationDetailsAsync(game.Id, cancellationToken);
             foreach (var action in details.ActionAvailability ?? [])
             {
                 SelectedGameActions.Add(new GameDetailsActionItemViewModel(action));
@@ -2826,6 +2972,7 @@ public sealed partial class MainViewModel : ObservableObject
                 ? $"Jogo enviado ao Dolphin: {preview.GameTitle ?? preview.GameId}."
                 : result.ErrorMessage ?? "Não foi possível iniciar o jogo no emulador.";
             await RefreshSelectedEmulatorPreviewAsync(preview.GameId, cancellationToken);
+            await RefreshEmulationDetailsAsync(preview.GameId, cancellationToken);
             if (result.Started && EmulatorCloseAfterLaunch && AvaloniaApp.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             {
                 desktop.Shutdown();
@@ -3425,6 +3572,9 @@ public sealed partial class MainViewModel : ObservableObject
             EmulatorLastGameId = lastGameId ?? settings.EmulatorLastGameId,
             EmulatorDefaultProfileId = defaultProfileId ?? settings.EmulatorDefaultProfileId,
             EmulatorLastUsedProfileId = lastProfileId ?? PendingEmulatorLaunchPreview?.ProfileId ?? settings.EmulatorLastUsedProfileId,
+            EmulatorSaveBackupDirectory = EmulatorSaveBackupDirectory,
+            EmulatorOpenSaveFolderRequiresConfirmation = settings.EmulatorOpenSaveFolderRequiresConfirmation,
+            EmulatorSaveBackupRequiresConfirmation = settings.EmulatorSaveBackupRequiresConfirmation,
             ExternalToolsLastCheckAt = settings.ExternalToolsLastCheckAt,
             CoverCachePath = settings.CoverCachePath,
             MetadataCachePath = settings.MetadataCachePath,

@@ -8,4 +8,5 @@ public sealed record EmulatorLaunchHistoryEntry(
     DateTimeOffset StartedAt,
     int? ExitCode,
     string Result,
-    string? ErrorMessage);
+    string? ErrorMessage,
+    string? ProfileId = null);

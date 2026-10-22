@@ -144,19 +144,19 @@ public sealed class EmulatorGameLaunchWorkflowService : IEmulatorGameLaunchWorkf
         if (!request.UserConfirmed)
         {
             const string cancellationMessage = "Execução cancelada pelo usuário.";
-            await SaveHistoryAsync(request.GameId, request.EmulatorId, preview.GameFilePath, "Cancelled", cancellationMessage, request.SaveHistory, cancellationToken);
+            await SaveHistoryAsync(request.GameId, request.EmulatorId, preview.GameFilePath, "Cancelled", cancellationMessage, request.SaveHistory, cancellationToken, preview.ProfileId);
             return new EmulatorLaunchResult(false, request.GameId, request.EmulatorId, DateTimeOffset.UtcNow, cancellationMessage);
         }
 
         if (!preview.CanLaunch || string.IsNullOrWhiteSpace(preview.GameFilePath))
         {
-            return await FailAsync(request.GameId, request.EmulatorId, preview.GameFilePath, "Blocked", preview.BlockReason ?? "Não foi possível iniciar o jogo no emulador.", request.SaveHistory, cancellationToken);
+            return await FailAsync(request.GameId, request.EmulatorId, preview.GameFilePath, "Blocked", preview.BlockReason ?? "Não foi possível iniciar o jogo no emulador.", request.SaveHistory, cancellationToken, preview.ProfileId);
         }
 
         var emulator = await externalToolManager.CheckAsync(ExternalToolDefinitionProvider.DolphinToolId, cancellationToken);
         if (string.IsNullOrWhiteSpace(emulator.ExecutablePath))
         {
-            return await FailAsync(preview.GameId, request.EmulatorId, preview.GameFilePath, "Blocked", "Configure o Dolphin antes de jogar no PC.", request.SaveHistory, cancellationToken);
+            return await FailAsync(preview.GameId, request.EmulatorId, preview.GameFilePath, "Blocked", "Configure o Dolphin antes de jogar no PC.", request.SaveHistory, cancellationToken, preview.ProfileId);
         }
 
         Guid? taskId = await EnqueueLaunchTaskAsync(preview, cancellationToken);
@@ -176,14 +176,14 @@ public sealed class EmulatorGameLaunchWorkflowService : IEmulatorGameLaunchWorkf
                 cancellationToken);
 
             await CompleteTaskAsync(taskId, cancellationToken);
-            await SaveHistoryAsync(preview.GameId, request.EmulatorId, preview.GameFilePath, "Started", null, request.SaveHistory, cancellationToken);
+            await SaveHistoryAsync(preview.GameId, request.EmulatorId, preview.GameFilePath, "Started", null, request.SaveHistory, cancellationToken, preview.ProfileId);
             await PublishAsync(NotificationType.Success, "Jogo iniciado no Dolphin", $"{preview.GameTitle ?? preview.GameId} foi enviado para o emulador.", cancellationToken);
             return new EmulatorLaunchResult(true, preview.GameId, request.EmulatorId, DateTimeOffset.UtcNow);
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
             await FailTaskAsync(taskId, exception.Message);
-            return await FailAsync(preview.GameId, request.EmulatorId, preview.GameFilePath, "Failed", "Não foi possível iniciar o jogo no emulador.", request.SaveHistory, cancellationToken);
+            return await FailAsync(preview.GameId, request.EmulatorId, preview.GameFilePath, "Failed", "Não foi possível iniciar o jogo no emulador.", request.SaveHistory, cancellationToken, preview.ProfileId);
         }
     }
 
@@ -246,9 +246,10 @@ public sealed class EmulatorGameLaunchWorkflowService : IEmulatorGameLaunchWorkf
         string result,
         string message,
         bool saveHistory,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        string? profileId)
     {
-        await SaveHistoryAsync(gameId, emulatorId, filePath, result, message, saveHistory, cancellationToken);
+        await SaveHistoryAsync(gameId, emulatorId, filePath, result, message, saveHistory, cancellationToken, profileId);
         await PublishAsync(NotificationType.Warning, "Não foi possível iniciar o jogo", message, cancellationToken);
         return new EmulatorLaunchResult(false, gameId, emulatorId, DateTimeOffset.UtcNow, message);
     }
@@ -260,7 +261,8 @@ public sealed class EmulatorGameLaunchWorkflowService : IEmulatorGameLaunchWorkf
         string result,
         string? errorMessage,
         bool saveHistory,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        string? profileId)
     {
         await RecordLogAsync(gameId, emulatorId, result, errorMessage, cancellationToken);
         if (!saveHistory || launchHistoryRepository is null)
@@ -277,7 +279,8 @@ public sealed class EmulatorGameLaunchWorkflowService : IEmulatorGameLaunchWorkf
                 DateTimeOffset.UtcNow,
                 null,
                 result,
-                errorMessage),
+                errorMessage,
+                profileId),
             cancellationToken);
     }
 

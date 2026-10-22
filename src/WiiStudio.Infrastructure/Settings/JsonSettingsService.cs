@@ -130,6 +130,7 @@ public sealed class JsonSettingsService : ISettingsService
         ValidateOptionalPath(settings.DolphinExecutablePath, nameof(settings.DolphinExecutablePath));
         ValidateOptionalPath(settings.CoverCachePath, nameof(settings.CoverCachePath));
         ValidateOptionalPath(settings.MetadataCachePath, nameof(settings.MetadataCachePath));
+        ValidateOptionalPath(settings.EmulatorSaveBackupDirectory, nameof(settings.EmulatorSaveBackupDirectory));
     }
 
     private static void ValidateOptionalPath(string? path, string parameterName)

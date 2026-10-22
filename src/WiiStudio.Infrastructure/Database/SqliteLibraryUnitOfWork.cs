@@ -130,9 +130,11 @@ public sealed class SqliteLibraryUnitOfWork : ILibraryUnitOfWork
                 StartedAt TEXT NOT NULL,
                 ExitCode INTEGER NULL,
                 Result TEXT NOT NULL,
-                ErrorMessage TEXT NULL
+                ErrorMessage TEXT NULL,
+                ProfileId TEXT NULL
             );
             """, cancellationToken);
+        await EnsureColumnAsync(connection, "EmulatorLaunchHistory", "ProfileId", "TEXT NULL", cancellationToken);
         await ExecuteAsync(connection, """
             CREATE TABLE IF NOT EXISTS EmulatorProfiles (
                 ProfileId TEXT PRIMARY KEY,
@@ -157,6 +159,38 @@ public sealed class SqliteLibraryUnitOfWork : ILibraryUnitOfWork
                 FOREIGN KEY (ProfileId) REFERENCES EmulatorProfiles(ProfileId) ON DELETE RESTRICT
             );
             """, cancellationToken);
+        await ExecuteAsync(connection, """
+            CREATE TABLE IF NOT EXISTS GameEmulatorCompatibility (
+                GameId TEXT NOT NULL,
+                EmulatorId TEXT NOT NULL,
+                Status TEXT NOT NULL,
+                PreferredProfileId TEXT NULL,
+                UpdatedAt TEXT NOT NULL,
+                PRIMARY KEY (GameId, EmulatorId)
+            );
+            """, cancellationToken);
+        await ExecuteAsync(connection, """
+            CREATE TABLE IF NOT EXISTS GameEmulatorNotes (
+                GameId TEXT NOT NULL,
+                EmulatorId TEXT NOT NULL,
+                Notes TEXT NULL,
+                UpdatedAt TEXT NOT NULL,
+                PRIMARY KEY (GameId, EmulatorId)
+            );
+            """, cancellationToken);
+        await ExecuteAsync(connection, """
+            CREATE TABLE IF NOT EXISTS SaveBackups (
+                Id TEXT PRIMARY KEY,
+                GameId TEXT NOT NULL,
+                EmulatorId TEXT NOT NULL,
+                SourcePath TEXT NOT NULL,
+                BackupPath TEXT NOT NULL,
+                SizeInBytes INTEGER NOT NULL,
+                Success INTEGER NOT NULL,
+                Message TEXT NULL,
+                CreatedAt TEXT NOT NULL
+            );
+            """, cancellationToken);
         await ExecuteAsync(connection, "CREATE INDEX IF NOT EXISTS IX_Games_GameId ON Games(GameId);", cancellationToken);
         await ExecuteAsync(connection, "CREATE INDEX IF NOT EXISTS IX_Games_Title ON Games(Title);", cancellationToken);
         await ExecuteAsync(connection, "CREATE INDEX IF NOT EXISTS IX_Games_IsFavorite ON Games(IsFavorite);", cancellationToken);
@@ -168,10 +202,13 @@ public sealed class SqliteLibraryUnitOfWork : ILibraryUnitOfWork
         await ExecuteAsync(connection, "CREATE INDEX IF NOT EXISTS IX_EmulatorLaunchHistory_StartedAt ON EmulatorLaunchHistory(StartedAt);", cancellationToken);
         await ExecuteAsync(connection, "CREATE UNIQUE INDEX IF NOT EXISTS IX_EmulatorProfiles_Default ON EmulatorProfiles(EmulatorId) WHERE IsDefault = 1;", cancellationToken);
         await ExecuteAsync(connection, "CREATE INDEX IF NOT EXISTS IX_GameEmulatorProfiles_ProfileId ON GameEmulatorProfiles(ProfileId);", cancellationToken);
+        await ExecuteAsync(connection, "CREATE INDEX IF NOT EXISTS IX_SaveBackups_GameId ON SaveBackups(GameId);", cancellationToken);
+        await ExecuteAsync(connection, "CREATE INDEX IF NOT EXISTS IX_SaveBackups_CreatedAt ON SaveBackups(CreatedAt);", cancellationToken);
         await ExecuteAsync(connection, "INSERT OR IGNORE INTO SchemaMigrations (Version, AppliedAt) VALUES (1, $appliedAt);", cancellationToken, ("$appliedAt", DateTimeOffset.UtcNow.ToString("O")));
         await ExecuteAsync(connection, "INSERT OR IGNORE INTO SchemaMigrations (Version, AppliedAt) VALUES (2, $appliedAt);", cancellationToken, ("$appliedAt", DateTimeOffset.UtcNow.ToString("O")));
         await ExecuteAsync(connection, "INSERT OR IGNORE INTO SchemaMigrations (Version, AppliedAt) VALUES (3, $appliedAt);", cancellationToken, ("$appliedAt", DateTimeOffset.UtcNow.ToString("O")));
         await ExecuteAsync(connection, "INSERT OR IGNORE INTO SchemaMigrations (Version, AppliedAt) VALUES (4, $appliedAt);", cancellationToken, ("$appliedAt", DateTimeOffset.UtcNow.ToString("O")));
+        await ExecuteAsync(connection, "INSERT OR IGNORE INTO SchemaMigrations (Version, AppliedAt) VALUES (5, $appliedAt);", cancellationToken, ("$appliedAt", DateTimeOffset.UtcNow.ToString("O")));
 
         _initialized = true;
     }
@@ -191,5 +228,27 @@ public sealed class SqliteLibraryUnitOfWork : ILibraryUnitOfWork
         }
 
         await command.ExecuteNonQueryAsync(cancellationToken);
+    }
+
+    private static async Task EnsureColumnAsync(
+        SqliteConnection connection,
+        string tableName,
+        string columnName,
+        string definition,
+        CancellationToken cancellationToken)
+    {
+        await using var check = connection.CreateCommand();
+        check.CommandText = $"PRAGMA table_info({tableName});";
+        await using var reader = await check.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            if (string.Equals(reader.GetString(1), columnName, StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+        }
+
+        await reader.DisposeAsync();
+        await ExecuteAsync(connection, $"ALTER TABLE {tableName} ADD COLUMN {columnName} {definition};", cancellationToken);
     }
 }

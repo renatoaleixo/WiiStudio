@@ -48,6 +48,12 @@ public sealed class Settings
 
     public string? EmulatorLastUsedProfileId { get; init; }
 
+    public string? EmulatorSaveBackupDirectory { get; init; }
+
+    public bool EmulatorOpenSaveFolderRequiresConfirmation { get; init; } = true;
+
+    public bool EmulatorSaveBackupRequiresConfirmation { get; init; } = true;
+
     public DateTimeOffset? ExternalToolsLastCheckAt { get; init; }
 
     public string? CoverCachePath { get; init; }
