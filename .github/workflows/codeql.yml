@@ -22,7 +22,7 @@ jobs:
       - uses: github/codeql-action/init@v4
         with:
           languages: csharp
-          queries: security-and-quality
+          queries: security-extended
       - uses: actions/setup-dotnet@v6
         with:
           dotnet-version: 10.0.x
