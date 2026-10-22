@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using WiiStudio.Application.DTOs;
@@ -39,12 +40,14 @@ public sealed record ManifestApplicationUpdateProviderOptions
     {
         if (OperatingSystem.IsWindows())
         {
-            return "windows-x64";
+            return "win-x64";
         }
 
         if (OperatingSystem.IsMacOS())
         {
-            return "macos-x64";
+            return RuntimeInformation.ProcessArchitecture == Architecture.Arm64
+                ? "osx-arm64"
+                : "osx-x64";
         }
 
         return "linux-x64";

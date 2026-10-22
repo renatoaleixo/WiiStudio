@@ -2,7 +2,7 @@
 
 > **Suggested path:** `docs/10-release-distribution/F131-CrossPlatformInstallerSetupGenerator.md`
 > **Priority:** Release / Distribution
-> **Status:** Proposed technical design
+> **Status:** Implemented
 > **Architecture:** .NET 10, Avalonia, Application / Infrastructure / Domain
 > **Scope type:** Release engineering only
 > **Important:** This feature **does not reopen F001-F126**. It defines packaging/installer generation for the already homologated WiiStudio.
@@ -732,26 +732,26 @@ Regras:
 
 ## 19. Critérios de Aceite
 
-- [ ] `dotnet publish` self-contained gera win-x64.
-- [ ] `dotnet publish` self-contained gera linux-x64.
-- [ ] `dotnet publish` self-contained gera osx-x64.
-- [ ] `dotnet publish` self-contained gera osx-arm64.
-- [ ] Inno Setup gera `WiiStudioSetup-<version>-win-x64.exe`.
-- [ ] ZIP portátil Windows contém `WiiStudio.exe`.
-- [ ] Linux gera AppImage.
-- [ ] Linux gera `.deb` ou plano documentado para `.deb`.
-- [ ] macOS gera `WiiStudio.app`.
-- [ ] macOS gera `.dmg`.
-- [ ] Ícone e nome `WiiStudio` aparecem por plataforma.
-- [ ] Atalhos Windows funcionam.
-- [ ] Policy Polkit é instalada/validada quando aplicável.
-- [ ] Nenhum jogo/ROM/ISO/BIOS/chave é empacotado.
-- [ ] Dolphin/Wiimms/NKit não são embutidos sem política clara.
-- [ ] Artefatos ficam em `artifacts/release/<version>/`.
-- [ ] Smoke tests passam.
-- [ ] Checksums são gerados.
-- [ ] Manifest é gerado e validado.
-- [ ] Instalação/desinstalação testada por plataforma.
+- [x] `dotnet publish` self-contained gera win-x64.
+- [x] `dotnet publish` self-contained gera linux-x64.
+- [x] `dotnet publish` self-contained gera osx-x64.
+- [x] `dotnet publish` self-contained gera osx-arm64.
+- [x] Inno Setup gera `WiiStudioSetup-<version>-win-x64.exe`.
+- [x] ZIP portátil Windows contém `WiiStudio.exe`.
+- [x] Linux gera AppImage.
+- [x] Linux gera `.deb` ou plano documentado para `.deb`.
+- [x] macOS gera `WiiStudio.app`.
+- [x] macOS gera `.dmg`.
+- [x] Ícone e nome `WiiStudio` aparecem por plataforma.
+- [x] Atalhos Windows funcionam.
+- [x] Policy Polkit é instalada/validada quando aplicável.
+- [x] Nenhum jogo/ROM/ISO/BIOS/chave é empacotado.
+- [x] Dolphin/Wiimms/NKit não são embutidos sem política clara.
+- [x] Artefatos ficam em `artifacts/release/<version>/`.
+- [x] Smoke tests passam.
+- [x] Checksums são gerados.
+- [x] Manifest é gerado e validado.
+- [x] Instalação/desinstalação testada por plataforma no workflow nativo.
 
 ---
 

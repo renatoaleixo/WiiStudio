@@ -3,89 +3,134 @@ name: Release
 on:
   workflow_dispatch:
     inputs:
-      version:
-        description: SemVer version, for example 1.0.0
-        required: true
-      channel:
-        description: Release channel
-        required: true
-        default: stable
-        type: choice
-        options:
-          - stable
-          - beta
-          - dev
+      version: { description: 'SemVer version', required: true }
+      channel: { description: 'Release channel', required: true, default: stable, type: choice, options: [stable, beta, dev] }
   push:
-    tags:
-      - 'v*'
+    tags: ['v*']
 
-permissions:
-  contents: write
+permissions: { contents: write }
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
 
 jobs:
-  package:
-    name: Build, Test and Package
+  verify:
     runs-on: ubuntu-latest
-    env:
-      DOTNET_NOLOGO: true
-      DOTNET_CLI_TELEMETRY_OPTOUT: true
-      WIISTUDIO_CHANNEL: ${{ inputs.channel || 'stable' }}
-      WIISTUDIO_REPOSITORY: ${{ github.repository }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with: { dotnet-version: 10.0.x }
+      - run: dotnet restore WiiStudio.sln
+      - run: dotnet build WiiStudio.sln -c Release --no-restore
+      - run: dotnet test WiiStudio.sln -c Release --no-build --logger "trx;LogFileName=test-results.trx"
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: 10.0.x
-
-      - name: Resolve Version
-        id: version
+  package-linux:
+    needs: verify
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with: { dotnet-version: 10.0.x }
+      - id: version
         shell: bash
         run: |
-          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
-            version="${GITHUB_REF_NAME#v}"
-          else
-            version="${{ inputs.version }}"
-          fi
-
-          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+([-+][0-9A-Za-z.-]+)?$ ]]; then
-            echo "Invalid SemVer version: $version" >&2
-            exit 2
-          fi
-
-          echo "version=$version" >> "$GITHUB_OUTPUT"
-
-      - name: Restore
-        run: dotnet restore WiiStudio.sln
-
-      - name: Build
-        run: dotnet build WiiStudio.sln --configuration Release --no-restore
-
-      - name: Test
-        run: dotnet test WiiStudio.sln --configuration Release --no-build --logger "trx;LogFileName=test-results.trx"
-
-      - name: Package
-        run: scripts/release/package.sh "${{ steps.version.outputs.version }}"
-
-      - name: Smoke Test Artifacts
-        run: scripts/release/smoke-test.sh "${{ steps.version.outputs.version }}"
-
-      - name: Upload Release Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: wiistudio-release-${{ steps.version.outputs.version }}
-          path: artifacts/release/${{ steps.version.outputs.version }}/
-          if-no-files-found: error
-
-      - name: Publish GitHub Release
-        if: startsWith(github.ref, 'refs/tags/v')
-        env:
-          GH_TOKEN: ${{ github.token }}
-          VERSION: ${{ steps.version.outputs.version }}
+          if [[ "$GITHUB_REF_TYPE" == tag ]]; then version="${GITHUB_REF_NAME#v}"; else version="${{ inputs.version }}"; fi
+          echo "value=$version" >> "$GITHUB_OUTPUT"
+      - name: Install appimagetool
         run: |
-          gh release create "$GITHUB_REF_NAME" artifacts/release/${VERSION}/* \
-            --title "$GITHUB_REF_NAME" \
-            --notes "WiiStudio ${GITHUB_REF_NAME}" \
-            --verify-tag
+          wget -q https://github.com/AppImage/appimagetool/releases/download/1.9.1/appimagetool-x86_64.AppImage
+          chmod +x appimagetool-x86_64.AppImage
+          ./appimagetool-x86_64.AppImage --appimage-extract >/dev/null
+          echo "APPIMAGETOOL=$PWD/squashfs-root/AppRun" >> "$GITHUB_ENV"
+      - run: scripts/release/package.sh "${{ steps.version.outputs.value }}" linux
+      - name: Validate Linux install and removal
+        run: |
+          deb="artifacts/release/${{ steps.version.outputs.value }}/linux/wiistudio_${{ steps.version.outputs.value }}_amd64.deb"
+          appimage="artifacts/release/${{ steps.version.outputs.value }}/linux/WiiStudio-${{ steps.version.outputs.value }}-linux-x64.AppImage"
+          dpkg-deb --info "$deb"
+          APPIMAGE_EXTRACT_AND_RUN=1 "$appimage" --appimage-version
+          sudo dpkg --install "$deb"
+          test -x /opt/wiistudio/WiiStudio
+          test -f /usr/share/polkit-1/actions/com.wiistudio.device.policy
+          sudo dpkg --remove wiistudio
+          test ! -e /opt/wiistudio/WiiStudio
+      - uses: actions/upload-artifact@v4
+        with: { name: release-linux, path: 'artifacts/release/${{ steps.version.outputs.value }}/linux', if-no-files-found: error }
+
+  package-windows:
+    needs: verify
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with: { dotnet-version: 10.0.x }
+      - id: version
+        shell: bash
+        run: |
+          if [[ "$GITHUB_REF_TYPE" == tag ]]; then version="${GITHUB_REF_NAME#v}"; else version="${{ inputs.version }}"; fi
+          echo "value=$version" >> "$GITHUB_OUTPUT"
+      - run: choco install innosetup --no-progress -y
+      - shell: bash
+        run: scripts/release/package.sh "${{ steps.version.outputs.value }}" windows
+      - shell: pwsh
+        run: |
+          $installer = "artifacts/release/${{ steps.version.outputs.value }}/windows/WiiStudioSetup-${{ steps.version.outputs.value }}-win-x64.exe"
+          $target = Join-Path $env:RUNNER_TEMP WiiStudio
+          Start-Process $installer -ArgumentList "/VERYSILENT /SUPPRESSMSGBOXES /DIR=`"$target`"" -Wait
+          if (-not (Test-Path (Join-Path $target 'WiiStudio.exe'))) { throw 'Installed executable missing.' }
+          Start-Process (Join-Path $target 'unins000.exe') -ArgumentList '/VERYSILENT /SUPPRESSMSGBOXES' -Wait
+      - uses: actions/upload-artifact@v4
+        with: { name: release-windows, path: 'artifacts/release/${{ steps.version.outputs.value }}/windows', if-no-files-found: error }
+
+  package-macos:
+    needs: verify
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with: { dotnet-version: 10.0.x }
+      - id: version
+        shell: bash
+        run: |
+          if [[ "$GITHUB_REF_TYPE" == tag ]]; then version="${GITHUB_REF_NAME#v}"; else version="${{ inputs.version }}"; fi
+          echo "value=$version" >> "$GITHUB_OUTPUT"
+      - run: scripts/release/package.sh "${{ steps.version.outputs.value }}" macos
+      - run: |
+          for dmg in artifacts/release/${{ steps.version.outputs.value }}/macos/*.dmg; do
+            mount=$(hdiutil attach "$dmg" -nobrowse | tail -1 | awk '{$1=$2=""; sub(/^  */, ""); print}')
+            test -d "$mount/WiiStudio.app"
+            ditto "$mount/WiiStudio.app" "$RUNNER_TEMP/WiiStudio.app"
+            test -x "$RUNNER_TEMP/WiiStudio.app/Contents/MacOS/WiiStudio"
+            rm -rf "$RUNNER_TEMP/WiiStudio.app"
+            hdiutil detach "$mount"
+          done
+      - uses: actions/upload-artifact@v4
+        with: { name: release-macos, path: 'artifacts/release/${{ steps.version.outputs.value }}/macos', if-no-files-found: error }
+
+  finalize:
+    needs: [package-linux, package-windows, package-macos]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - id: version
+        shell: bash
+        run: |
+          if [[ "$GITHUB_REF_TYPE" == tag ]]; then version="${GITHUB_REF_NAME#v}"; else version="${{ inputs.version }}"; fi
+          echo "value=$version" >> "$GITHUB_OUTPUT"
+      - uses: actions/download-artifact@v4
+        with: { name: release-linux, path: 'artifacts/release/${{ steps.version.outputs.value }}/linux' }
+      - uses: actions/download-artifact@v4
+        with: { name: release-windows, path: 'artifacts/release/${{ steps.version.outputs.value }}/windows' }
+      - uses: actions/download-artifact@v4
+        with: { name: release-macos, path: 'artifacts/release/${{ steps.version.outputs.value }}/macos' }
+      - env:
+          WIISTUDIO_CHANNEL: "${{ inputs.channel || 'stable' }}"
+          WIISTUDIO_REPOSITORY: "${{ github.repository }}"
+        run: |
+          scripts/release/package.sh "${{ steps.version.outputs.value }}" finalize
+          scripts/release/smoke-test.sh "${{ steps.version.outputs.value }}"
+      - uses: actions/upload-artifact@v4
+        with: { name: 'wiistudio-release-${{ steps.version.outputs.value }}', path: 'artifacts/release/${{ steps.version.outputs.value }}', if-no-files-found: error }
+      - if: startsWith(github.ref, 'refs/tags/v')
+        env: { GH_TOKEN: '${{ github.token }}' }
+        run: gh release create "$GITHUB_REF_NAME" $(find "artifacts/release/${{ steps.version.outputs.value }}" -type f -print) --title "$GITHUB_REF_NAME" --generate-notes --verify-tag

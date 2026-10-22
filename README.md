@@ -29,6 +29,7 @@ O projeto segue a documentação em `docs/`, organizada em:
 - `docs/04-application-shell/` em diante para shell, plugins, segurança e testes.
 - `docs/08-tools/` para integrações externas, USB/WBFS, GameTDB, updates, marketplace remoto e release readiness F101-F126.
 - `docs/09-emulator-integration/` para a nova fase de integração com emuladores externos F127-F130.
+- `docs/10-release-distribution/` para instaladores e distribuição multiplataforma a partir da F131.
 
 O alvo atual é .NET 10.
 
@@ -43,9 +44,13 @@ dotnet run --project src/WiiStudio.App
 ```bash
 dotnet build WiiStudio.sln -c Release
 dotnet test WiiStudio.sln --no-build -c Release
-WIISTUDIO_CHANNEL=dev scripts/release/package.sh 0.1.0-dev.1
-WIISTUDIO_CHANNEL=dev scripts/release/smoke-test.sh 0.1.0-dev.1
+scripts/release/package.sh 1.0.0 linux
 ```
+
+Os instaladores oficiais são produzidos no sistema nativo pelo workflow
+`Release`: Inno Setup e ZIP no Windows, AppImage e `.deb` no Linux, e `.app`
+mais `.dmg` para macOS x64/arm64. Após reunir os artefatos, o job final gera o
+manifesto, checksums SHA-256 e executa os smoke tests estruturais.
 
 Homologação final em hardware real está registrada em
 `docs/99-final/HOMOLOGATION_ACCEPTANCE.md`. Novas integrações devem entrar como

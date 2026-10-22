@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=WiiStudio
+Comment=Gerenciador de jogos Nintendo Wii
+Exec=WiiStudio
+Icon=wiistudio
+Terminal=false
+Categories=Game;
+StartupWMClass=WiiStudio

@@ -12,6 +12,20 @@ public sealed class ManifestApplicationUpdateProviderTests : IDisposable
     private readonly string tempRoot = Path.Combine(Path.GetTempPath(), "wiistudio-update-tests", Guid.NewGuid().ToString("N"));
 
     [Fact]
+    public void Options_ShouldUseRuntimeIdentifierPlatformNames()
+    {
+        var options = new ManifestApplicationUpdateProviderOptions();
+
+        options.Platform.Should().Be(OperatingSystem.IsWindows()
+            ? "win-x64"
+            : OperatingSystem.IsMacOS()
+                ? System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture == System.Runtime.InteropServices.Architecture.Arm64
+                    ? "osx-arm64"
+                    : "osx-x64"
+                : "linux-x64");
+    }
+
+    [Fact]
     public async Task CheckAsync_ShouldReturnUpdateFromHttpsManifest()
     {
         var packageBytes = Encoding.UTF8.GetBytes("update package");
