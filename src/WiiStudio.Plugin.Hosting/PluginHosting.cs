@@ -1192,13 +1192,17 @@ public sealed class FileSystemPluginManagementService : IPluginManagementService
 
     private static void SafeExtractZip(string zipPath, string destinationDirectory)
     {
-        var root = Path.GetFullPath(destinationDirectory);
+        var root = Path.GetFullPath(destinationDirectory)
+            .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) + Path.DirectorySeparatorChar;
         Directory.CreateDirectory(root);
         using var archive = ZipFile.OpenRead(zipPath);
         foreach (var entry in archive.Entries)
         {
             var destination = Path.GetFullPath(Path.Combine(root, entry.FullName));
-            if (!IsPathInside(root, destination))
+            var comparison = OperatingSystem.IsWindows()
+                ? StringComparison.OrdinalIgnoreCase
+                : StringComparison.Ordinal;
+            if (!destination.StartsWith(root, comparison))
             {
                 throw new InvalidDataException("Pacote de plugin contém caminho inseguro.");
             }
