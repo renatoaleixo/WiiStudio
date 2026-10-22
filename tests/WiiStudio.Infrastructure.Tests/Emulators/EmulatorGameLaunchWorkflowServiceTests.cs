@@ -60,10 +60,12 @@ public sealed class EmulatorGameLaunchWorkflowServiceTests : IDisposable
     {
         var gamePath = CreateFile("games/RMCP01.wbfs");
         var processRunner = new FakeProcessRunner();
+        var history = new FakeEmulatorLaunchHistoryRepository();
         var service = CreateService(
             [CreateGame("RMCP01", gamePath)],
             new FakeExternalToolManager(ExternalToolState.Configured, "/usr/bin/dolphin-emu", "2409"),
-            processRunner);
+            processRunner,
+            history);
 
         var result = await service.ExecuteAsync(new EmulatorLaunchExecutionRequest("RMCP01"));
 
@@ -72,6 +74,41 @@ public sealed class EmulatorGameLaunchWorkflowServiceTests : IDisposable
         processRunner.LastRequest!.ExecutablePath.Should().Be("/usr/bin/dolphin-emu");
         processRunner.LastRequest.Arguments.Should().Equal($"--exec={gamePath}");
         processRunner.LastRequest.WaitForExit.Should().BeFalse();
+        history.Entries.Should().ContainSingle().Which.Result.Should().Be("Started");
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_ShouldRecordCancelledPreview()
+    {
+        var gamePath = CreateFile("games/RMCP01.wbfs");
+        var history = new FakeEmulatorLaunchHistoryRepository();
+        var processRunner = new FakeProcessRunner();
+        var service = CreateService(
+            [CreateGame("RMCP01", gamePath)],
+            new FakeExternalToolManager(ExternalToolState.Configured, "/usr/bin/dolphin-emu", "2409"),
+            processRunner,
+            history);
+
+        var result = await service.ExecuteAsync(new EmulatorLaunchExecutionRequest("RMCP01", UserConfirmed: false));
+
+        result.Started.Should().BeFalse();
+        processRunner.LastRequest.Should().BeNull();
+        history.Entries.Should().ContainSingle().Which.Result.Should().Be("Cancelled");
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_ShouldNotRecordHistoryWhenDisabled()
+    {
+        var gamePath = CreateFile("games/RMCP01.wbfs");
+        var history = new FakeEmulatorLaunchHistoryRepository();
+        var service = CreateService(
+            [CreateGame("RMCP01", gamePath)],
+            new FakeExternalToolManager(ExternalToolState.Configured, "/usr/bin/dolphin-emu", "2409"),
+            historyRepository: history);
+
+        await service.ExecuteAsync(new EmulatorLaunchExecutionRequest("RMCP01", SaveHistory: false));
+
+        history.Entries.Should().BeEmpty();
     }
 
     public void Dispose()
@@ -85,13 +122,15 @@ public sealed class EmulatorGameLaunchWorkflowServiceTests : IDisposable
     private EmulatorGameLaunchWorkflowService CreateService(
         IReadOnlyList<GameDto> games,
         IExternalToolManager externalToolManager,
-        IProcessRunner? processRunner = null)
+        IProcessRunner? processRunner = null,
+        IEmulatorLaunchHistoryRepository? historyRepository = null)
     {
         return new EmulatorGameLaunchWorkflowService(
             new FakeGameLibraryService(games),
             externalToolManager,
             processRunner ?? new FakeProcessRunner(),
-            new SafePathService());
+            new SafePathService(),
+            launchHistoryRepository: historyRepository);
     }
 
     private string CreateFile(string relativePath)
@@ -187,6 +226,31 @@ public sealed class EmulatorGameLaunchWorkflowServiceTests : IDisposable
             cancellationToken.ThrowIfCancellationRequested();
             LastRequest = request;
             return Task.FromResult(new ProcessResult(0, string.Empty, string.Empty, TimeSpan.FromMilliseconds(1)));
+        }
+    }
+
+    private sealed class FakeEmulatorLaunchHistoryRepository : IEmulatorLaunchHistoryRepository
+    {
+        public List<EmulatorLaunchHistoryEntry> Entries { get; } = [];
+
+        public Task AppendAsync(EmulatorLaunchHistoryEntry entry, CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            Entries.Add(entry);
+            return Task.CompletedTask;
+        }
+
+        public Task<IReadOnlyList<EmulatorLaunchHistoryEntry>> GetRecentAsync(
+            string? gameId = null,
+            int limit = 100,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            IReadOnlyList<EmulatorLaunchHistoryEntry> entries = Entries
+                .Where(entry => gameId is null || string.Equals(entry.GameId, gameId, StringComparison.OrdinalIgnoreCase))
+                .Take(limit)
+                .ToArray();
+            return Task.FromResult(entries);
         }
     }
 }

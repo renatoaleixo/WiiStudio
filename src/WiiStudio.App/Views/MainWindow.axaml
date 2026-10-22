@@ -663,7 +663,7 @@
                       <Grid Grid.Row="1" ColumnDefinitions="Auto,*" ColumnSpacing="8">
                         <Button Command="{Binding LaunchSelectedGameInEmulatorCommand}"
                                 Classes="primary small"
-                                IsEnabled="{Binding CanLaunchSelectedGameInEmulator}"
+                                IsEnabled="{Binding HasSelectedGame}"
                                 ToolTip.Tip="{Binding EmulatorLaunchSummary}">
                           <StackPanel Orientation="Horizontal" Spacing="6">
                             <PathIcon Classes="small" Data="{StaticResource WiiIcon.Play}" />
@@ -768,7 +768,7 @@
                 </ListBox.ItemTemplate>
               </ListBox>
               <Border Grid.Row="2" Classes="contentBlock">
-                <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="10">
+                <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="10">
                   <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
                     <StackPanel>
                       <TextBlock Text="Preparação Wii USB" FontSize="{StaticResource WiiFontSizeSubtitle}" FontWeight="SemiBold" Foreground="{DynamicResource WiiBrushTextPrimary}" />
@@ -1049,6 +1049,22 @@
                              Text="{Binding DolphinStatusSummary}"
                              Foreground="{DynamicResource WiiBrushTextSecondary}"
                              TextWrapping="Wrap" />
+                  <Grid Grid.Row="3" ColumnDefinitions="Auto,Auto,Auto,*" ColumnSpacing="16">
+                    <CheckBox Content="Mostrar confirmação antes de iniciar"
+                              IsChecked="{Binding EmulatorShowPreviewBeforeLaunch}" />
+                    <CheckBox Grid.Column="1"
+                              Content="Registrar histórico"
+                              IsChecked="{Binding EmulatorSaveLaunchHistory}" />
+                    <CheckBox Grid.Column="2"
+                              Content="Fechar WiiStudio após iniciar"
+                              IsChecked="{Binding EmulatorCloseAfterLaunch}" />
+                    <Button Grid.Column="3"
+                            Command="{Binding SaveEmulatorLaunchSettingsCommand}"
+                            Classes="secondary small"
+                            HorizontalAlignment="Right">
+                      <TextBlock Text="Salvar preferências" />
+                    </Button>
+                  </Grid>
                 </Grid>
               </Border>
               <Border Grid.Row="2" Classes="contentBlock">
@@ -1747,6 +1763,52 @@
                 HorizontalAlignment="Right"
                 VerticalAlignment="Top"
                 IsVisible="False" />
+
+    <Border Grid.Row="0"
+            Grid.RowSpan="3"
+            Classes="modalScrim"
+            IsVisible="{Binding IsEmulatorLaunchPreviewOpen}">
+      <Button Command="{Binding CancelEmulatorLaunchCommand}" Background="Transparent" BorderThickness="0" />
+    </Border>
+
+    <Border Grid.Row="0"
+            Grid.RowSpan="3"
+            Classes="modalPanel"
+            Width="560"
+            MaxWidth="760"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            IsVisible="{Binding IsEmulatorLaunchPreviewOpen}">
+      <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="16">
+        <StackPanel Spacing="4">
+          <TextBlock Text="Jogar no PC" FontSize="{StaticResource WiiFontSizeSubtitle}" FontWeight="SemiBold" Foreground="{DynamicResource WiiBrushTextPrimary}" />
+          <TextBlock Text="Revise os dados antes de abrir o Dolphin." Foreground="{DynamicResource WiiBrushTextSecondary}" />
+        </StackPanel>
+        <Grid Grid.Row="1" ColumnDefinitions="100,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" ColumnSpacing="12" RowSpacing="8">
+          <TextBlock Text="Jogo" Foreground="{DynamicResource WiiBrushTextMuted}" />
+          <TextBlock Grid.Column="1" Text="{Binding PendingEmulatorLaunchPreview.GameTitle}" Foreground="{DynamicResource WiiBrushTextPrimary}" TextWrapping="Wrap" />
+          <TextBlock Grid.Row="1" Text="Game ID" Foreground="{DynamicResource WiiBrushTextMuted}" />
+          <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding PendingEmulatorLaunchPreview.GameId}" Foreground="{DynamicResource WiiBrushTextPrimary}" />
+          <TextBlock Grid.Row="2" Text="Arquivo" Foreground="{DynamicResource WiiBrushTextMuted}" />
+          <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding PendingEmulatorLaunchPreview.GameFilePath}" Foreground="{DynamicResource WiiBrushTextPrimary}" TextWrapping="Wrap" />
+          <TextBlock Grid.Row="3" Text="Emulador" Foreground="{DynamicResource WiiBrushTextMuted}" />
+          <TextBlock Grid.Row="3" Grid.Column="1" Text="Dolphin" Foreground="{DynamicResource WiiBrushTextPrimary}" />
+          <TextBlock Grid.Row="4" Text="Versão" Foreground="{DynamicResource WiiBrushTextMuted}" />
+          <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding PendingEmulatorLaunchPreview.EmulatorVersion, FallbackValue=Não detectada}" Foreground="{DynamicResource WiiBrushTextPrimary}" />
+          <TextBlock Grid.Row="5" Text="Perfil" Foreground="{DynamicResource WiiBrushTextMuted}" />
+          <TextBlock Grid.Row="5" Grid.Column="1" Text="Padrão" Foreground="{DynamicResource WiiBrushTextPrimary}" />
+        </Grid>
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+          <Button Command="{Binding CancelEmulatorLaunchCommand}" Classes="secondary small"><TextBlock Text="Cancelar" /></Button>
+          <Button Command="{Binding ConfirmEmulatorLaunchCommand}" Classes="primary small">
+            <StackPanel Orientation="Horizontal" Spacing="6">
+              <PathIcon Classes="small" Data="{StaticResource WiiIcon.Play}" />
+              <TextBlock Text="Iniciar no Dolphin" />
+            </StackPanel>
+          </Button>
+        </StackPanel>
+      </Grid>
+    </Border>
 
     <Border Grid.Row="0"
             Grid.RowSpan="3"

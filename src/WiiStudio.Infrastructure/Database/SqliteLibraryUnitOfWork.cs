@@ -121,6 +121,18 @@ public sealed class SqliteLibraryUnitOfWork : ILibraryUnitOfWork
                 CreatedAt TEXT NOT NULL
             );
             """, cancellationToken);
+        await ExecuteAsync(connection, """
+            CREATE TABLE IF NOT EXISTS EmulatorLaunchHistory (
+                Id TEXT PRIMARY KEY,
+                GameId TEXT NOT NULL,
+                EmulatorId TEXT NOT NULL,
+                FilePath TEXT NULL,
+                StartedAt TEXT NOT NULL,
+                ExitCode INTEGER NULL,
+                Result TEXT NOT NULL,
+                ErrorMessage TEXT NULL
+            );
+            """, cancellationToken);
         await ExecuteAsync(connection, "CREATE INDEX IF NOT EXISTS IX_Games_GameId ON Games(GameId);", cancellationToken);
         await ExecuteAsync(connection, "CREATE INDEX IF NOT EXISTS IX_Games_Title ON Games(Title);", cancellationToken);
         await ExecuteAsync(connection, "CREATE INDEX IF NOT EXISTS IX_Games_IsFavorite ON Games(IsFavorite);", cancellationToken);
@@ -128,8 +140,11 @@ public sealed class SqliteLibraryUnitOfWork : ILibraryUnitOfWork
         await ExecuteAsync(connection, "CREATE INDEX IF NOT EXISTS IX_LibraryFiles_GameId ON LibraryFiles(GameId);", cancellationToken);
         await ExecuteAsync(connection, "CREATE INDEX IF NOT EXISTS IX_ImportHistory_GameId ON ImportHistory(GameId);", cancellationToken);
         await ExecuteAsync(connection, "CREATE INDEX IF NOT EXISTS IX_ImportHistory_CreatedAt ON ImportHistory(CreatedAt);", cancellationToken);
+        await ExecuteAsync(connection, "CREATE INDEX IF NOT EXISTS IX_EmulatorLaunchHistory_GameId ON EmulatorLaunchHistory(GameId);", cancellationToken);
+        await ExecuteAsync(connection, "CREATE INDEX IF NOT EXISTS IX_EmulatorLaunchHistory_StartedAt ON EmulatorLaunchHistory(StartedAt);", cancellationToken);
         await ExecuteAsync(connection, "INSERT OR IGNORE INTO SchemaMigrations (Version, AppliedAt) VALUES (1, $appliedAt);", cancellationToken, ("$appliedAt", DateTimeOffset.UtcNow.ToString("O")));
         await ExecuteAsync(connection, "INSERT OR IGNORE INTO SchemaMigrations (Version, AppliedAt) VALUES (2, $appliedAt);", cancellationToken, ("$appliedAt", DateTimeOffset.UtcNow.ToString("O")));
+        await ExecuteAsync(connection, "INSERT OR IGNORE INTO SchemaMigrations (Version, AppliedAt) VALUES (3, $appliedAt);", cancellationToken, ("$appliedAt", DateTimeOffset.UtcNow.ToString("O")));
 
         _initialized = true;
     }

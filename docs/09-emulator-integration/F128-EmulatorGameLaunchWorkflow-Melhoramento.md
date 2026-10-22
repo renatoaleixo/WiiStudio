@@ -2,7 +2,7 @@
 
 > **Suggested path:** `docs/09-emulator-integration/F128-EmulatorGameLaunchWorkflow-Melhoramento.md`  
 > **Priority:** Future / Product Expansion  
-> **Status:** Proposed technical design  
+> **Status:** Implemented
 > **Architecture:** .NET 10, Avalonia, Application / Infrastructure / Domain  
 > **Area:** Emulator Launch, Game Library, UX, Safety  
 > **Related:** F115, F127, F109, F113, F114, F118
@@ -273,15 +273,15 @@ Logs:
 
 ## 13. Critérios de Aceite
 
-- [ ] Botão **Jogar no PC** aparece para jogos elegíveis.
-- [ ] Preview mostra jogo, arquivo e emulador.
-- [ ] Arquivo inexistente bloqueia execução.
-- [ ] Emulador ausente abre configuração.
-- [ ] Processo é iniciado via `IProcessRunner`.
-- [ ] Argumentos são validados.
-- [ ] Histórico é registrado.
-- [ ] Notificação é gerada.
-- [ ] Testes usam fakes.
+- [x] Botão **Jogar no PC** aparece para jogos elegíveis.
+- [x] Preview mostra jogo, arquivo e emulador.
+- [x] Arquivo inexistente bloqueia execução.
+- [x] Emulador ausente abre configuração.
+- [x] Processo é iniciado via `IProcessRunner`.
+- [x] Argumentos são validados.
+- [x] Histórico é registrado.
+- [x] Notificação é gerada.
+- [x] Testes usam fakes.
 
 ---
 

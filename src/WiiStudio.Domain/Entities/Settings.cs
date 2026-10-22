@@ -34,6 +34,16 @@ public sealed class Settings
 
     public string? DolphinVersion { get; init; }
 
+    public bool EmulatorShowPreviewBeforeLaunch { get; init; } = true;
+
+    public bool EmulatorSaveLaunchHistory { get; init; } = true;
+
+    public bool EmulatorCloseAfterLaunch { get; init; }
+
+    public string? EmulatorLastId { get; init; }
+
+    public string? EmulatorLastGameId { get; init; }
+
     public DateTimeOffset? ExternalToolsLastCheckAt { get; init; }
 
     public string? CoverCachePath { get; init; }

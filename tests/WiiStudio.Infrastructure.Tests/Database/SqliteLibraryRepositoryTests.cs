@@ -73,7 +73,7 @@ public sealed class SqliteLibraryRepositoryTests : IDisposable
             versions.Add(reader.GetInt64(0));
         }
 
-        versions.Should().Contain([1, 2]);
+        versions.Should().Contain([1, 2, 3]);
     }
 
     [Fact]
@@ -132,6 +132,27 @@ public sealed class SqliteLibraryRepositoryTests : IDisposable
         entries[0].GameId.Should().Be("RSPE01");
         entries[0].Operation.Should().Be("usb-write");
         entries[0].Success.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task EmulatorLaunchHistoryRepository_ShouldPersistAndFilterEntries()
+    {
+        var repository = new SqliteEmulatorLaunchHistoryRepository(CreateUnitOfWork());
+        var first = new EmulatorLaunchHistoryEntry(
+            Guid.NewGuid(), "RMCP01", "dolphin", "/games/RMCP01.wbfs",
+            DateTimeOffset.UtcNow.AddMinutes(-2), null, "Started", null);
+        var second = new EmulatorLaunchHistoryEntry(
+            Guid.NewGuid(), "RSPE01", "dolphin", "/games/RSPE01.wbfs",
+            DateTimeOffset.UtcNow, null, "Blocked", "Arquivo ausente");
+
+        await repository.AppendAsync(first);
+        await repository.AppendAsync(second);
+
+        var entries = await repository.GetRecentAsync("rmcp01");
+
+        entries.Should().ContainSingle();
+        entries[0].GameId.Should().Be("RMCP01");
+        entries[0].Result.Should().Be("Started");
     }
 
     public void Dispose()

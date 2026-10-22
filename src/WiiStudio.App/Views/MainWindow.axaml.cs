@@ -71,14 +71,21 @@ public sealed partial class MainWindow : Window
 
     private void OnKeyDown(object? sender, KeyEventArgs e)
     {
-        if (e.Key != Key.Escape ||
-            DataContext is not MainViewModel { IsCoverLightboxOpen: true } viewModel)
+        if (e.Key != Key.Escape || DataContext is not MainViewModel viewModel)
         {
             return;
         }
 
-        viewModel.CloseCoverLightboxCommand.Execute(null);
-        e.Handled = true;
+        if (viewModel.IsEmulatorLaunchPreviewOpen)
+        {
+            viewModel.CancelEmulatorLaunchCommand.Execute(null);
+            e.Handled = true;
+        }
+        else if (viewModel.IsCoverLightboxOpen)
+        {
+            viewModel.CloseCoverLightboxCommand.Execute(null);
+            e.Handled = true;
+        }
     }
 
     private async Task<string[]> PickGameFilesAsync(string title)

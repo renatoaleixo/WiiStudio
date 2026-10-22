@@ -7,7 +7,8 @@ public sealed record EmulatorLaunchRequest(
 public sealed record EmulatorLaunchExecutionRequest(
     string GameId,
     string EmulatorId = "dolphin",
-    bool UserConfirmed = true);
+    bool UserConfirmed = true,
+    bool SaveHistory = true);
 
 public sealed record EmulatorLaunchPreview(
     bool CanLaunch,

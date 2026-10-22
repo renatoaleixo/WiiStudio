@@ -256,6 +256,21 @@ public sealed partial class MainViewModel : ObservableObject
     private string _emulatorLaunchSummary = "Selecione um jogo local para jogar no PC.";
 
     [ObservableProperty]
+    private bool _isEmulatorLaunchPreviewOpen;
+
+    [ObservableProperty]
+    private EmulatorLaunchPreview? _pendingEmulatorLaunchPreview;
+
+    [ObservableProperty]
+    private bool _emulatorShowPreviewBeforeLaunch = true;
+
+    [ObservableProperty]
+    private bool _emulatorSaveLaunchHistory = true;
+
+    [ObservableProperty]
+    private bool _emulatorCloseAfterLaunch;
+
+    [ObservableProperty]
     private string? _dolphinExecutablePath;
 
     [ObservableProperty]
@@ -496,6 +511,8 @@ public sealed partial class MainViewModel : ObservableObject
     public bool IsLogsModuleSelected => IsSelectedModule(ShellModuleId.Logs);
 
     public string LibrarySummary => LibraryTotalCount == 1 ? "1 jogo" : $"{LibraryTotalCount} jogos";
+
+    public bool HasSelectedGame => SelectedGame is not null;
 
     public bool IsLibraryGridViewSelected => SelectedLibraryViewMode == LibraryViewMode.Grid;
 
@@ -826,6 +843,9 @@ public sealed partial class MainViewModel : ObservableObject
         {
             var settings = await _settingsService.GetAsync(cancellationToken);
             DolphinExecutablePath = settings.DolphinExecutablePath;
+            EmulatorShowPreviewBeforeLaunch = settings.EmulatorShowPreviewBeforeLaunch;
+            EmulatorSaveLaunchHistory = settings.EmulatorSaveLaunchHistory;
+            EmulatorCloseAfterLaunch = settings.EmulatorCloseAfterLaunch;
             var status = await _externalToolManager.CheckAsync("dolphin", cancellationToken);
             ApplyDolphinStatus(status);
         }
@@ -2215,6 +2235,7 @@ public sealed partial class MainViewModel : ObservableObject
     partial void OnSelectedGameChanged(LibraryGameItem? value)
     {
         OnPropertyChanged(nameof(SelectedFavoriteActionText));
+        OnPropertyChanged(nameof(HasSelectedGame));
         _ = RefreshSelectedGameDetailsAsync(value, CancellationToken.None);
 
         if (value is not null && _selectedGameIds.Contains(value.Id))
@@ -2503,24 +2524,95 @@ public sealed partial class MainViewModel : ObservableObject
             return;
         }
 
-        IsBusy = true;
         try
         {
-            var result = await _emulatorLaunchWorkflowService.ExecuteAsync(
-                new EmulatorLaunchExecutionRequest(SelectedGame.Id),
+            var preview = await _emulatorLaunchWorkflowService.CreatePreviewAsync(
+                new EmulatorLaunchRequest(SelectedGame.Id),
                 cancellationToken);
+            if (!preview.CanLaunch)
+            {
+                StatusMessage = preview.BlockReason ?? "Não foi possível preparar o jogo para emulação.";
+                if (preview.BlockReason?.Contains("Configure o Dolphin", StringComparison.OrdinalIgnoreCase) == true)
+                {
+                    SelectedModule = Modules.FirstOrDefault(module => module.Id == ShellModuleId.Settings) ?? SelectedModule;
+                }
 
-            StatusMessage = result.Started
-                ? $"Jogo enviado ao Dolphin: {SelectedGame.Title}."
-                : result.ErrorMessage ?? "Não foi possível iniciar o jogo no emulador.";
-            await RefreshSelectedEmulatorPreviewAsync(SelectedGame.Id, cancellationToken);
+                return;
+            }
+
+            PendingEmulatorLaunchPreview = preview;
+            if (EmulatorShowPreviewBeforeLaunch)
+            {
+                IsEmulatorLaunchPreviewOpen = true;
+                return;
+            }
+
+            await ExecuteConfirmedEmulatorLaunchAsync(preview, cancellationToken);
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
             StatusMessage = $"Falha ao iniciar no emulador: {exception.Message}";
         }
+    }
+
+    [RelayCommand]
+    private async Task ConfirmEmulatorLaunchAsync(CancellationToken cancellationToken)
+    {
+        var preview = PendingEmulatorLaunchPreview;
+        IsEmulatorLaunchPreviewOpen = false;
+        if (preview is not null)
+        {
+            await ExecuteConfirmedEmulatorLaunchAsync(preview, cancellationToken);
+        }
+    }
+
+    [RelayCommand]
+    private async Task CancelEmulatorLaunchAsync(CancellationToken cancellationToken)
+    {
+        var preview = PendingEmulatorLaunchPreview;
+        IsEmulatorLaunchPreviewOpen = false;
+        PendingEmulatorLaunchPreview = null;
+        if (preview is not null)
+        {
+            await _emulatorLaunchWorkflowService.ExecuteAsync(
+                new EmulatorLaunchExecutionRequest(preview.GameId, preview.EmulatorId, UserConfirmed: false, EmulatorSaveLaunchHistory),
+                cancellationToken);
+        }
+
+        StatusMessage = "Execução no emulador cancelada.";
+    }
+
+    [RelayCommand]
+    private async Task SaveEmulatorLaunchSettingsAsync(CancellationToken cancellationToken)
+    {
+        var settings = await _settingsService.GetAsync(cancellationToken);
+        await _settingsService.SaveAsync(CopyEmulatorSettings(settings), cancellationToken);
+        StatusMessage = "Preferências do emulador salvas.";
+    }
+
+    private async Task ExecuteConfirmedEmulatorLaunchAsync(EmulatorLaunchPreview preview, CancellationToken cancellationToken)
+    {
+        IsBusy = true;
+        try
+        {
+            var result = await _emulatorLaunchWorkflowService.ExecuteAsync(
+                new EmulatorLaunchExecutionRequest(preview.GameId, preview.EmulatorId, UserConfirmed: true, EmulatorSaveLaunchHistory),
+                cancellationToken);
+
+            var settings = await _settingsService.GetAsync(cancellationToken);
+            await _settingsService.SaveAsync(CopyEmulatorSettings(settings, preview.EmulatorId, preview.GameId), cancellationToken);
+            StatusMessage = result.Started
+                ? $"Jogo enviado ao Dolphin: {preview.GameTitle ?? preview.GameId}."
+                : result.ErrorMessage ?? "Não foi possível iniciar o jogo no emulador.";
+            await RefreshSelectedEmulatorPreviewAsync(preview.GameId, cancellationToken);
+            if (result.Started && EmulatorCloseAfterLaunch && AvaloniaApp.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+            {
+                desktop.Shutdown();
+            }
+        }
         finally
         {
+            PendingEmulatorLaunchPreview = null;
             IsBusy = false;
         }
     }
@@ -3069,5 +3161,38 @@ public sealed partial class MainViewModel : ObservableObject
             .Where(path => !string.IsNullOrWhiteSpace(path))
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToArray();
+    }
+
+    private Settings CopyEmulatorSettings(Settings settings, string? lastEmulatorId = null, string? lastGameId = null)
+    {
+        return new Settings
+        {
+            Language = settings.Language,
+            Theme = settings.Theme,
+            AutoScanLibrary = settings.AutoScanLibrary,
+            LibraryPath = settings.LibraryPath,
+            ExportPath = settings.ExportPath,
+            MaxParallelTasks = settings.MaxParallelTasks,
+            EnableDiagnostics = settings.EnableDiagnostics,
+            CheckForUpdatesOnStartup = settings.CheckForUpdatesOnStartup,
+            WitExecutablePath = settings.WitExecutablePath,
+            WwtExecutablePath = settings.WwtExecutablePath,
+            NKitExecutablePath = settings.NKitExecutablePath,
+            DolphinExecutablePath = settings.DolphinExecutablePath,
+            WitVersion = settings.WitVersion,
+            WwtVersion = settings.WwtVersion,
+            NKitVersion = settings.NKitVersion,
+            DolphinVersion = settings.DolphinVersion,
+            EmulatorShowPreviewBeforeLaunch = EmulatorShowPreviewBeforeLaunch,
+            EmulatorSaveLaunchHistory = EmulatorSaveLaunchHistory,
+            EmulatorCloseAfterLaunch = EmulatorCloseAfterLaunch,
+            EmulatorLastId = lastEmulatorId ?? settings.EmulatorLastId,
+            EmulatorLastGameId = lastGameId ?? settings.EmulatorLastGameId,
+            ExternalToolsLastCheckAt = settings.ExternalToolsLastCheckAt,
+            CoverCachePath = settings.CoverCachePath,
+            MetadataCachePath = settings.MetadataCachePath,
+            FirstRunCompleted = settings.FirstRunCompleted,
+            FirstRunCompletedAt = settings.FirstRunCompletedAt
+        };
     }
 }

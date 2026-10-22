@@ -378,3 +378,73 @@ public sealed class SqliteImportHistoryRepository : IImportHistoryRepository
         return entries;
     }
 }
+
+public sealed class SqliteEmulatorLaunchHistoryRepository : IEmulatorLaunchHistoryRepository
+{
+    private readonly SqliteLibraryUnitOfWork _unitOfWork;
+
+    public SqliteEmulatorLaunchHistoryRepository(SqliteLibraryUnitOfWork unitOfWork)
+    {
+        _unitOfWork = unitOfWork;
+    }
+
+    public async Task AppendAsync(EmulatorLaunchHistoryEntry entry, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(entry);
+        await _unitOfWork.InitializeAsync(cancellationToken);
+        await using var connection = _unitOfWork.CreateConnection();
+        await connection.OpenAsync(cancellationToken);
+        await using var command = connection.CreateCommand();
+        command.CommandText = """
+            INSERT INTO EmulatorLaunchHistory
+                (Id, GameId, EmulatorId, FilePath, StartedAt, ExitCode, Result, ErrorMessage)
+            VALUES
+                ($id, $gameId, $emulatorId, $filePath, $startedAt, $exitCode, $result, $errorMessage);
+            """;
+        command.Parameters.AddWithValue("$id", entry.Id.ToString("N"));
+        command.Parameters.AddWithValue("$gameId", entry.GameId);
+        command.Parameters.AddWithValue("$emulatorId", entry.EmulatorId);
+        command.Parameters.AddWithValue("$filePath", (object?)entry.FilePath ?? DBNull.Value);
+        command.Parameters.AddWithValue("$startedAt", entry.StartedAt.ToString("O"));
+        command.Parameters.AddWithValue("$exitCode", (object?)entry.ExitCode ?? DBNull.Value);
+        command.Parameters.AddWithValue("$result", entry.Result);
+        command.Parameters.AddWithValue("$errorMessage", (object?)entry.ErrorMessage ?? DBNull.Value);
+        await command.ExecuteNonQueryAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<EmulatorLaunchHistoryEntry>> GetRecentAsync(
+        string? gameId = null,
+        int limit = 100,
+        CancellationToken cancellationToken = default)
+    {
+        await _unitOfWork.InitializeAsync(cancellationToken);
+        await using var connection = _unitOfWork.CreateConnection();
+        await connection.OpenAsync(cancellationToken);
+        await using var command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT Id, GameId, EmulatorId, FilePath, StartedAt, ExitCode, Result, ErrorMessage
+            FROM EmulatorLaunchHistory
+            WHERE $gameId IS NULL OR GameId = $gameId
+            ORDER BY StartedAt DESC
+            LIMIT $limit;
+            """;
+        command.Parameters.AddWithValue("$gameId", string.IsNullOrWhiteSpace(gameId) ? DBNull.Value : gameId.Trim().ToUpperInvariant());
+        command.Parameters.AddWithValue("$limit", Math.Max(1, limit));
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        var entries = new List<EmulatorLaunchHistoryEntry>();
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            entries.Add(new EmulatorLaunchHistoryEntry(
+                Guid.Parse(reader.GetString(0)),
+                reader.GetString(1),
+                reader.GetString(2),
+                reader.IsDBNull(3) ? null : reader.GetString(3),
+                DateTimeOffset.Parse(reader.GetString(4)),
+                reader.IsDBNull(5) ? null : reader.GetInt32(5),
+                reader.GetString(6),
+                reader.IsDBNull(7) ? null : reader.GetString(7)));
+        }
+
+        return entries;
+    }
+}
