@@ -2,6 +2,21 @@
 
 WiiStudio é um gerenciador open source de jogos Nintendo Wii, multiplataforma, desenvolvido com .NET 10, Avalonia UI e Clean Architecture.
 
+## Como surgiu
+
+O WiiStudio nasceu de uma necessidade pessoal: eu não encontrava na internet
+um programa visual, moderno e prático que reunisse as operações necessárias
+para organizar meus próprios jogos e transferi-los para HDs externos e
+pendrives usados no Wii, permitindo jogar sem depender da mídia física no uso
+cotidiano.
+
+O projeto começou como uma forma de tornar esse processo mais simples, seguro
+e acessível em uma única interface. Com a evolução do desenvolvimento, o
+WiiStudio também passou a integrar o Dolphin, permitindo iniciar no computador
+os jogos legalmente preservados pelo próprio usuário. A iniciativa continua
+com o objetivo de oferecer uma ferramenta multiplataforma bem documentada,
+sem distribuir jogos, chaves, BIOS ou qualquer conteúdo protegido.
+
 ## Estrutura
 
 ```text
