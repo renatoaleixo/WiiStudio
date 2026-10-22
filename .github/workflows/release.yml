@@ -117,11 +117,11 @@ jobs:
         run: |
           if [[ "$GITHUB_REF_TYPE" == tag ]]; then version="${GITHUB_REF_NAME#v}"; else version="${{ inputs.version }}"; fi
           echo "value=$version" >> "$GITHUB_OUTPUT"
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with: { name: release-linux, path: 'artifacts/release/${{ steps.version.outputs.value }}/linux' }
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with: { name: release-windows, path: 'artifacts/release/${{ steps.version.outputs.value }}/windows' }
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with: { name: release-macos, path: 'artifacts/release/${{ steps.version.outputs.value }}/macos' }
       - env:
           WIISTUDIO_CHANNEL: "${{ inputs.channel || 'stable' }}"
